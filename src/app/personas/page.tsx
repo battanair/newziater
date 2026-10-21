@@ -11,7 +11,7 @@ export const metadata: Metadata = {
 };
 
 export default async function PersonasPage() {
-  const personas = await listPersonas();
+  const personas = (await listPersonas()).filter((p) => p.Nombre?.trim());
   return (
     <main className="wrap section">
       <h1 className="h1" style={{ marginBottom: 8 }}>Artistas</h1>

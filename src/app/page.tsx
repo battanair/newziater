@@ -11,7 +11,7 @@ export const revalidate = 3600;
 export default async function Home() {
   const [obras, personas, prods] = await Promise.all([listObras(), listPersonas(), listProductoras()]);
   const activas = obras.filter(obraActiva);
-  const conFoto = personas.filter((p) => p.foto);
+  const conFoto = personas.filter((p) => p.foto && !p.foto.includes("/imagenesdefecto/") && p.Nombre?.trim());
 
   return (
     <main>

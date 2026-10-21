@@ -94,7 +94,7 @@ export default async function PersonaPage({ params }: Props) {
         <div className="wrap hero-ficha-in">
           <div className="hero-media" style={{ maxWidth: 300 }}>
             <div style={{ position: "relative", aspectRatio: "4/5", borderRadius: 8, overflow: "hidden", background: colorCartel(persona.id), display: "flex", alignItems: "center", justifyContent: "center" }}>
-              {persona.foto ? (
+              {cld(persona.foto, "c_fill,g_face,w_600,h_750,f_auto,q_auto") ? (
                 <Image src={cld(persona.foto, "c_fill,g_face,w_600,h_750,f_auto,q_auto")!} alt={`Foto de ${nombre}`} fill sizes="300px" priority style={{ objectFit: "cover" }} />
               ) : (
                 <span className="serif" style={{ fontSize: 96, color: "#f6d9b0" }} aria-hidden="true">{iniciales(nombre)}</span>

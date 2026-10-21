@@ -44,7 +44,7 @@ export default async function CompaniaPage({ params }: Props) {
         <div className="wrap hero-ficha-in">
           <div className="hero-media" style={{ maxWidth: 240 }}>
             <div style={{ position: "relative", aspectRatio: "1", borderRadius: 16, overflow: "hidden", background: colorCartel(p.id), display: "flex", alignItems: "center", justifyContent: "center" }}>
-              {p.foto_prod ? <Image src={cld(p.foto_prod, "c_pad,w_480,h_480,b_rgb:1c1915,f_auto,q_auto")!} alt={`Logo de ${p.nombre_prod}`} fill sizes="240px" priority /> : <span className="serif" style={{ fontSize: 72 }}>{iniciales(p.nombre_prod)}</span>}
+              {cld(p.foto_prod, "c_pad,w_480,h_480,b_rgb:1c1915,f_auto,q_auto") ? <Image src={cld(p.foto_prod, "c_pad,w_480,h_480,b_rgb:1c1915,f_auto,q_auto")!} alt={`Logo de ${p.nombre_prod}`} fill sizes="240px" priority /> : <span className="serif" style={{ fontSize: 72 }}>{iniciales(p.nombre_prod)}</span>}
             </div>
           </div>
           <div className="hero-text">

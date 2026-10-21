@@ -4,10 +4,11 @@ import type { Obra, Persona, Productora } from "@/lib/types";
 import { cld, colorCartel, iniciales, nombreCompleto, obraActiva, periodo } from "@/lib/format";
 
 export function Poster({ obra, sizes = "200px", priority = false }: { obra: Pick<Obra, "id" | "titulo" | "cartel">; sizes?: string; priority?: boolean }) {
+  const src = cld(obra.cartel, "c_fill,g_auto,w_600,h_900,f_auto,q_auto");
   return (
     <span className="poster" style={{ background: colorCartel(obra.id) }}>
-      {obra.cartel ? (
-        <Image src={cld(obra.cartel, "c_fill,g_auto,w_600,h_900,f_auto,q_auto")!} alt={`Cartel de ${obra.titulo}`} fill sizes={sizes} priority={priority} />
+      {src ? (
+        <Image src={src} alt={`Cartel de ${obra.titulo}`} fill sizes={sizes} priority={priority} />
       ) : (
         <span className="poster-title">{obra.titulo}</span>
       )}
@@ -29,10 +30,11 @@ export function ObraCard({ obra }: { obra: Obra }) {
 
 export function Avatar({ persona, size }: { persona: Pick<Persona, "id" | "Nombre" | "Apellidos" | "foto">; size?: number }) {
   const nombre = nombreCompleto(persona);
+  const src = cld(persona.foto, "c_fill,g_face,w_400,h_400,f_auto,q_auto");
   return (
     <span className="avatar" style={{ background: colorCartel(persona.id), width: size, height: size, fontSize: size ? size / 2.6 : undefined }}>
-      {persona.foto ? (
-        <Image src={cld(persona.foto, "c_fill,g_face,w_400,h_400,f_auto,q_auto")!} alt={`Foto de ${nombre}`} fill sizes={size ? `${size}px` : "180px"} />
+      {src ? (
+        <Image src={src} alt={`Foto de ${nombre}`} fill sizes={size ? `${size}px` : "180px"} />
       ) : (
         <span aria-hidden="true">{iniciales(nombre)}</span>
       )}
@@ -54,7 +56,7 @@ export function ProductoraCard({ p }: { p: Productora }) {
   return (
     <Link href={`/compania/${p.id}`} className="card" style={{ display: "block", textAlign: "center" }}>
       <span className="avatar" style={{ background: colorCartel(p.id), borderRadius: 16 }}>
-        {p.foto_prod ? (
+        {cld(p.foto_prod, "c_pad,w_400,h_400,b_rgb:1c1915,f_auto,q_auto") ? (
           <Image src={cld(p.foto_prod, "c_pad,w_400,h_400,b_rgb:1c1915,f_auto,q_auto")!} alt={`Logo de ${p.nombre_prod}`} fill sizes="180px" />
         ) : (
           <span aria-hidden="true">{iniciales(p.nombre_prod)}</span>

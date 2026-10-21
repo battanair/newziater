@@ -42,7 +42,8 @@ export function recortar(texto: string | undefined, max = 160): string {
 
 /** Inserta una transformación en una URL de Cloudinary (recorte, tamaño, formato automático). */
 export function cld(url: string | undefined, transform: string): string | undefined {
-  if (!url) return undefined;
+  // Las imágenes "por defecto" de la web antigua se tratan como si no hubiera foto
+  if (!url || url.includes("/imagenesdefecto/")) return undefined;
   if (!url.includes("res.cloudinary.com") || !url.includes("/upload/")) return url;
   return url.replace("/upload/", `/upload/${transform}/`);
 }
