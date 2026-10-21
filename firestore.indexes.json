@@ -1,0 +1,13 @@
+{
+  "indexes": [
+    {
+      "collectionGroup": "persona",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "creacion", "order": "ASCENDING" },
+        { "fieldPath": "coincide", "order": "ASCENDING" }
+      ]
+    }
+  ],
+  "fieldOverrides": []
+}
