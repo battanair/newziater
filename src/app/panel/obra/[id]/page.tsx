@@ -1,16 +1,17 @@
 "use client";
 
 import Link from "next/link";
-import { Suspense, use, useEffect, useMemo, useState } from "react";
+import { Suspense, use, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { addDoc, collection, deleteDoc, doc, updateDoc } from "firebase/firestore";
+import { addDoc, collection, deleteDoc, doc, serverTimestamp, updateDoc } from "firebase/firestore";
 import type { User } from "firebase/auth";
 import { db } from "@/lib/firebase-client";
 import { RequireAuth } from "@/components/RequireAuth";
 import { PanelNav } from "@/components/PanelNav";
 import { ImageUpload } from "@/components/ImageUpload";
 import { authFetch } from "@/components/AuthProvider";
-import { filterIndex, loadIndex } from "@/components/SearchBox";
+import { useBusqueda } from "@/components/SearchBox";
+import { clavesDe } from "@/lib/claves";
 import { anadirCredito, creditosDe, crearPersonaSinCuenta, leer, miPersona } from "@/lib/client-data";
 import { DEPARTAMENTOS, GENEROS, colorCartel, iniciales } from "@/lib/format";
 import type { Obra, Persona, SearchItem } from "@/lib/types";
@@ -48,7 +49,6 @@ function Editor({ id, user }: { id: string; user: User }) {
   const [f, setF] = useState({ titulo: sp.get("titulo")?.slice(0, 200) ?? "", sinopsis: "", anoinicio: "", anofin: "", activa: true, cartel: "", instagram: "", trailer: "", categoria: [] as string[], duracion: "", idioma: "Castellano" });
   const [equipo, setEquipo] = useState<Miembro[]>([]);
   const [borrados, setBorrados] = useState<string[]>([]);
-  const [index, setIndex] = useState<SearchItem[]>([]);
   const [dep, setDep] = useState("Interpretación");
   const [q, setQ] = useState("");
   const [personaje, setPersonaje] = useState("");
@@ -56,7 +56,6 @@ function Editor({ id, user }: { id: string; user: User }) {
   const [error, setError] = useState("");
 
   useEffect(() => {
-    loadIndex().then(setIndex);
     miPersona(user.uid).then(setYo);
     if (nueva) return;
     (async () => {
@@ -74,8 +73,7 @@ function Editor({ id, user }: { id: string; user: User }) {
   }, [id, nueva, user.uid]);
 
   const esDuena = nueva || obra?.creacion === user.uid;
-  const personas = useMemo(() => index.filter((i) => i.t === "persona"), [index]);
-  const sugerencias = useMemo(() => filterIndex(personas, q, 5), [personas, q]);
+  const { items: sugerencias } = useBusqueda(q, ["persona"]);
 
   if (cargando) return <main className="wrap section"><p className="muted">Cargando…</p></main>;
   if (!nueva && !obra) return <main className="wrap section"><p>Esta obra no existe.</p></main>;
@@ -128,10 +126,11 @@ function Editor({ id, user }: { id: string; user: User }) {
         trailer: f.trailer.trim().slice(0, 500),
         categoria: f.categoria.slice(0, 5),
         idioma: f.idioma.slice(0, 40),
+        claves: clavesDe(f.titulo),
         ...(f.duracion ? { duracion: Math.min(600, Number(f.duracion) || 0) } : {}),
       };
       let obraId = id;
-      if (nueva) obraId = (await addDoc(collection(db, "obra"), { ...datos, creacion: user.uid, fotos_obra: [] })).id;
+      if (nueva) obraId = (await addDoc(collection(db, "obra"), { ...datos, creacion: user.uid, fotos_obra: [], creado: serverTimestamp() })).id;
       else await updateDoc(doc(db, "obra", id), datos);
 
       for (const cid of borrados) await deleteDoc(doc(db, "persona_obra", cid));
@@ -180,7 +179,7 @@ function Editor({ id, user }: { id: string; user: User }) {
                   <div className="field">
                     <label className="label" htmlFor="titulo">Título</label>
                     <input id="titulo" className="input serif" style={{ fontSize: 22, height: 56 }} value={f.titulo} onChange={(e) => set("titulo", e.target.value)} maxLength={200} required />
-                    <TituloDuplicado titulo={f.titulo} index={index} actual={id} />
+                    <TituloDuplicado titulo={f.titulo} actual={id} />
                   </div>
                   <div className="form-grid">
                     <div className="field"><label className="label" htmlFor="ini">Año de estreno</label><input id="ini" className="input" inputMode="numeric" maxLength={4} value={f.anoinicio} onChange={(e) => set("anoinicio", e.target.value)} /></div>
@@ -285,10 +284,11 @@ function Editor({ id, user }: { id: string; user: User }) {
   );
 }
 
-function TituloDuplicado({ titulo, index, actual }: { titulo: string; index: SearchItem[]; actual: string }) {
+function TituloDuplicado({ titulo, actual }: { titulo: string; actual: string }) {
   const t = titulo.trim().toLowerCase();
+  const { items } = useBusqueda(t.length >= 3 ? titulo : "", ["obra"]);
   if (t.length < 3) return null;
-  const iguales = index.filter((i) => i.t === "obra" && i.id !== actual && i.n.trim().toLowerCase() === t);
+  const iguales = items.filter((i) => i.id !== actual && i.n.trim().toLowerCase() === t);
   if (!iguales.length) return <span className="ok">✓ No hay otra ficha con este título.</span>;
   return (
     <span className="hint" style={{ color: "var(--foco)" }}>

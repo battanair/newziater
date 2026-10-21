@@ -7,10 +7,10 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint",
     "typecheck": "tsc --noEmit",
     "admin:set": "node scripts/set-admin.mjs",
-    "deploy:rules": "firebase deploy --only firestore:rules,firestore:indexes --project ziater2"
+    "deploy:rules": "firebase deploy --only firestore:rules,firestore:indexes --project ziater2",
+    "migrar": "node scripts/migrar.mjs"
   },
   "engines": {
     "node": ">=20"

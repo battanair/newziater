@@ -1,25 +1,37 @@
 "use client";
 
-import { useEffect, useId, useMemo, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { SearchItem } from "@/lib/types";
 
-let cache: Promise<SearchItem[]> | null = null;
-export function loadIndex(): Promise<SearchItem[]> {
-  cache ??= fetch("/api/buscar").then((r) => (r.ok ? r.json() : [])).catch(() => []);
-  return cache;
+// Búsqueda contra el servidor (no se descarga ningún índice): espera 200 ms
+// tras teclear y reutiliza respuestas ya vistas.
+const memoria = new Map<string, Promise<SearchItem[]>>();
+export function buscarRemoto(q: string, tipos?: SearchItem["t"][]): Promise<SearchItem[]> {
+  const term = q.trim().slice(0, 80);
+  if (term.length < 2) return Promise.resolve([]);
+  const key = `${tipos?.join(",") ?? ""}|${term.toLowerCase()}`;
+  if (!memoria.has(key)) {
+    const params = new URLSearchParams({ q: term, ...(tipos ? { t: tipos.join(",") } : {}) });
+    memoria.set(key, fetch(`/api/buscar?${params}`).then((r) => (r.ok ? r.json() : [])).catch(() => []));
+  }
+  return memoria.get(key)!;
 }
 
-const norm = (s: string) => s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
-export function filterIndex(items: SearchItem[], q: string, max = 8) {
-  const nq = norm(q.trim());
-  if (!nq) return [];
-  return items
-    .map((i) => ({ i, pos: norm(i.n).indexOf(nq) }))
-    .filter((x) => x.pos >= 0)
-    .sort((a, b) => a.pos - b.pos || a.i.n.length - b.i.n.length)
-    .slice(0, max)
-    .map((x) => x.i);
+export function useBusqueda(q: string, tipos?: SearchItem["t"][]) {
+  const [items, setItems] = useState<SearchItem[]>([]);
+  const [cargando, setCargando] = useState(false);
+  const tiposKey = tipos?.join(",");
+  useEffect(() => {
+    let vivo = true;
+    if (q.trim().length < 2) { setItems([]); return; }
+    setCargando(true);
+    const t = setTimeout(() => {
+      buscarRemoto(q, tiposKey ? (tiposKey.split(",") as SearchItem["t"][]) : undefined).then((r) => { if (vivo) { setItems(r); setCargando(false); } });
+    }, 200);
+    return () => { vivo = false; clearTimeout(t); };
+  }, [q, tiposKey]);
+  return { items, cargando };
 }
 
 export const hrefFor = (i: SearchItem) => (i.t === "obra" ? `/obra/${i.id}` : i.t === "persona" ? `/persona/${i.id}` : `/compania/${i.id}`);
@@ -29,22 +41,16 @@ export function SearchBox({ hero = false, autoFocus = false }: { hero?: boolean;
   const router = useRouter();
   const id = useId();
   const [q, setQ] = useState("");
-  const [items, setItems] = useState<SearchItem[]>([]);
   const [open, setOpen] = useState(false);
   const [active, setActive] = useState(0);
   const box = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (open && !items.length) loadIndex().then(setItems);
-  }, [open, items.length]);
+  const { items: results } = useBusqueda(q);
 
   useEffect(() => {
     const close = (e: MouseEvent) => { if (!box.current?.contains(e.target as Node)) setOpen(false); };
     document.addEventListener("mousedown", close);
     return () => document.removeEventListener("mousedown", close);
   }, []);
-
-  const results = useMemo(() => filterIndex(items, q), [items, q]);
 
   function go(i?: SearchItem) {
     setOpen(false);
@@ -65,7 +71,7 @@ export function SearchBox({ hero = false, autoFocus = false }: { hero?: boolean;
             aria-controls={`${id}-list`}
             aria-autocomplete="list"
             autoFocus={autoFocus}
-            maxLength={100}
+            maxLength={80}
             placeholder={hero ? "Busca una obra, un artista o una compañía…" : "Obras, artistas, compañías…"}
             value={q}
             onFocus={() => setOpen(true)}

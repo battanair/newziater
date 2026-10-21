@@ -47,14 +47,38 @@ service cloud.firestore {
       return data().titulo is string && data().titulo.size() > 0 && data().titulo.size() <= 200
         && str('sinopsis', 3000) && img('cartel') && list('fotos_obra', 30) && list('categoria', 5)
         && str('instagram', 100) && str('trailer', 500) && str('idioma', 40) && str('edad', 20)
+        && list('claves', 200)
         && (!('duracion' in data()) || (data().duracion is number && data().duracion >= 0 && data().duracion <= 600));
+    }
+
+    // Contadores de valoración: solo cambian a la vez que la nota del propio
+    // usuario (valoraciones/{obra}_{uid}) y deben cuadrar exactamente con ella.
+    function valoracionConsistente(obraId) {
+      let vpath = /databases/$(database)/documents/valoraciones/$(obraId + '_' + uid());
+      let existia = exists(vpath);
+      let antes = existia ? get(vpath).data.nota : 0;
+      let votos = data().votos;
+      let suma = data().suma_notas;
+      return signedIn() && existsAfter(vpath)
+        && onlyChanges(['votos', 'suma_notas', 'nota', 'puntuacion'])
+        && votos is int && suma is int
+        && votos == resource.data.get('votos', 0) + (existia ? 0 : 1)
+        && suma == resource.data.get('suma_notas', 0) - antes + getAfter(vpath).data.nota
+        // nota = suma / votos ; puntuacion = (suma + 5·7) / (votos + 5)  (sin dividir, para evitar redondeos)
+        && math.abs(data().nota * votos - suma) <= 0.01 * votos
+        && math.abs(data().puntuacion * (votos + 5) - (suma + 35)) <= 0.01 * (votos + 5);
     }
 
     match /obra/{obraId} {
       allow read: if true;
-      allow create: if signedIn() && data().creacion == uid() && obraValida();
+      allow create: if signedIn() && data().creacion == uid() && obraValida()
+        && !('votos' in data()) && !('puntuacion' in data())
+        && (!('creado' in data()) || data().creado == request.time);
       allow update: if isAdmin()
-        || (signedIn() && resource.data.creacion == uid() && unchanged('creacion') && obraValida());
+        || valoracionConsistente(obraId)
+        || (signedIn() && resource.data.creacion == uid() && unchanged('creacion') && unchanged('creado')
+            && unchanged('votos') && unchanged('suma_notas') && unchanged('nota') && unchanged('puntuacion')
+            && obraValida());
       allow delete: if isAdmin();
     }
 
@@ -73,7 +97,7 @@ service cloud.firestore {
     function personaValida() {
       return data().Nombre is string && data().Nombre.size() > 0 && data().Nombre.size() <= 100
         && str('Apellidos', 150) && str('biografia', 5000) && img('foto') && str('instagram', 100)
-        && str('ciudad', 80) && list('roles', 10) && list('destacadas', 4);
+        && str('ciudad', 80) && list('roles', 10) && list('destacadas', 4) && list('claves', 200);
     }
 
     match /persona/{personaId} {
@@ -88,7 +112,7 @@ service cloud.firestore {
       // El dueño edita sus datos, pero nunca "coincide", "creacion" ni "verificado"
       allow update: if isAdmin()
         || (ownsPersonaData(personaId, resource.data) && personaValida()
-            && onlyChanges(['Nombre', 'Apellidos', 'biografia', 'foto', 'instagram', 'ciudad', 'roles', 'destacadas', 'artesEscenicas']));
+            && onlyChanges(['Nombre', 'Apellidos', 'biografia', 'foto', 'instagram', 'ciudad', 'roles', 'destacadas', 'artesEscenicas', 'claves']));
 
       allow delete: if isAdmin();
     }
@@ -135,10 +159,27 @@ service cloud.firestore {
       allow read: if true;
       allow create: if signedIn() && data().creacion == uid()
         && data().nombre_prod is string && data().nombre_prod.size() > 0 && data().nombre_prod.size() <= 150
-        && str('descripcion', 3000) && img('foto_prod') && str('instagram', 100);
+        && str('descripcion', 3000) && img('foto_prod') && str('instagram', 100) && list('claves', 200);
       allow update: if isAdmin()
         || (signedIn() && resource.data.creacion == uid() && unchanged('creacion')
             && str('descripcion', 3000) && img('foto_prod'));
+      allow delete: if isAdmin();
+    }
+
+    // ---------- Valoraciones (una por persona y obra) ----------
+    match /valoraciones/{valId} {
+      allow read: if signedIn() && resource.data.uid == uid();
+      allow create: if signedIn() && valId == data().obra + '_' + uid()
+        && data().uid == uid() && data().nota is int && data().nota >= 1 && data().nota <= 10
+        && exists(/databases/$(database)/documents/obra/$(data().obra))
+        // y en la misma escritura se actualizan los contadores de la obra
+        && getAfter(/databases/$(database)/documents/obra/$(data().obra)).data.votos
+           == get(/databases/$(database)/documents/obra/$(data().obra)).data.get('votos', 0) + 1;
+      allow update: if signedIn() && resource.data.uid == uid()
+        && unchanged('obra') && unchanged('uid')
+        && data().nota is int && data().nota >= 1 && data().nota <= 10
+        && getAfter(/databases/$(database)/documents/obra/$(resource.data.obra)).data.suma_notas
+           == get(/databases/$(database)/documents/obra/$(resource.data.obra)).data.get('suma_notas', 0) - resource.data.nota + data().nota;
       allow delete: if isAdmin();
     }
 

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { deleteDoc, doc, updateDoc } from "firebase/firestore";
 import type { User } from "firebase/auth";
 import { db } from "@/lib/firebase-client";
@@ -9,10 +9,11 @@ import { RequireAuth } from "@/components/RequireAuth";
 import { PanelNav } from "@/components/PanelNav";
 import { ImageUpload } from "@/components/ImageUpload";
 import { authFetch } from "@/components/AuthProvider";
-import { filterIndex, loadIndex } from "@/components/SearchBox";
+import { useBusqueda } from "@/components/SearchBox";
 import { anadirCredito, creditosDe, leer, miPersona, obrasCreadasPor } from "@/lib/client-data";
 import { DEPARTAMENTOS, ROLES, nombreCompleto } from "@/lib/format";
 import type { Credito, Obra, Persona, SearchItem } from "@/lib/types";
+import { clavesDe } from "@/lib/claves";
 
 export default function PanelPage() {
   return <RequireAuth>{(user) => <Panel user={user} />}</RequireAuth>;
@@ -77,6 +78,7 @@ function Panel({ user }: { user: User }) {
         instagram: (form.instagram ?? "").trim().slice(0, 100),
         foto: form.foto ?? "",
         roles: (form.roles ?? []).slice(0, 10),
+        claves: clavesDe(form.Nombre, form.Apellidos),
         destacadas: (form.destacadas ?? []).slice(0, 4),
       });
       await authFetch("/api/revalidar", { personas: [persona.id] }).catch(() => {});
@@ -203,7 +205,6 @@ function MisObras({ obras }: { obras: Obra[] }) {
 
 function AnadirCredito({ persona, uid, onAdded }: { persona: Persona; uid: string; onAdded: () => void }) {
   const [open, setOpen] = useState(false);
-  const [index, setIndex] = useState<SearchItem[]>([]);
   const [q, setQ] = useState("");
   const [obra, setObra] = useState<SearchItem | null>(null);
   const [puesto, setPuesto] = useState("Interpretación");
@@ -212,8 +213,7 @@ function AnadirCredito({ persona, uid, onAdded }: { persona: Persona; uid: strin
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
 
-  useEffect(() => { if (open && !index.length) loadIndex().then(setIndex); }, [open, index.length]);
-  const obras = useMemo(() => filterIndex(index.filter((i) => i.t === "obra"), q, 6), [index, q]);
+  const { items: obras } = useBusqueda(open ? q : "", ["obra"]);
 
   async function guardar() {
     if (!obra) return;

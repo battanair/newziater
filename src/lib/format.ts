@@ -92,5 +92,5 @@ export function colorCartel(id: string): string {
 }
 
 export const DEPARTAMENTOS = ["Interpretación", "Dirección", "Dramaturgia", "Ayudantía de dirección", "Producción", "Escenografía", "Iluminación", "Vestuario", "Sonido", "Música", "Coreografía", "Fotografía"];
-export const GENEROS = ["Comedia", "Drama", "Monólogo", "Musical", "Danza", "Improvisación", "Circo", "Infantil", "Clásico", "Performance", "Títeres", "Ópera"];
+export const GENEROS = ["Teatro", "Comedia", "Drama", "Monólogo", "Stand up", "Impro", "Musical", "Danza", "Circo", "Infantil", "Clásico", "Performance", "Títeres", "Ópera"];
 export const ROLES = ["Interpretación", "Dirección", "Dramaturgia", "Producción", "Doblaje", "Danza", "Iluminación", "Escenografía", "Vestuario", "Música", "Técnica"];

@@ -1,23 +1,22 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { indiceBusqueda } from "@/lib/data";
+import { buscar } from "@/lib/data";
 import { SearchBox } from "@/components/SearchBox";
 
 export const metadata: Metadata = { title: "Buscar", robots: { index: false, follow: true } };
 
-const norm = (s: string) => s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
 const LABEL = { obra: "Obra", persona: "Artista", productora: "Compañía" } as const;
 const href = (t: keyof typeof LABEL, id: string) => (t === "obra" ? `/obra/${id}` : t === "persona" ? `/persona/${id}` : `/compania/${id}`);
 
 export default async function BuscarPage({ searchParams }: { searchParams: Promise<{ q?: string }> }) {
   const { q = "" } = await searchParams;
-  const term = norm(q.slice(0, 100).trim());
-  const items = term ? (await indiceBusqueda()).filter((i) => norm(i.n).includes(term)) : [];
+  const term = q.slice(0, 80).trim();
+  const items = term.length >= 2 ? await buscar(term) : [];
   return (
     <main className="wrap section">
       <h1 className="h1" style={{ marginBottom: 24 }}>Buscar</h1>
       <div style={{ maxWidth: 640, marginBottom: 32 }}><SearchBox hero autoFocus /></div>
-      {term ? <p className="muted">{items.length} resultados para «{q}»</p> : null}
+      {term ? <p className="muted">{items.length} resultados para «{term}»</p> : null}
       <ul className="list">
         {items.map((i) => (
           <li key={i.t + i.id}>

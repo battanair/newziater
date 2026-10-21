@@ -21,7 +21,10 @@ export function ObraCard({ obra }: { obra: Obra }) {
   return (
     <Link href={`/obra/${obra.id}`} className="card" style={{ display: "block" }}>
       <Poster obra={obra} />
-      <span className="card-title">{obra.titulo}</span>
+      <span className="card-title" style={{ display: "flex", justifyContent: "space-between", gap: 8 }}>
+        <span>{obra.titulo}</span>
+        {obra.votos ? <span style={{ whiteSpace: "nowrap", fontSize: 14 }}><span style={{ color: "var(--foco)" }} aria-hidden="true">★</span> {obra.nota?.toLocaleString("es-ES", { maximumFractionDigits: 1 })}<span className="sr-only"> de 10</span></span> : null}
+      </span>
       <span className="card-sub">{[cat, periodo(obra.anoinicio, obra.anofin)].filter(Boolean).join(" · ")}</span>
       {obraActiva(obra) ? <span className="card-sub" style={{ color: "var(--foco)" }}>En activo</span> : null}
     </Link>

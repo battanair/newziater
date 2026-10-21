@@ -12,7 +12,8 @@ La base de datos de las artes escénicas: obras, artistas, compañías y sus ví
 | Objetivo | Cómo se consigue |
 |---|---|
 | **Gratis al empezar** | Vercel Hobby + Firebase Spark + Cloudinary Free. Las fichas se sirven desde caché (ISR), así que cada visita no gasta lecturas de Firestore: se regeneran como mucho una vez por hora o al momento cuando alguien las edita. |
-| **Escalable** | Las páginas públicas son estáticas en el CDN. Si crece mucho: pasar la búsqueda a Algolia/Typesense (`src/lib/data.ts → indiceBusqueda`) y Firestore a plan Blaze. |
+| **Escalable** | Ninguna página lee una colección entera. La portada muestra selecciones (mejor valoradas, recién añadidas, artistas de las obras mejor valoradas). Los listados van paginados de 24 en 24 con cursor. La búsqueda usa prefijos guardados en cada ficha (`claves`) con una sola consulta por colección. El sitemap se trocea en archivos de 5.000 fichas. Las páginas son estáticas en el CDN. |
+| **Valoraciones** | Notas de 1 a 10 (una por persona y obra) en `valoraciones`. Cada obra guarda `votos`, `suma_notas`, `nota` (media) y `puntuacion` (media ponderada, para que una obra con un solo 10 no supere a otra con cien 9). Las reglas comprueban que los contadores cuadran con cada voto. |
 | **SEO** | Cada ficha se genera en el servidor con título, descripción, URL canónica, imagen Open Graph 1200×630 (para WhatsApp, Instagram, X…), datos estructurados schema.org (`CreativeWork`, `Person`, `PerformingGroup`, `BreadcrumbList`), `sitemap.xml` con todas las fichas y `robots.txt`. Las URLs antiguas (`/obra/:id`, `/persona/:id`) se mantienen y `/todoelequipo/:id` redirige con 301. |
 | **Seguridad** | Reglas de Firestore estrictas (`firestore.rules`), cabeceras HTTP (CSP, HSTS, anti-clickjacking…), secreto de Cloudinary solo en el servidor, tokens verificados en cada ruta `/api`, reclamación de fichas con revisión manual y sin redirecciones abiertas. |
 
@@ -56,7 +57,18 @@ npm run dev
 - Settings → Upload → desactiva cualquier *upload preset* **unsigned**: ya no hace falta y permite que cualquiera suba archivos a tu cuenta.
 - Settings → Security → activa «Strict transformations» si no usas transformaciones dinámicas fuera de Ziater.
 
-### 6. Hacerte administrador
+### 6. Preparar las fichas antiguas (una vez)
+
+Añade a las fichas existentes los campos de búsqueda (`claves`) y la fecha de alta (`creado`) que usan la portada y el buscador. No borra nada:
+
+```bash
+npm run migrar              # solo muestra cuántas fichas cambiaría
+npm run migrar -- --aplicar # guarda los cambios
+```
+
+Después publica los índices con `npm run deploy:rules` (incluye `firestore.indexes.json`).
+
+### 7. Hacerte administrador
 
 Necesario para aprobar reclamaciones de fichas en `/panel/admin` y editar fichas antiguas sin dueño:
 
@@ -69,14 +81,15 @@ npm run admin:set -- tu-email@ejemplo.com
 
 | Colección | Uso | Campos nuevos (opcionales) |
 |---|---|---|
-| `obra` | Fichas de obra | `duracion`, `edad`, `idioma`, `id_productora` |
-| `persona` | Fichas de artista. `coincide` = uid del artista que la reclamó | `roles`, `ciudad`, `verificado`, `destacadas` |
+| `obra` | Fichas de obra | `duracion`, `edad`, `idioma`, `id_productora`, `votos`, `suma_notas`, `nota`, `puntuacion`, `creado`, `claves` |
+| `persona` | Fichas de artista. `coincide` = uid del artista que la reclamó | `roles`, `ciudad`, `verificado`, `destacadas`, `claves` |
 | `persona_obra` | Créditos (el vínculo persona ↔ obra) | `estado` (`pendiente`/`confirmado`), `creado_por` |
 | `premios_obras` | Premios | — |
 | `productoras` | Compañías | — |
 | `users` | Cuenta privada: `favoritos_obra` («Quiero verla»), `vistas` («La he visto») | — |
 | `fallos` | Mensajes del formulario de contacto (privado) | — |
 | `reclamaciones` | **Nueva.** Solicitudes para reclamar una ficha | — |
+| `valoraciones` | **Nueva.** Nota de cada persona a cada obra (`{obra}_{uid}`) | — |
 
 Los créditos antiguos no tienen `estado` y se muestran como confirmados.
 

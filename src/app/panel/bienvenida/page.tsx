@@ -1,12 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { RequireAuth } from "@/components/RequireAuth";
-import { filterIndex, loadIndex } from "@/components/SearchBox";
+import { useBusqueda } from "@/components/SearchBox";
 import { crearMiPersona, miPersona } from "@/lib/client-data";
-import type { SearchItem } from "@/lib/types";
 import type { User } from "firebase/auth";
 
 export default function BienvenidaPage() {
@@ -16,17 +15,14 @@ export default function BienvenidaPage() {
 function Bienvenida({ user }: { user: User }) {
   const router = useRouter();
   const [nombre, setNombre] = useState(user.displayName ?? "");
-  const [index, setIndex] = useState<SearchItem[]>([]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
 
   useEffect(() => {
     miPersona(user.uid).then((p) => { if (p) router.replace("/panel"); });
-    loadIndex().then(setIndex);
   }, [user.uid, router]);
 
-  const personas = useMemo(() => index.filter((i) => i.t === "persona"), [index]);
-  const matches = useMemo(() => filterIndex(personas, nombre, 6), [personas, nombre]);
+  const { items: matches } = useBusqueda(nombre, ["persona"]);
 
   async function crear() {
     const [n, ...rest] = nombre.trim().split(/\s+/);

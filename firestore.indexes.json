@@ -4,8 +4,56 @@
       "collectionGroup": "persona",
       "queryScope": "COLLECTION",
       "fields": [
-        { "fieldPath": "creacion", "order": "ASCENDING" },
-        { "fieldPath": "coincide", "order": "ASCENDING" }
+        {
+          "fieldPath": "creacion",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "coincide",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "obra",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "categoria",
+          "arrayConfig": "CONTAINS"
+        },
+        {
+          "fieldPath": "puntuacion",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "obra",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "categoria",
+          "arrayConfig": "CONTAINS"
+        },
+        {
+          "fieldPath": "creado",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "obra",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "categoria",
+          "arrayConfig": "CONTAINS"
+        },
+        {
+          "fieldPath": "titulo",
+          "order": "ASCENDING"
+        }
       ]
     }
   ],

@@ -2,9 +2,10 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import Image from "next/image";
 import { notFound } from "next/navigation";
-import { equipoDeObra, getObra, getProductora, listObras, premiosDeObra } from "@/lib/data";
+import { equipoDeObra, getObra, getProductora, obrasRelacionadas, premiosDeObra } from "@/lib/data";
 import { Avatar, JsonLd, ObraCard, Poster } from "@/components/Cards";
 import { ObraActions } from "@/components/ObraActions";
+import { Valoracion } from "@/components/Valoracion";
 import { agruparPorDepartamento, cld, departamento, instagramHandle, instagramUrl, nombreCompleto, obraActiva, periodo, recortar } from "@/lib/format";
 import { SITE_URL } from "@/lib/firebase-config";
 
@@ -44,11 +45,11 @@ export default async function ObraPage({ params }: Props) {
   const obra = await getObra(id);
   if (!obra) notFound();
 
-  const [equipo, premios, productora, todas] = await Promise.all([
+  const [equipo, premios, productora, relacionadas] = await Promise.all([
     equipoDeObra(obra.id),
     premiosDeObra(obra.id),
     obra.id_productora ? getProductora(obra.id_productora) : Promise.resolve(null),
-    listObras(),
+    obrasRelacionadas({ id: obra.id, categoria: obra.categoria }),
   ]);
 
   const elenco = equipo.filter((c) => departamento(c) === "Interpretación");
@@ -58,7 +59,6 @@ export default async function ObraPage({ params }: Props) {
   const ig = instagramUrl(obra.instagram);
   const yt = youtubeId(obra.trailer);
   const fotos = (obra.fotos_obra ?? []).filter(Boolean);
-  const relacionadas = todas.filter((o) => o.id !== obra.id && o.categoria?.some((c) => generos.includes(c))).slice(0, 4);
   const url = `${SITE_URL}/obra/${obra.id}`;
 
   return (
@@ -82,6 +82,7 @@ export default async function ObraPage({ params }: Props) {
             contributor: equipo.filter((c) => departamento(c) !== "Interpretación" && !/direcci/i.test(c.puesto ?? "")).map((c) => ({ "@type": "Person", name: nombreCompleto(c.persona), url: `${SITE_URL}/persona/${c.persona.id}` })),
             award: premios.map((p) => p.galardon_obra),
             sameAs: ig ? [ig] : undefined,
+            aggregateRating: obra.votos && obra.votos > 0 ? { "@type": "AggregateRating", ratingValue: obra.nota, bestRating: 10, worstRating: 1, ratingCount: obra.votos } : undefined,
           },
           {
             "@context": "https://schema.org",
@@ -115,7 +116,8 @@ export default async function ObraPage({ params }: Props) {
                 {productora ? <> · <Link href={`/compania/${productora.id}`} style={{ color: "var(--foco)" }}>{productora.nombre_prod}</Link></> : null}
               </p>
             ) : null}
-            <div style={{ marginTop: 28 }}>
+            <Valoracion obraId={obra.id} votos={obra.votos} nota={obra.nota} />
+            <div>
               <ObraActions obraId={obra.id} />
             </div>
             {obra.sinopsis ? (

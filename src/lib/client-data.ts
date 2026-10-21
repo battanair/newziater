@@ -3,6 +3,7 @@
 import { addDoc, collection, doc, getDoc, getDocs, query, serverTimestamp, setDoc, updateDoc, where } from "firebase/firestore";
 import { auth, db } from "./firebase-client";
 import type { Credito, Obra, Persona } from "./types";
+import { clavesDe } from "./claves";
 
 const withId = <T,>(s: { id: string; data: () => unknown }) => ({ id: s.id, ...(s.data() as object) }) as T;
 
@@ -37,6 +38,7 @@ export async function crearMiPersona(uid: string, datos: { Nombre: string; Apell
     coincide: uid,
     creacion: uid,
     artesEscenicas: "si",
+    claves: clavesDe(datos.Nombre, datos.Apellidos),
   });
   return uid;
 }
@@ -51,6 +53,7 @@ export async function crearPersonaSinCuenta(nombre: string) {
     coincide: "",
     creacion: uid,
     artesEscenicas: "si",
+    claves: clavesDe(nombre),
   });
   return ref.id;
 }

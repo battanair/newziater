@@ -18,6 +18,13 @@ export interface Obra {
   edad?: string;
   idioma?: string;
   id_productora?: string;
+  // Valoraciones (las mantiene el componente de nota, validadas por las reglas)
+  votos?: number;
+  suma_notas?: number;
+  nota?: number; // media simple
+  puntuacion?: number; // media ponderada: ordena «mejor valoradas»
+  creado?: unknown; // fecha de alta (Timestamp)
+  claves?: string[]; // prefijos para la búsqueda
 }
 
 export interface Persona {
@@ -35,6 +42,7 @@ export interface Persona {
   ciudad?: string;
   verificado?: boolean;
   destacadas?: string[]; // ids de obra para "Conocida por"
+  claves?: string[];
 }
 
 export type EstadoCredito = "confirmado" | "pendiente";
