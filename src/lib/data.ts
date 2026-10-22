@@ -228,16 +228,18 @@ export const buscar = memo(
     // Las fichas antiguas no lo tienen hasta ejecutar la migración, así que
     // además se busca por el comienzo del título/nombre en sus variantes de
     // mayúsculas (consultas de rango sobre un solo campo: no necesitan índice).
-    const palabra = q.trim().split(/\s+/)[0] ?? "";
+    // Solo las 3 primeras letras: así «adrian» también encuentra «Adrián»
+    // (el filtro final compara sin tildes).
+    const palabra = (q.trim().split(/\s+/)[0] ?? "").slice(0, 3);
     const variantes = [...new Set([palabra, palabra.toLowerCase(), palabra.toUpperCase(), palabra.charAt(0).toUpperCase() + palabra.slice(1).toLowerCase()])].filter(Boolean);
     const consulta = async (col: string, campo: string) => {
       const consultas = [
         getDocs(query(collection(db, col), where("claves", "array-contains", partes.clave), limit(8))),
-        ...variantes.map((v) => getDocs(query(collection(db, col), where(campo, ">=", v), where(campo, "<=", v + "\uf8ff"), limit(8)))),
+        ...variantes.map((v) => getDocs(query(collection(db, col), where(campo, ">=", v), where(campo, "<=", v + "\uf8ff"), limit(25)))),
       ];
       const vistos = new Set<string>();
       const docs = (await Promise.allSettled(consultas)).flatMap((r) => (r.status === "fulfilled" ? r.value.docs : [])).filter((d) => !vistos.has(d.id) && vistos.add(d.id));
-      return { docs: docs.slice(0, 12) };
+      return { docs };
     };
     const [obras, personas, prods] = await Promise.all([
       tipos.includes("obra") ? consulta("obra", "titulo") : null,
@@ -248,7 +250,7 @@ export const buscar = memo(
     obras?.docs.map((d) => withId<Obra>(d)).forEach((o) => { if (coincide(o.titulo)) out.push({ t: "obra", id: o.id, n: o.titulo, s: periodo(o.anoinicio, o.anofin), img: cld(o.cartel, T_MINI) }); });
     personas?.docs.map((d) => withId<Persona>(d)).forEach((p) => { if (coincide(nombreCompleto(p))) out.push({ t: "persona", id: p.id, n: nombreCompleto(p), s: (p.roles ?? []).join(" · "), img: cld(p.foto, T_MINI_RETRATO) }); });
     prods?.docs.map((d) => withId<Productora>(d)).forEach((p) => { if (coincide(p.nombre_prod)) out.push({ t: "productora", id: p.id, n: p.nombre_prod, img: cld(p.foto_prod, T_MINI) }); });
-    return out;
+    return out.slice(0, 24);
   },
   300,
 );

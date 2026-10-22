@@ -16,7 +16,7 @@ export default async function BuscarPage({ searchParams }: { searchParams: Promi
     <main className="wrap section">
       <h1 className="h1" style={{ marginBottom: 24 }}>Buscar</h1>
       <div style={{ maxWidth: 640, marginBottom: 32 }}><SearchBox hero autoFocus /></div>
-      {term ? <p className="muted">{items.length} resultados para «{term}»</p> : null}
+      {term ? <p className="muted">{items.length} {items.length === 1 ? "resultado" : "resultados"} para «{term}»</p> : null}
       <ul className="list">
         {items.map((i) => (
           <li key={i.t + i.id}>
