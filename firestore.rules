@@ -1,0 +1,219 @@
+rules_version = '2';
+
+// ============================================================================
+// Reglas de seguridad de Ziater (proyecto ziater2)
+//
+// Principios:
+//  - Lo público (obras, fichas, créditos, compañías) lo puede leer cualquiera.
+//  - Cada ficha solo la edita su dueño: quien la creó o el artista que la ha
+//    reclamado (campo "coincide"). Nadie puede apropiarse de una ficha ajena.
+//  - Los datos personales (users, fallos, reclamaciones) son privados.
+//  - Las imágenes solo pueden venir de la cuenta de Cloudinary de Ziater.
+//  - Todo lo que no está permitido expresamente, está prohibido.
+//  - Administradores: custom claim { admin: true } (scripts/set-admin.mjs).
+// ============================================================================
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ---------- Utilidades ----------
+    function signedIn() { return request.auth != null; }
+    function uid() { return request.auth.uid; }
+    function isAdmin() { return signedIn() && request.auth.token.admin == true; }
+    function data() { return request.resource.data; }
+
+    function str(field, maxLen) {
+      return !(field in data()) || (data()[field] is string && data()[field].size() <= maxLen);
+    }
+    function list(field, maxItems) {
+      return !(field in data()) || (data()[field] is list && data()[field].size() <= maxItems);
+    }
+    // URL de imagen: vacía o de la cuenta de Cloudinary de Ziater
+    function img(field) {
+      return !(field in data()) || data()[field] == ''
+        || (data()[field] is string && data()[field].size() < 500
+            && data()[field].matches('^https://res[.]cloudinary[.]com/dk0vvcpyn/.*'));
+    }
+    function unchanged(field) {
+      return !(field in data()) && !(field in resource.data)
+        || (field in data() && field in resource.data && data()[field] == resource.data[field]);
+    }
+    function onlyChanges(keys) {
+      return data().diff(resource.data).affectedKeys().hasOnly(keys);
+    }
+
+    // ---------- Obras ----------
+    function obraValida() {
+      return data().titulo is string && data().titulo.size() > 0 && data().titulo.size() <= 200
+        && str('sinopsis', 3000) && img('cartel') && list('fotos_obra', 30) && list('categoria', 5)
+        && str('instagram', 100) && str('trailer', 500) && str('idioma', 40) && str('edad', 20)
+        && list('claves', 200)
+        && (!('duracion' in data()) || (data().duracion is number && data().duracion >= 0 && data().duracion <= 600));
+    }
+
+    // Contadores de valoración: solo cambian a la vez que la nota del propio
+    // usuario (valoraciones/{obra}_{uid}) y deben cuadrar exactamente con ella.
+    function valoracionConsistente(obraId) {
+      let vpath = /databases/$(database)/documents/valoraciones/$(obraId + '_' + uid());
+      let existia = exists(vpath);
+      let antes = existia ? get(vpath).data.nota : 0;
+      let votos = data().votos;
+      let suma = data().suma_notas;
+      return signedIn() && existsAfter(vpath)
+        && onlyChanges(['votos', 'suma_notas', 'nota', 'puntuacion'])
+        && votos is int && suma is int
+        && votos == resource.data.get('votos', 0) + (existia ? 0 : 1)
+        && suma == resource.data.get('suma_notas', 0) - antes + getAfter(vpath).data.nota
+        // nota = suma / votos ; puntuacion = (suma + 5·7) / (votos + 5)  (sin dividir, para evitar redondeos)
+        && math.abs(data().nota * votos - suma) <= 0.01 * votos
+        && math.abs(data().puntuacion * (votos + 5) - (suma + 35)) <= 0.01 * (votos + 5);
+    }
+
+    match /obra/{obraId} {
+      allow read: if true;
+      allow create: if signedIn() && data().creacion == uid() && obraValida()
+        && !('votos' in data()) && !('puntuacion' in data())
+        && (!('creado' in data()) || data().creado == request.time);
+      allow update: if isAdmin()
+        || valoracionConsistente(obraId)
+        || (signedIn() && resource.data.creacion == uid() && unchanged('creacion') && unchanged('creado')
+            && unchanged('votos') && unchanged('suma_notas') && unchanged('nota') && unchanged('puntuacion')
+            && obraValida());
+      allow delete: if isAdmin();
+    }
+
+    // ---------- Personas (fichas de artista) ----------
+    // Dueño de una ficha: el artista que la reclamó, o quien la creó mientras nadie la haya reclamado.
+    function claimed(p) { return ('coincide' in p) && p.coincide != ''; }
+    function ownsPersonaData(personaId, p) {
+      return signedIn() && (
+        (claimed(p) && p.coincide == uid())
+        || (!claimed(p) && (personaId == uid() || p.creacion == uid()))
+      );
+    }
+    function ownsPersona(personaId) {
+      return ownsPersonaData(personaId, get(/databases/$(database)/documents/persona/$(personaId)).data);
+    }
+    function personaValida() {
+      return data().Nombre is string && data().Nombre.size() > 0 && data().Nombre.size() <= 100
+        && str('Apellidos', 150) && str('biografia', 5000) && img('foto') && str('instagram', 100)
+        && str('ciudad', 80) && list('roles', 10) && list('destacadas', 4) && list('claves', 200);
+    }
+
+    match /persona/{personaId} {
+      allow read: if true;
+
+      // Ficha propia (id = uid, coincide = uid) o ficha para alguien sin cuenta (coincide = '')
+      allow create: if signedIn() && personaValida()
+        && data().creacion == uid()
+        && !('verificado' in data())
+        && ((personaId == uid() && data().coincide == uid()) || (personaId != uid() && data().coincide == ''));
+
+      // El dueño edita sus datos, pero nunca "coincide", "creacion" ni "verificado"
+      allow update: if isAdmin()
+        || (ownsPersonaData(personaId, resource.data) && personaValida()
+            && onlyChanges(['Nombre', 'Apellidos', 'biografia', 'foto', 'instagram', 'ciudad', 'roles', 'destacadas', 'artesEscenicas', 'claves']));
+
+      allow delete: if isAdmin();
+    }
+
+    // ---------- Créditos: persona <-> obra ----------
+    function obraDe(obraId) { return get(/databases/$(database)/documents/obra/$(obraId)).data; }
+    function esDuenaObra(obraId) { return signedIn() && obraDe(obraId).creacion == uid(); }
+
+    match /persona_obra/{creditoId} {
+      allow read: if true;
+
+      // Lo puede añadir quien creó la obra o la propia persona. Solo nace "confirmado"
+      // si quien lo añade es a la vez dueño de la obra y de la ficha.
+      allow create: if signedIn()
+        && data().id_obra is string && data().id_persona is string
+        && exists(/databases/$(database)/documents/obra/$(data().id_obra))
+        && exists(/databases/$(database)/documents/persona/$(data().id_persona))
+        && (esDuenaObra(data().id_obra) || ownsPersona(data().id_persona))
+        && data().creado_por == uid()
+        && (data().estado == 'pendiente'
+            || (data().estado == 'confirmado' && esDuenaObra(data().id_obra) && ownsPersona(data().id_persona)))
+        && str('puesto', 100) && str('titulo', 150) && str('fecha_inicio', 10) && str('fecha_fin', 10);
+
+      // Confirmar o corregir: el dueño de la obra o la persona acreditada. No se puede mover a otra obra/persona.
+      allow update: if isAdmin()
+        || ((esDuenaObra(resource.data.id_obra) || ownsPersona(resource.data.id_persona))
+            && unchanged('id_obra') && unchanged('id_persona') && unchanged('creado_por')
+            && str('puesto', 100) && str('titulo', 150)
+            && (!('estado' in data()) || data().estado in ['pendiente', 'confirmado']));
+
+      allow delete: if isAdmin() || esDuenaObra(resource.data.id_obra) || ownsPersona(resource.data.id_persona);
+    }
+
+    // ---------- Premios de obras ----------
+    match /premios_obras/{premioId} {
+      allow read: if true;
+      allow create: if esDuenaObra(data().id_obra) && str('galardon_obra', 200);
+      allow update: if isAdmin() || (esDuenaObra(resource.data.id_obra) && unchanged('id_obra'));
+      allow delete: if isAdmin() || esDuenaObra(resource.data.id_obra);
+    }
+
+    // ---------- Compañías / productoras ----------
+    match /productoras/{prodId} {
+      allow read: if true;
+      allow create: if signedIn() && data().creacion == uid()
+        && data().nombre_prod is string && data().nombre_prod.size() > 0 && data().nombre_prod.size() <= 150
+        && str('descripcion', 3000) && img('foto_prod') && str('instagram', 100) && list('claves', 200);
+      allow update: if isAdmin()
+        || (signedIn() && resource.data.creacion == uid() && unchanged('creacion')
+            && str('descripcion', 3000) && img('foto_prod'));
+      allow delete: if isAdmin();
+    }
+
+    // ---------- Valoraciones (una por persona y obra) ----------
+    match /valoraciones/{valId} {
+      allow read: if signedIn() && resource.data.uid == uid();
+      allow create: if signedIn() && valId == data().obra + '_' + uid()
+        && data().uid == uid() && data().nota is int && data().nota >= 1 && data().nota <= 10
+        && exists(/databases/$(database)/documents/obra/$(data().obra))
+        // y en la misma escritura se actualizan los contadores de la obra
+        && getAfter(/databases/$(database)/documents/obra/$(data().obra)).data.votos
+           == get(/databases/$(database)/documents/obra/$(data().obra)).data.get('votos', 0) + 1;
+      allow update: if signedIn() && resource.data.uid == uid()
+        && unchanged('obra') && unchanged('uid')
+        && data().nota is int && data().nota >= 1 && data().nota <= 10
+        && getAfter(/databases/$(database)/documents/obra/$(resource.data.obra)).data.suma_notas
+           == get(/databases/$(database)/documents/obra/$(resource.data.obra)).data.get('suma_notas', 0) - resource.data.nota + data().nota;
+      allow delete: if isAdmin();
+    }
+
+    // ---------- Reclamaciones de fichas (privadas) ----------
+    match /reclamaciones/{recId} {
+      allow create: if signedIn()
+        && recId == data().id_persona + '_' + uid()
+        && data().uid == uid() && data().estado == 'pendiente'
+        && str('metodo', 30) && str('contacto', 200);
+      allow read: if isAdmin() || (signedIn() && resource.data.uid == uid());
+      allow update, delete: if isAdmin();
+    }
+
+    // ---------- Cuentas de usuario (privadas) ----------
+    match /users/{userId} {
+      allow read: if isAdmin() || (signedIn() && userId == uid());
+      allow create, update: if signedIn() && userId == uid()
+        && str('Nombre', 100) && str('Apellidos', 150)
+        && list('favoritos_obra', 2000) && list('vistas', 5000) && list('favoritos_persona', 2000);
+      allow delete: if signedIn() && userId == uid();
+    }
+
+    // ---------- Formulario de contacto (privado) ----------
+    match /fallos/{msgId} {
+      allow create: if data().keys().hasOnly(['nombre', 'email', 'mensaje', 'fecha'])
+        && data().nombre is string && data().nombre.size() <= 100
+        && data().email is string && data().email.size() <= 200
+        && data().mensaje is string && data().mensaje.size() > 0 && data().mensaje.size() <= 5000;
+      allow read, update, delete: if isAdmin();
+    }
+
+    // ---------- Todo lo demás: cerrado ----------
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

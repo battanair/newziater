@@ -1,0 +1,75 @@
+{
+  "indexes": [
+    {
+      "collectionGroup": "persona",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "creacion",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "coincide",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "obra",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "categoria",
+          "arrayConfig": "CONTAINS"
+        },
+        {
+          "fieldPath": "puntuacion",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "obra",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "categoria",
+          "arrayConfig": "CONTAINS"
+        },
+        {
+          "fieldPath": "creado",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "obra",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "categoria",
+          "arrayConfig": "CONTAINS"
+        },
+        {
+          "fieldPath": "titulo",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "valoraciones",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "uid",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "fecha",
+          "order": "DESCENDING"
+        }
+      ]
+    }
+  ],
+  "fieldOverrides": []
+}
