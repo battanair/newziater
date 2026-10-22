@@ -4,7 +4,7 @@ import { PersonaCard } from "@/components/Cards";
 import { Paginacion } from "@/components/Paginacion";
 import { SearchBox } from "@/components/SearchBox";
 
-export const revalidate = 3600;
+export const revalidate = 600;
 
 type SP = Promise<{ despues?: string }>;
 

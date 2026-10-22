@@ -10,7 +10,7 @@ import { Trayectoria } from "@/components/Trayectoria";
 import { T_RETRATO, T_OG, cld, colorCartel, departamento, iniciales, instagramUrl, nombreCompleto, periodo, recortar } from "@/lib/format";
 import { SITE_URL } from "@/lib/firebase-config";
 
-export const revalidate = 3600;
+export const revalidate = 600;
 export const dynamicParams = true;
 export async function generateStaticParams() {
   return [];

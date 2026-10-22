@@ -10,7 +10,7 @@ import { T_OG, agruparPorDepartamento, cld, departamento, instagramHandle, insta
 import { SITE_URL } from "@/lib/firebase-config";
 
 // Página estática regenerada en segundo plano: rápida para Google y gratis de servir.
-export const revalidate = 3600;
+export const revalidate = 600;
 export const dynamicParams = true;
 export async function generateStaticParams() {
   return [];

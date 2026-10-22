@@ -5,7 +5,7 @@ import { ObraCard } from "@/components/Cards";
 import { Paginacion } from "@/components/Paginacion";
 import { GENEROS } from "@/lib/format";
 
-export const revalidate = 3600;
+export const revalidate = 600;
 
 const ORDENES: { k: OrdenObras; l: string }[] = [
   { k: "valoradas", l: "Mejor valoradas" },

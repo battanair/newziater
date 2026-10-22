@@ -23,11 +23,16 @@ function withId<T>(snap: { id: string; data: () => unknown }): T {
   return JSON.parse(JSON.stringify({ id: snap.id, ...(snap.data() as object) })) as T;
 }
 
-// Caché compartida entre visitas (1 h) + caché por petición. /api/revalidar la
-// invalida al momento cuando alguien edita una ficha.
+// Caché compartida entre visitas + caché por petición.
+// - Al crear o editar desde la web, /api/revalidar la borra AL MOMENTO.
+// - Lo que cambie por otras vías (la web antigua, la consola de Firebase) se ve
+//   como mucho a los 10 minutos.
+// - Cada publicación usa su propia caché (versión = commit), para no servir
+//   resultados guardados por una versión anterior del código.
 export const CACHE_TAG = "ziater";
-function memo<A extends unknown[], R>(name: string, fn: (...args: A) => Promise<R>, revalidate = 3600) {
-  return cache(unstable_cache(fn, [name], { revalidate, tags: [CACHE_TAG] }));
+const VERSION = (process.env.VERCEL_GIT_COMMIT_SHA ?? "local").slice(0, 7);
+function memo<A extends unknown[], R>(name: string, fn: (...args: A) => Promise<R>, revalidate = 600) {
+  return cache(unstable_cache(fn, [name, VERSION], { revalidate, tags: [CACHE_TAG] }));
 }
 
 // ---------- Fichas sueltas ----------

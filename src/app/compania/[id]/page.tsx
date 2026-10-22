@@ -7,7 +7,7 @@ import { ShareButton } from "@/components/ObraActions";
 import { T_LOGO, T_OG, cld, colorCartel, iniciales, instagramUrl, recortar } from "@/lib/format";
 import { SITE_URL } from "@/lib/firebase-config";
 
-export const revalidate = 3600;
+export const revalidate = 600;
 export const dynamicParams = true;
 export async function generateStaticParams() {
   return [];

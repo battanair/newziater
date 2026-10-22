@@ -3,7 +3,7 @@ import { paginaProductoras } from "@/lib/data";
 import { ProductoraCard } from "@/components/Cards";
 import { Paginacion } from "@/components/Paginacion";
 
-export const revalidate = 3600;
+export const revalidate = 600;
 
 type SP = Promise<{ despues?: string }>;
 

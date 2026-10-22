@@ -5,8 +5,8 @@ import { SearchBox } from "@/components/SearchBox";
 import { SITE_URL } from "@/lib/firebase-config";
 
 // La portada nunca carga todas las fichas: solo selecciones pequeñas y
-// ordenadas (12 + 12 + 12 + 8 documentos), cacheadas una hora.
-export const revalidate = 3600;
+// ordenadas (12 + 12 + 12 + 8 documentos), cacheadas 10 minutos y renovadas al momento al guardar.
+export const revalidate = 600;
 
 export default async function Home() {
   const [top, recientes, artistas, prods] = await Promise.all([
