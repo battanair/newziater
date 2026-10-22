@@ -19,7 +19,7 @@ export async function POST(req: Request) {
   intentos.set(user.uid, [...recientes, ahora]);
 
   const secret = process.env.CLOUDINARY_API_SECRET;
-  const apiKey = process.env.NEXT_PUBLIC_CLOUDINARY_API_KEY;
+  const apiKey = process.env.CLOUDINARY_API_KEY ?? process.env.NEXT_PUBLIC_CLOUDINARY_API_KEY;
   const cloud = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
   if (!secret || !apiKey || !cloud) return NextResponse.json({ error: "Cloudinary no está configurado" }, { status: 500 });
 
