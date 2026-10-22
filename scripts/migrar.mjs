@@ -6,17 +6,25 @@
 //   persona      → claves
 //   productoras  → claves
 //
-// Uso (una sola vez, en tu ordenador, con service-account.json como en set-admin.mjs):
+// Uso (una sola vez). Lo más fácil: Google Cloud Shell (sin archivos de claves).
+// También en tu ordenador con service-account.json como en set-admin.mjs:
 //   npm run migrar            ← solo cuenta lo que cambiaría
 //   npm run migrar -- --aplicar
 
 import { readFileSync } from "node:fs";
-import { cert, initializeApp } from "firebase-admin/app";
+import { applicationDefault, cert, initializeApp } from "firebase-admin/app";
 import { getFirestore } from "firebase-admin/firestore";
 
 const aplicar = process.argv.includes("--aplicar");
-const sa = JSON.parse(readFileSync(new URL("../service-account.json", import.meta.url), "utf8"));
-initializeApp({ credential: cert(sa) });
+// Con service-account.json si existe; si no (p. ej. en Google Cloud Shell),
+// con las credenciales de la cuenta con la que has iniciado sesión.
+let credential;
+try {
+  credential = cert(JSON.parse(readFileSync(new URL("../service-account.json", import.meta.url), "utf8")));
+} catch {
+  credential = applicationDefault();
+}
+initializeApp({ credential, projectId: "ziater2" });
 const db = getFirestore();
 
 // Misma lógica que src/lib/claves.ts
