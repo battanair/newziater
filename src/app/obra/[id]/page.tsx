@@ -5,6 +5,7 @@ import { notFound } from "next/navigation";
 import { equipoDeObra, getObra, getProductora, obrasRelacionadas, premiosDeObra } from "@/lib/data";
 import { Avatar, JsonLd, ObraCard, Poster } from "@/components/Cards";
 import { ObraActions } from "@/components/ObraActions";
+import { Galeria } from "@/components/Galeria";
 import { Valoracion } from "@/components/Valoracion";
 import { fotosDe, T_OG, agruparPorDepartamento, cld, departamento, instagramHandle, instagramUrl, nombreCompleto, obraActiva, periodo, recortar } from "@/lib/format";
 import { SITE_URL } from "@/lib/firebase-config";
@@ -182,13 +183,7 @@ export default async function ObraPage({ params }: Props) {
                   <iframe src={`https://www.youtube-nocookie.com/embed/${yt}`} title={`Tráiler de ${obra.titulo}`} loading="lazy" allow="encrypted-media; picture-in-picture" allowFullScreen style={{ position: "absolute", inset: 0, width: "100%", height: "100%", border: 0 }} />
                 </div>
               ) : null}
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: 10 }}>
-                {fotos.map((f, i) => (
-                  <a key={f} href={cld(f, "c_limit,w_2000,f_auto,q_auto") ?? f} target="_blank" rel="noopener" className="card" style={{ position: "relative", display: "block", aspectRatio: "4/3", borderRadius: 8, overflow: "hidden" }} aria-label={`Ver foto ${i + 1} de ${obra.titulo} a tamaño completo`}>
-                    <Image src={cld(f, "c_fill,g_auto,w_800,h_600,f_auto,q_auto")!} alt={`${obra.titulo}, foto ${i + 1}`} fill sizes="(max-width: 640px) 100vw, 300px" />
-                  </a>
-                ))}
-              </div>
+              <Galeria fotos={fotos} titulo={obra.titulo} />
             </section>
           ) : null}
         </div>
