@@ -223,12 +223,26 @@ export const buscar = memo(
   async (q: string, tipos: SearchItem["t"][] = ["obra", "persona", "productora"]): Promise<SearchItem[]> => {
     const partes = partirBusqueda(q);
     if (!partes) return [];
-    const coincide = (texto: string) => partes.resto.every((r) => normalizar(texto).includes(r));
-    const consulta = (col: string) => getDocs(query(collection(db, col), where("claves", "array-contains", partes.clave), limit(8)));
+    const coincide = (texto: string) => [partes.clave, ...partes.resto].every((r) => normalizar(texto ?? "").includes(r));
+    // Búsqueda principal: el campo "claves" (prefijos normalizados).
+    // Las fichas antiguas no lo tienen hasta ejecutar la migración, así que
+    // además se busca por el comienzo del título/nombre en sus variantes de
+    // mayúsculas (consultas de rango sobre un solo campo: no necesitan índice).
+    const palabra = q.trim().split(/\s+/)[0] ?? "";
+    const variantes = [...new Set([palabra, palabra.toLowerCase(), palabra.toUpperCase(), palabra.charAt(0).toUpperCase() + palabra.slice(1).toLowerCase()])].filter(Boolean);
+    const consulta = async (col: string, campo: string) => {
+      const consultas = [
+        getDocs(query(collection(db, col), where("claves", "array-contains", partes.clave), limit(8))),
+        ...variantes.map((v) => getDocs(query(collection(db, col), where(campo, ">=", v), where(campo, "<=", v + "\uf8ff"), limit(8)))),
+      ];
+      const vistos = new Set<string>();
+      const docs = (await Promise.allSettled(consultas)).flatMap((r) => (r.status === "fulfilled" ? r.value.docs : [])).filter((d) => !vistos.has(d.id) && vistos.add(d.id));
+      return { docs: docs.slice(0, 12) };
+    };
     const [obras, personas, prods] = await Promise.all([
-      tipos.includes("obra") ? consulta("obra") : null,
-      tipos.includes("persona") ? consulta("persona") : null,
-      tipos.includes("productora") ? consulta("productoras") : null,
+      tipos.includes("obra") ? consulta("obra", "titulo") : null,
+      tipos.includes("persona") ? consulta("persona", "Nombre") : null,
+      tipos.includes("productora") ? consulta("productoras", "nombre_prod") : null,
     ]);
     const out: SearchItem[] = [];
     obras?.docs.map((d) => withId<Obra>(d)).forEach((o) => { if (coincide(o.titulo)) out.push({ t: "obra", id: o.id, n: o.titulo, s: periodo(o.anoinicio, o.anofin), img: cld(o.cartel, T_MINI) }); });
