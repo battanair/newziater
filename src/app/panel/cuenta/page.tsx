@@ -83,14 +83,14 @@ function Cuenta({ user }: { user: User }) {
           </div>
         </section>
 
-        <section className="panel" style={{ background: "transparent", borderColor: "#5a2a2e" }}>
+        <section className="panel panel-peligro">
           <h2 className="h3" style={{ marginBottom: 8 }}>Eliminar mi cuenta</h2>
           <p className="soft" style={{ marginTop: 0 }}>Se borran tu cuenta, tus listas y tus datos privados. Las obras y fichas públicas que hayas creado se quedan en Ziater, porque forman parte del archivo común. Tus notas siguen contando en las medias, sin tu nombre.</p>
           <div className="field" style={{ maxWidth: 360 }}>
             <label className="label" htmlFor="c-borrar">Escribe ELIMINAR para confirmar</label>
             <input id="c-borrar" className="input" value={borrar} onChange={(e) => setBorrar(e.target.value)} autoComplete="off" />
           </div>
-          <button type="button" className="btn" style={{ marginTop: 12, borderColor: "#8e1e24" }} disabled={borrar.trim() !== "ELIMINAR"} onClick={eliminar}>Eliminar mi cuenta para siempre</button>
+          <button type="button" className="btn btn-peligro" style={{ marginTop: 12 }} disabled={borrar.trim() !== "ELIMINAR"} onClick={eliminar}>Eliminar mi cuenta para siempre</button>
         </section>
       </main>
     </>

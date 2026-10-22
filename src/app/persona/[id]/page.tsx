@@ -98,17 +98,19 @@ export default async function PersonaPage({ params }: Props) {
               {cld(persona.foto, T_RETRATO) ? (
                 <Image src={cld(persona.foto, T_RETRATO)!} alt={`Foto de ${nombre}`} fill sizes="300px" priority style={{ objectFit: "cover" }} />
               ) : (
-                <span className="serif" style={{ fontSize: 96, color: "#f6d9b0" }} aria-hidden="true">{iniciales(nombre)}</span>
+                <span className="serif" style={{ fontSize: 96, color: "#f6e6cc" }} aria-hidden="true">{iniciales(nombre)}</span>
               )}
             </div>
           </div>
           <div className="hero-text">
+            <div className="hero-cab">
             <nav aria-label="Ruta" className="breadcrumb"><Link href="/personas">Artistas</Link></nav>
             <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 14 }}>
               <h1 className="h1">{nombre}</h1>
               {persona.verificado ? <span className="chip chip-foco">✓ Perfil verificado</span> : null}
             </div>
             {roles.length ? <p className="soft" style={{ margin: "14px 0 0", fontSize: 18 }}>{roles.join(" · ")}</p> : null}
+            </div>
 
             <dl className="stats">
               {persona.ciudad ? <div><dt>Ciudad</dt><dd>{persona.ciudad}</dd></div> : null}

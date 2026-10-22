@@ -1,13 +1,16 @@
 import type { Metadata, Viewport } from "next";
-import { Bodoni_Moda, Instrument_Sans } from "next/font/google";
+import { Fraunces, Source_Sans_3 } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/components/AuthProvider";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
+import { TabBar } from "@/components/TabBar";
+import { SCRIPT_MODO } from "@/components/ModoToggle";
 import { SITE_URL } from "@/lib/firebase-config";
 
-const serif = Bodoni_Moda({ subsets: ["latin"], variable: "--font-serif", display: "swap", weight: ["400", "500", "600", "700"], style: ["normal", "italic"] });
-const sans = Instrument_Sans({ subsets: ["latin"], variable: "--font-sans", display: "swap" });
+// Dos fuentes legibles: Fraunces para titulares y Source Sans 3 para el texto.
+const serif = Fraunces({ subsets: ["latin"], variable: "--font-serif", display: "swap", weight: ["500", "600"] });
+const sans = Source_Sans_3({ subsets: ["latin"], variable: "--font-sans", display: "swap", weight: ["400", "500", "600", "700"] });
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
@@ -20,17 +23,22 @@ export const metadata: Metadata = {
   robots: { index: true, follow: true },
 };
 
-export const viewport: Viewport = { themeColor: "#12100E", width: "device-width", initialScale: 1 };
+export const viewport: Viewport = { themeColor: "#131210", width: "device-width", initialScale: 1 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="es" className={`${serif.variable} ${sans.variable}`}>
+    <html lang="es" className={`${serif.variable} ${sans.variable}`} suppressHydrationWarning>
+      <head>
+        {/* Aplica el modo claro guardado antes de pintar, sin destello */}
+        <script dangerouslySetInnerHTML={{ __html: SCRIPT_MODO }} />
+      </head>
       <body>
         <a href="#contenido" className="sr-only">Saltar al contenido</a>
         <AuthProvider>
           <Header />
           <div id="contenido">{children}</div>
           <Footer />
+          <TabBar />
         </AuthProvider>
       </body>
     </html>

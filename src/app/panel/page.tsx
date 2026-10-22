@@ -74,10 +74,10 @@ function Resumen({ user }: { user: User }) {
         <h1 className="h1" style={{ fontSize: 48 }}>{nombre ? `Hola, ${nombre}` : "Tu espacio"}</h1>
         <p className="soft" style={{ margin: "10px 0 28px" }}>Tus notas, tus listas y todo lo que has aportado a Ziater.</p>
 
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: 12 }}>
+        <div className="cifras">
           {cifras.map((c) => (
             <Link key={c.href} href={c.href} className="panel" style={{ display: "block" }}>
-              <span className="serif" style={{ display: "block", fontSize: 40, fontWeight: 600, lineHeight: 1, fontVariantNumeric: "tabular-nums" }}>{c.n}</span>
+              <span className="cifra">{c.n}</span>
               <span className="muted" style={{ fontSize: 14 }}>{c.l}</span>
             </Link>
           ))}

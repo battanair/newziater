@@ -69,9 +69,9 @@ export function Valoracion({ obraId, votos: v0 = 0, nota: n0 = 0 }: { obraId: st
           )}
         </dd>
       </div>
-      <div>
+      <div className="votar">
         <dt>{mia ? `Tu nota: ${mia}` : "¿La has visto? Puntúala"}</dt>
-        <dd role="group" aria-label="Tu nota de 1 a 10" style={{ display: "flex", gap: 4, marginTop: 8 }} onMouseLeave={() => setHover(0)}>
+        <dd role="group" aria-label="Tu nota de 1 a 10" className="notas" onMouseLeave={() => setHover(0)}>
           {Array.from({ length: 10 }, (_, i) => i + 1).map((n) => (
             <button
               key={n}
@@ -81,7 +81,7 @@ export function Valoracion({ obraId, votos: v0 = 0, nota: n0 = 0 }: { obraId: st
               disabled={estado === "saving"}
               onMouseEnter={() => setHover(n)}
               onClick={() => votar(n)}
-              style={{ width: 30, height: 44, border: 0, borderRadius: 6, cursor: "pointer", fontWeight: 600, background: n <= activa ? "var(--foco)" : "var(--butaca)", color: n <= activa ? "var(--foco-tinta)" : "var(--texto-2)" }}
+              className={n <= activa ? "on" : undefined}
             >
               {n}
             </button>

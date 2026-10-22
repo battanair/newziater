@@ -101,11 +101,12 @@ export default async function ObraPage({ params }: Props) {
             <Poster obra={obra} sizes="(max-width: 640px) 260px, 320px" priority />
           </div>
           <div className="hero-text">
+            <div className="hero-cab">
             <nav aria-label="Ruta" className="breadcrumb">
               <Link href="/obras">Obras</Link>
               {generos[0] ? <> / <Link href={`/obras?genero=${encodeURIComponent(generos[0])}`}>{generos[0]}</Link></> : null}
             </nav>
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 16 }}>
+            <div className="chips" style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 16 }}>
               {obraActiva(obra) ? <span className="chip chip-foco chip-dot">En activo</span> : <span className="chip">Finalizada</span>}
               {generos.map((g) => <span key={g} className="chip">{g}</span>)}
             </div>
@@ -116,6 +117,7 @@ export default async function ObraPage({ params }: Props) {
                 {productora ? <> · <Link href={`/compania/${productora.id}`} style={{ color: "var(--foco)" }}>{productora.nombre_prod}</Link></> : null}
               </p>
             ) : null}
+            </div>
             <Valoracion obraId={obra.id} votos={obra.votos} nota={obra.nota} />
             <div>
               <ObraActions obraId={obra.id} />

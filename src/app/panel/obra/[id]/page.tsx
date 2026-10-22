@@ -156,7 +156,7 @@ function Editor({ id, user }: { id: string; user: User }) {
     <>
       <PanelNav personaId={yo?.id} />
       <div className="wrap row section" style={{ alignItems: "flex-start", gap: 40 }}>
-        <nav aria-label="Pasos" style={{ flex: "0 1 220px", minWidth: 200 }}>
+        <nav aria-label="Pasos" className="pasos" style={{ flex: "0 1 220px", minWidth: 200 }}>
           <ol className="steps">
             {PASOS.map((p, i) => (
               <li key={p.l}>

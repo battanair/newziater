@@ -17,8 +17,8 @@ const ITEMS = [
 export function PanelNav({ pendientes = 0, personaId }: { pendientes?: number; personaId?: string }) {
   const path = usePathname();
   return (
-    <div style={{ borderBottom: "1px solid var(--linea)" }}>
-      <div className="wrap" style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: "8px 22px", paddingTop: 12, paddingBottom: 12 }}>
+    <div className="panel-nav">
+      <div className="wrap panel-nav-in">
         <span className="muted" style={{ fontSize: 14 }}>Mi espacio</span>
         <nav aria-label="Mi espacio" className="nav" style={{ flex: 1 }}>
           {ITEMS.map((i) => (

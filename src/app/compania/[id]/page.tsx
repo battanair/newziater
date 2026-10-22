@@ -48,8 +48,10 @@ export default async function CompaniaPage({ params }: Props) {
             </div>
           </div>
           <div className="hero-text">
-            <p className="eyebrow" style={{ marginBottom: 12 }}>Compañía</p>
-            <h1 className="h1">{p.nombre_prod}</h1>
+            <div className="hero-cab">
+              <p className="eyebrow" style={{ marginBottom: 12 }}>Compañía</p>
+              <h1 className="h1">{p.nombre_prod}</h1>
+            </div>
             {p.descripcion ? <p className="lead" style={{ maxWidth: 700, whiteSpace: "pre-line" }}>{p.descripcion}</p> : null}
             <div className="actions">
               {ig ? <a href={ig} className="btn" target="_blank" rel="noopener noreferrer nofollow">Instagram</a> : null}

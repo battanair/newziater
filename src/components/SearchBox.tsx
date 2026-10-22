@@ -62,7 +62,7 @@ export function SearchBox({ hero = false, autoFocus = false }: { hero?: boolean;
     <div ref={box} style={{ position: "relative" }}>
       <form role="search" onSubmit={(e) => { e.preventDefault(); go(results[active]); }}>
         <label className={`search ${hero ? "search-hero" : ""}`}>
-          <svg aria-hidden="true" width={hero ? 22 : 18} height={hero ? 22 : 18} viewBox="0 0 24 24" fill="none" stroke={hero ? "#5A5248" : "#A89F92"} strokeWidth="2"><circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" /></svg>
+          <svg aria-hidden="true" width={hero ? 22 : 18} height={hero ? 22 : 18} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" /></svg>
           <span className="sr-only">Buscar en Ziater</span>
           <input
             type="search"
@@ -72,7 +72,7 @@ export function SearchBox({ hero = false, autoFocus = false }: { hero?: boolean;
             aria-autocomplete="list"
             autoFocus={autoFocus}
             maxLength={80}
-            placeholder={hero ? "Busca una obra, un artista o una compañía…" : "Obras, artistas, compañías…"}
+            placeholder={hero ? "Busca obras, artistas o compañías…" : "Obras, artistas, compañías…"}
             value={q}
             onFocus={() => setOpen(true)}
             onChange={(e) => { setQ(e.target.value); setActive(0); setOpen(true); }}

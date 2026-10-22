@@ -33,7 +33,7 @@ export default async function Home() {
       <section className="wrap" style={{ paddingTop: 72, paddingBottom: 48 }}>
         <p className="eyebrow" style={{ marginBottom: 18 }}>La base de datos de las artes escénicas</p>
         <h1 className="display" style={{ maxWidth: 900 }}>
-          Lo que ocurre en un escenario <em style={{ color: "var(--foco)" }}>no se queda en él.</em>
+          Lo que ocurre en un escenario <span className="acento">no se queda en él.</span>
         </h1>
         <p className="lead" style={{ maxWidth: 600, margin: "24px 0 32px", color: "var(--texto-2)" }}>
           Encuentra obras, artistas y compañías de teatro, danza, circo e improvisación, y la trayectoria completa de quienes las hacen posibles.
@@ -73,7 +73,7 @@ export default async function Home() {
             </div>
             <Link href="/personas" style={{ color: "var(--foco)", fontWeight: 600 }}>Todos los artistas →</Link>
           </div>
-          <div className="grid-people">{artistas.map((p) => <PersonaCard key={p.id} persona={p} />)}</div>
+          <div className="grid-people desliza">{artistas.map((p) => <PersonaCard key={p.id} persona={p} />)}</div>
         </section>
       ) : null}
 
@@ -83,7 +83,7 @@ export default async function Home() {
             <h2 className="h2">Compañías y productoras</h2>
             <Link href="/companias" style={{ color: "var(--foco)", fontWeight: 600 }}>Todas →</Link>
           </div>
-          <div className="grid-people">{prods.map((p) => <ProductoraCard key={p.id} p={p} />)}</div>
+          <div className="grid-people desliza">{prods.map((p) => <ProductoraCard key={p.id} p={p} />)}</div>
         </section>
       ) : null}
 
