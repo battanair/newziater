@@ -50,16 +50,34 @@ export const getProductora = memo("getProductora", async (id: string): Promise<P
 });
 
 // ---------- Selecciones para portada ----------
+/**
+ * Firestore deja fuera de un orderBy los documentos que no tienen ese campo.
+ * Las fichas antiguas no tienen "puntuacion" ni "creado" hasta que se ejecuta
+ * `npm run migrar -- --aplicar`; mientras tanto se completa con otras fichas
+ * (siempre con limit, nunca la colección entera).
+ */
+async function completar(lista: Obra[], n: number, orden?: "nota"): Promise<Obra[]> {
+  if (lista.length >= n) return lista;
+  const extra: Obra[] = [];
+  try {
+    const q = orden ? query(collection(db, "obra"), orderBy(orden, "desc"), limit(n * 2)) : query(collection(db, "obra"), limit(n * 2));
+    extra.push(...(await getDocs(q)).docs.map((d) => withId<Obra>(d)));
+  } catch { /* índice o campo inexistente: se sigue con el siguiente recurso */ }
+  if (orden && lista.length + extra.length < n) return completar([...lista, ...extra.filter((o) => !lista.some((x) => x.id === o.id))], n);
+  const ids = new Set(lista.map((o) => o.id));
+  return [...lista, ...extra.filter((o) => !ids.has(o.id) && o.titulo?.trim())].slice(0, n);
+}
+
 /** Las mejor valoradas según la puntuación ponderada (solo obras con algún voto). */
 export const obrasMejorValoradas = memo("obrasMejorValoradas", async (n: number): Promise<Obra[]> => {
   const s = await getDocs(query(collection(db, "obra"), orderBy("puntuacion", "desc"), limit(Math.min(n, 48))));
-  return s.docs.map((d) => withId<Obra>(d));
+  return completar(s.docs.map((d) => withId<Obra>(d)), Math.min(n, 48), "nota");
 });
 
 /** Las últimas fichas creadas (campo "creado"; el script de migración lo añade a las antiguas). */
 export const obrasRecientes = memo("obrasRecientes", async (n: number): Promise<Obra[]> => {
   const s = await getDocs(query(collection(db, "obra"), orderBy("creado", "desc"), limit(Math.min(n, 48))));
-  return s.docs.map((d) => withId<Obra>(d));
+  return completar(s.docs.map((d) => withId<Obra>(d)), Math.min(n, 48));
 });
 
 export const productorasDestacadas = memo("productorasDestacadas", async (n: number): Promise<Productora[]> => {
@@ -84,9 +102,10 @@ export const artistasDestacados = memo("artistasDestacados", async (n: number): 
 export const POR_PAGINA = 24;
 export type OrdenObras = "valoradas" | "recientes" | "titulo";
 
-export const paginaObras = memo(
-  "paginaObras",
-  async (opts: { orden: OrdenObras; genero?: string; despues?: string }): Promise<{ items: Obra[]; siguiente?: string }> => {
+type OpcionesPagina = { orden: OrdenObras; genero?: string; despues?: string };
+type Pagina<T> = { items: T[]; siguiente?: string };
+async function paginaObrasSinCache(opts: OpcionesPagina): Promise<Pagina<Obra>> {
+  {
     const c: QueryConstraint[] = [];
     if (opts.genero) c.push(where("categoria", "array-contains", opts.genero.slice(0, 40)));
     c.push(opts.orden === "valoradas" ? orderBy("puntuacion", "desc") : opts.orden === "recientes" ? orderBy("creado", "desc") : orderBy("titulo"));
@@ -95,11 +114,23 @@ export const paginaObras = memo(
       if (cur.exists()) c.push(startAfter(cur));
     }
     c.push(limit(POR_PAGINA + 1));
-    const s = await getDocs(query(collection(db, "obra"), ...c));
+    let s;
+    try {
+      s = await getDocs(query(collection(db, "obra"), ...c));
+    } catch (e) {
+      // Falta el índice compuesto (género + orden) mientras no se despliegue
+      // firestore.indexes.json: se filtra por género sin ordenar en vez de fallar.
+      if (!opts.genero) throw e;
+      s = await getDocs(query(collection(db, "obra"), where("categoria", "array-contains", opts.genero.slice(0, 40)), limit(POR_PAGINA + 1)));
+      return { items: s.docs.slice(0, POR_PAGINA).map((d) => withId<Obra>(d)) };
+    }
+    // Antes de migrar, "valoradas" y "recientes" pueden venir vacías: se muestran por título
+    if (!s.docs.length && opts.orden !== "titulo") return paginaObrasSinCache({ ...opts, orden: "titulo" });
     const docs = s.docs.slice(0, POR_PAGINA);
     return { items: docs.map((d) => withId<Obra>(d)), siguiente: s.docs.length > POR_PAGINA ? docs[docs.length - 1].id : undefined };
-  },
-);
+  }
+}
+export const paginaObras = memo("paginaObras", paginaObrasSinCache);
 
 export const paginaPersonas = memo(
   "paginaPersonas",
