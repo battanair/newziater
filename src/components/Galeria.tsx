@@ -1,16 +1,36 @@
 "use client";
 
 import Image from "next/image";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { cld } from "@/lib/format";
 
 /**
- * Galería de una obra: cuadrícula de miniaturas y, al pulsar, visor a pantalla
- * completa con flechas (también teclado: ← → y Esc) y deslizamiento en móvil.
+ * Galería de una obra: carrusel horizontal (se desliza con flechas, rueda o
+ * dedo) y, al pulsar una foto, visor a pantalla completa con flechas
+ * (también teclado: ← → y Esc) y deslizamiento en móvil.
  */
 export function Galeria({ fotos, titulo }: { fotos: string[]; titulo: string }) {
   const [abierta, setAbierta] = useState<number | null>(null);
   const [inicioX, setInicioX] = useState<number | null>(null);
+  const pista = useRef<HTMLDivElement>(null);
+  const [bordes, setBordes] = useState({ inicio: true, fin: false });
+
+  const actualizarBordes = useCallback(() => {
+    const el = pista.current;
+    if (!el) return;
+    setBordes({ inicio: el.scrollLeft < 8, fin: el.scrollLeft + el.clientWidth > el.scrollWidth - 8 });
+  }, []);
+  useEffect(() => {
+    actualizarBordes();
+    window.addEventListener("resize", actualizarBordes);
+    return () => window.removeEventListener("resize", actualizarBordes);
+  }, [actualizarBordes]);
+  const deslizar = (d: number) => {
+    const el = pista.current;
+    if (!el) return;
+    const paso = (el.querySelector(".carrusel-item") as HTMLElement | null)?.offsetWidth ?? el.clientWidth;
+    el.scrollBy({ left: d * (paso + 12), behavior: "smooth" });
+  };
 
   const mover = useCallback((d: number) => setAbierta((i) => (i === null ? i : (i + d + fotos.length) % fotos.length)), [fotos.length]);
 
@@ -31,12 +51,20 @@ export function Galeria({ fotos, titulo }: { fotos: string[]; titulo: string }) 
 
   return (
     <>
-      <div className="galeria">
-        {fotos.map((f, i) => (
-          <button key={f} type="button" className="galeria-item" onClick={() => setAbierta(i)} aria-label={`Ver foto ${i + 1} de ${fotos.length} de ${titulo}`}>
-            <Image src={cld(f, "c_fill,g_auto,w_800,h_600,f_auto,q_auto") ?? f} alt={`${titulo}, foto ${i + 1}`} fill sizes="(max-width: 640px) 50vw, 300px" />
-          </button>
-        ))}
+      <div className="carrusel" role="region" aria-roledescription="carrusel" aria-label={`Fotos de ${titulo}`}>
+        <div className="carrusel-pista" ref={pista} onScroll={actualizarBordes}>
+          {fotos.map((f, i) => (
+            <button key={f} type="button" className="carrusel-item" onClick={() => setAbierta(i)} aria-label={`Ver foto ${i + 1} de ${fotos.length} de ${titulo}`}>
+              <Image src={cld(f, "c_fill,g_auto,w_1000,h_750,f_auto,q_auto") ?? f} alt={`${titulo}, foto ${i + 1}`} fill sizes="(max-width: 640px) 85vw, 420px" />
+            </button>
+          ))}
+        </div>
+        {fotos.length > 1 ? (
+          <>
+            <button type="button" className="carrusel-btn carrusel-ant" onClick={() => deslizar(-1)} disabled={bordes.inicio} aria-label="Fotos anteriores">‹</button>
+            <button type="button" className="carrusel-btn carrusel-sig" onClick={() => deslizar(1)} disabled={bordes.fin} aria-label="Más fotos">›</button>
+          </>
+        ) : null}
       </div>
 
       {abierta !== null ? (
