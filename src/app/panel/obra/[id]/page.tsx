@@ -87,7 +87,7 @@ function Editor({ id, user }: { id: string; user: User }) {
           <h1 className="h1" style={{ fontSize: 44 }}>{obra!.titulo}</h1>
           <p className="lead soft">Esta ficha la gestiona quien la creó. Puedes añadir tu propio crédito y le pediremos que lo confirme, o sugerirnos una corrección.</p>
           <div className="actions">
-            <Link href="/panel" className="btn btn-primary">Añadir mi crédito</Link>
+            <Link href="/panel/ficha" className="btn btn-primary">Añadir mi crédito</Link>
             <Link href="/contacto" className="btn">Sugerir una corrección</Link>
           </div>
         </main>

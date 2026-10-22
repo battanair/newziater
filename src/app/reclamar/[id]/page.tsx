@@ -29,7 +29,7 @@ function Reclamar({ id, user }: { id: string; user: User }) {
 
   if (persona === undefined) return <main className="wrap section"><p className="muted">Cargando…</p></main>;
   if (!persona) return <main className="wrap section"><p>Esta ficha no existe.</p></main>;
-  if (persona.coincide === user.uid) return <main className="wrap section"><p>Esta ficha ya es tuya. <Link href="/panel" style={{ color: "var(--foco)" }}>Ir a mi panel</Link></p></main>;
+  if (persona.coincide === user.uid) return <main className="wrap section"><p>Esta ficha ya es tuya. <Link href="/panel/ficha" style={{ color: "var(--foco)" }}>Editar mi ficha</Link></p></main>;
   if (persona.coincide) return <main className="wrap section"><p>Esta ficha ya la ha reclamado otra persona. Si crees que es un error, <Link href="/contacto" style={{ color: "var(--foco)" }}>escríbenos</Link>.</p></main>;
 
   const m = METODOS.find((x) => x.id === metodo)!;

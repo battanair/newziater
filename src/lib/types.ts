@@ -80,8 +80,9 @@ export interface PremioObra {
 export interface UserDoc {
   Nombre?: string;
   Apellidos?: string;
-  favoritos_obra?: string[];
-  vistas?: string[];
+  favoritos_obra?: string[]; // «Quiero verla»
+  vistas?: string[]; // «La he visto»
+  favoritos_persona?: string[]; // artistas que sigue
 }
 
 export interface SearchItem {

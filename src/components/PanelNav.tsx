@@ -1,33 +1,35 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
-import { signOut } from "firebase/auth";
-import { auth } from "@/lib/firebase-client";
+import { usePathname } from "next/navigation";
 
+// Navegación del espacio personal. La tiene cualquier usuario con sesión;
+// «Ficha de artista» y «Vínculos» sirven a quien trabaja en las artes escénicas.
 const ITEMS = [
-  { href: "/panel", label: "Mi ficha" },
-  { href: "/panel/obra/nueva", label: "Crear obra" },
-  { href: "/panel/vinculos", label: "Vínculos" },
+  { href: "/panel", label: "Resumen", activo: (p: string) => p === "/panel" },
+  { href: "/panel/listas/notas", label: "Mis listas", activo: (p: string) => p.startsWith("/panel/listas") },
+  { href: "/panel/aportaciones", label: "Aportaciones", activo: (p: string) => p.startsWith("/panel/aportaciones") },
+  { href: "/panel/ficha", label: "Ficha de artista", activo: (p: string) => p.startsWith("/panel/ficha") || p.startsWith("/panel/bienvenida") },
+  { href: "/panel/vinculos", label: "Vínculos", activo: (p: string) => p.startsWith("/panel/vinculos") },
+  { href: "/panel/cuenta", label: "Cuenta", activo: (p: string) => p.startsWith("/panel/cuenta") },
 ];
 
 export function PanelNav({ pendientes = 0, personaId }: { pendientes?: number; personaId?: string }) {
   const path = usePathname();
-  const router = useRouter();
   return (
     <div style={{ borderBottom: "1px solid var(--linea)" }}>
-      <div className="wrap" style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: "8px 22px", padding: "12px 24px" }}>
-        <span className="muted" style={{ fontSize: 14 }}>Panel del artista</span>
-        <nav aria-label="Panel" className="nav" style={{ flex: 1 }}>
+      <div className="wrap" style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: "8px 22px", paddingTop: 12, paddingBottom: 12 }}>
+        <span className="muted" style={{ fontSize: 14 }}>Mi espacio</span>
+        <nav aria-label="Mi espacio" className="nav" style={{ flex: 1 }}>
           {ITEMS.map((i) => (
-            <Link key={i.href} href={i.href} aria-current={path === i.href ? "page" : undefined}>
+            <Link key={i.href} href={i.href} aria-current={i.activo(path) ? "page" : undefined}>
               {i.label}
               {i.href === "/panel/vinculos" && pendientes ? <span className="chip chip-foco" style={{ marginLeft: 6, minHeight: 20, padding: "0 7px", fontSize: 12 }}>{pendientes}</span> : null}
             </Link>
           ))}
         </nav>
-        {personaId ? <Link href={`/persona/${personaId}`} className="btn">Ver ficha pública</Link> : null}
-        <button type="button" className="btn btn-ghost" onClick={async () => { await signOut(auth); router.replace("/"); }}>Cerrar sesión</button>
+        {personaId ? <Link href={`/persona/${personaId}`} className="btn">Ver mi ficha pública</Link> : null}
+        <Link href="/panel/obra/nueva" className="btn btn-primary">+ Crear obra</Link>
       </div>
     </div>
   );

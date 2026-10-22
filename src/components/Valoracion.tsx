@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { doc, getDoc, runTransaction, serverTimestamp } from "firebase/firestore";
 import { db } from "@/lib/firebase-client";
+import { anadirALista } from "@/lib/client-data";
 import { media, puntuacion } from "@/lib/claves";
 import { authFetch, useAuth } from "./AuthProvider";
 
@@ -43,6 +44,7 @@ export function Valoracion({ obraId, votos: v0 = 0, nota: n0 = 0 }: { obraId: st
       });
       setMia(nota);
       setStats(res);
+      anadirALista(user.uid, "vistas", obraId).catch(() => {}); // puntuarla implica haberla visto
       setEstado("idle");
       authFetch("/api/revalidar", { obras: [obraId] }).catch(() => {});
     } catch {

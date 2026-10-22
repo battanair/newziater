@@ -40,11 +40,11 @@ export function Header() {
         </nav>
         <div className="actions">
           {loading ? null : user ? (
-            <Link href="/panel" className="btn" aria-label="Mi panel">
+            <Link href="/panel" className="btn" aria-label="Mi espacio">
               {user.photoURL ? (
                 <Image src={user.photoURL} alt="" width={26} height={26} style={{ borderRadius: "50%" }} />
               ) : null}
-              Mi panel
+              Mi espacio
             </Link>
           ) : (
             <>

@@ -5,6 +5,7 @@ import { notFound } from "next/navigation";
 import { getPersona, trayectoriaDePersona, equipoDeObra } from "@/lib/data";
 import { Avatar, JsonLd, Poster } from "@/components/Cards";
 import { ShareButton } from "@/components/ObraActions";
+import { SeguirArtista } from "@/components/SeguirArtista";
 import { Trayectoria } from "@/components/Trayectoria";
 import { cld, colorCartel, departamento, iniciales, instagramUrl, nombreCompleto, periodo, recortar } from "@/lib/format";
 import { SITE_URL } from "@/lib/firebase-config";
@@ -131,6 +132,7 @@ export default async function PersonaPage({ params }: Props) {
 
             <div className="actions" style={{ marginTop: 24 }}>
               {ig ? <a href={ig} className="btn" target="_blank" rel="noopener noreferrer nofollow">Instagram</a> : null}
+              <SeguirArtista personaId={persona.id} />
               <ShareButton />
               {!reclamada ? <Link href={`/reclamar/${persona.id}`} className="btn btn-primary">¿Eres tú? Reclama esta ficha</Link> : null}
             </div>

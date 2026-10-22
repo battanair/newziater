@@ -46,8 +46,9 @@ const nextConfig: NextConfig = {
     // Mantiene vivas las URLs antiguas que Google ya tiene indexadas
     return [
       { source: "/todoelequipo/:id", destination: "/obra/:id#equipo", permanent: true },
-      { source: "/dashboard/editar", destination: "/panel", permanent: true },
-      { source: "/dashboard/cuenta", destination: "/panel", permanent: true },
+      { source: "/dashboard", destination: "/panel", permanent: true },
+      { source: "/dashboard/editar", destination: "/panel/ficha", permanent: true },
+      { source: "/dashboard/cuenta", destination: "/panel/cuenta", permanent: true },
       { source: "/artistas", destination: "/personas", permanent: true },
     ];
   },

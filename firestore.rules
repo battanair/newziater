@@ -198,7 +198,7 @@ service cloud.firestore {
       allow read: if isAdmin() || (signedIn() && userId == uid());
       allow create, update: if signedIn() && userId == uid()
         && str('Nombre', 100) && str('Apellidos', 150)
-        && list('favoritos_obra', 2000) && list('vistas', 5000);
+        && list('favoritos_obra', 2000) && list('vistas', 5000) && list('favoritos_persona', 2000);
       allow delete: if signedIn() && userId == uid();
     }
 

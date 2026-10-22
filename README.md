@@ -93,6 +93,23 @@ npm run admin:set -- tu-email@ejemplo.com
 
 Los créditos antiguos no tienen `estado` y se muestran como confirmados.
 
+## Mi espacio (todas las cuentas)
+
+Cualquier persona con cuenta (email y contraseña o Google) tiene su espacio en `/panel`:
+
+| Sección | Qué muestra | De dónde sale |
+|---|---|---|
+| Resumen | Cifras, últimas notas, «quiero ver» y acceso a la ficha de artista | todo lo de abajo |
+| Mis listas → Mis notas | Sus notas del 1 al 10, paginadas | `valoraciones` (`uid`) |
+| Mis listas → Vistas | Obras que ha visto (puntuar una obra la añade sola) | `users.vistas` |
+| Mis listas → Quiero ver | Obras guardadas | `users.favoritos_obra` |
+| Mis listas → Artistas que sigo | Botón «Seguir» de cada ficha de artista | `users.favoritos_persona` |
+| Aportaciones | Obras creadas, créditos añadidos y fichas creadas para otras personas | `obra.creacion`, `persona_obra.creado_por`, `persona.creacion` |
+| Ficha de artista / Vínculos | Solo para profesionales | `persona`, `persona_obra` |
+| Cuenta | Nombre, email, cambiar contraseña, cerrar sesión y eliminar la cuenta | Firebase Auth + `users` |
+
+Las listas usan los mismos campos que la web anterior, así que cada usuario conserva lo que ya tenía. Las URLs antiguas `/dashboard`, `/dashboard/editar` y `/dashboard/cuenta` redirigen a las nuevas.
+
 ## Cómo funcionan los vínculos
 
 1. Quien crea una obra añade al elenco y al equipo escribiendo nombres. Si la persona ya tiene ficha, queda enlazada; si no, se le crea una ficha que podrá reclamar.

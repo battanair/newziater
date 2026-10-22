@@ -19,7 +19,7 @@ function Bienvenida({ user }: { user: User }) {
   const [error, setError] = useState("");
 
   useEffect(() => {
-    miPersona(user.uid).then((p) => { if (p) router.replace("/panel"); });
+    miPersona(user.uid).then((p) => { if (p) router.replace("/panel/ficha"); });
   }, [user.uid, router]);
 
   const { items: matches } = useBusqueda(nombre, ["persona"]);
@@ -30,7 +30,7 @@ function Bienvenida({ user }: { user: User }) {
     setBusy(true);
     try {
       await crearMiPersona(user.uid, { Nombre: n, Apellidos: rest.join(" ") });
-      router.replace("/panel");
+      router.replace("/panel/ficha");
     } catch {
       setError("No se pudo crear la ficha. Inténtalo de nuevo.");
       setBusy(false);
