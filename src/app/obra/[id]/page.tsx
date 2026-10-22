@@ -6,7 +6,7 @@ import { equipoDeObra, getObra, getProductora, obrasRelacionadas, premiosDeObra 
 import { Avatar, JsonLd, ObraCard, Poster } from "@/components/Cards";
 import { ObraActions } from "@/components/ObraActions";
 import { Valoracion } from "@/components/Valoracion";
-import { agruparPorDepartamento, cld, departamento, instagramHandle, instagramUrl, nombreCompleto, obraActiva, periodo, recortar } from "@/lib/format";
+import { T_OG, agruparPorDepartamento, cld, departamento, instagramHandle, instagramUrl, nombreCompleto, obraActiva, periodo, recortar } from "@/lib/format";
 import { SITE_URL } from "@/lib/firebase-config";
 
 // Página estática regenerada en segundo plano: rápida para Google y gratis de servir.
@@ -25,7 +25,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const cuando = periodo(obra.anoinicio, obra.anofin);
   const title = cuando ? `${obra.titulo} (${cuando.split(" ")[0]})` : obra.titulo;
   const description = recortar(obra.sinopsis, 158) || `${obra.titulo}: ficha completa con elenco, equipo artístico y fechas en Ziater.`;
-  const image = cld(obra.cartel, "c_fill,g_auto,w_1200,h_630,f_jpg,q_auto");
+  const image = cld(obra.cartel, T_OG);
   return {
     title,
     description,

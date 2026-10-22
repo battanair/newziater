@@ -246,7 +246,7 @@ function Editor({ id, user }: { id: string; user: User }) {
                   <h2 className="eyebrow" style={{ color: "var(--texto-3)", marginBottom: 6 }}>{g.d} · {g.items.length}</h2>
                   {g.items.map((m) => (
                     <div key={m.key} className="member">
-                      <span style={{ width: 44, height: 44, borderRadius: "50%", flex: "none", display: "inline-flex", alignItems: "center", justifyContent: "center", background: m.img ? `center/cover url(${JSON.stringify(m.img)})` : colorCartel(m.key), border: m.estado === "nuevo" ? "1px dashed var(--texto-4)" : 0 }} aria-hidden="true">{m.img ? "" : iniciales(m.nombre)}</span>
+                      <span style={{ width: 44, height: 66, borderRadius: 4, flex: "none", display: "inline-flex", alignItems: "center", justifyContent: "center", background: m.img ? `center/cover url(${JSON.stringify(m.img)})` : colorCartel(m.key), border: m.estado === "nuevo" ? "1px dashed var(--texto-4)" : 0 }} aria-hidden="true">{m.img ? "" : iniciales(m.nombre)}</span>
                       <span className="who"><strong style={{ display: "block" }}>{m.nombre}</strong>{m.titulo ? <span className="hint">{m.titulo}</span> : null}</span>
                       <span className={`chip ${m.estado === "tu" ? "chip-foco" : m.estado === "enlazado" ? "chip-ok" : ""}`}>{m.estado === "tu" ? "Eres tú" : m.estado === "enlazado" ? (m.creditoId ? "✓ Enlazado" : "✓ Enlazado · recibirá aviso") : "Ficha nueva · podrá reclamarla"}</span>
                       <button type="button" className="btn btn-ghost" aria-label={`Quitar a ${m.nombre}`} onClick={() => quitar(m)}>✕</button>

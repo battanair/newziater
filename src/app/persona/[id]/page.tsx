@@ -7,7 +7,7 @@ import { Avatar, JsonLd, Poster } from "@/components/Cards";
 import { ShareButton } from "@/components/ObraActions";
 import { SeguirArtista } from "@/components/SeguirArtista";
 import { Trayectoria } from "@/components/Trayectoria";
-import { cld, colorCartel, departamento, iniciales, instagramUrl, nombreCompleto, periodo, recortar } from "@/lib/format";
+import { T_CARTEL, T_OG, cld, colorCartel, departamento, iniciales, instagramUrl, nombreCompleto, periodo, recortar } from "@/lib/format";
 import { SITE_URL } from "@/lib/firebase-config";
 
 export const revalidate = 3600;
@@ -25,7 +25,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const nombre = nombreCompleto(p);
   const roles = p.roles?.length ? p.roles.join(", ") : "Artes escénicas";
   const description = recortar(p.biografia, 158) || `${nombre} (${roles}): trayectoria completa en teatro y artes escénicas en Ziater.`;
-  const image = cld(p.foto, "c_fill,g_face,w_1200,h_630,f_jpg,q_auto");
+  const image = cld(p.foto, T_OG);
   return {
     title: `${nombre} · ${roles}`,
     description,
@@ -94,9 +94,9 @@ export default async function PersonaPage({ params }: Props) {
       <section className="hero-ficha">
         <div className="wrap hero-ficha-in">
           <div className="hero-media" style={{ maxWidth: 300 }}>
-            <div style={{ position: "relative", aspectRatio: "4/5", borderRadius: 8, overflow: "hidden", background: colorCartel(persona.id), display: "flex", alignItems: "center", justifyContent: "center" }}>
-              {cld(persona.foto, "c_fill,g_face,w_600,h_750,f_auto,q_auto") ? (
-                <Image src={cld(persona.foto, "c_fill,g_face,w_600,h_750,f_auto,q_auto")!} alt={`Foto de ${nombre}`} fill sizes="300px" priority style={{ objectFit: "cover" }} />
+            <div style={{ position: "relative", aspectRatio: "2/3", borderRadius: 8, overflow: "hidden", background: colorCartel(persona.id), display: "flex", alignItems: "center", justifyContent: "center" }}>
+              {cld(persona.foto, T_CARTEL) ? (
+                <Image src={cld(persona.foto, T_CARTEL)!} alt={`Foto de ${nombre}`} fill sizes="300px" priority style={{ objectFit: "cover" }} />
               ) : (
                 <span className="serif" style={{ fontSize: 96, color: "#f6d9b0" }} aria-hidden="true">{iniciales(nombre)}</span>
               )}

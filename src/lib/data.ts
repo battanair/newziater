@@ -7,7 +7,7 @@ import {
 } from "firebase/firestore";
 import { serverDb as db } from "./firebase-server";
 import type { Credito, Obra, Persona, PremioObra, Productora, SearchItem } from "./types";
-import { cld, nombreCompleto, periodo } from "./format";
+import { T_MINI, cld, nombreCompleto, periodo } from "./format";
 import { normalizar, partirBusqueda } from "./claves";
 
 // ============================================================================
@@ -195,9 +195,9 @@ export const buscar = memo(
       tipos.includes("productora") ? consulta("productoras") : null,
     ]);
     const out: SearchItem[] = [];
-    obras?.docs.map((d) => withId<Obra>(d)).forEach((o) => { if (coincide(o.titulo)) out.push({ t: "obra", id: o.id, n: o.titulo, s: periodo(o.anoinicio, o.anofin), img: cld(o.cartel, "c_fill,w_72,h_104,f_auto,q_auto") }); });
-    personas?.docs.map((d) => withId<Persona>(d)).forEach((p) => { if (coincide(nombreCompleto(p))) out.push({ t: "persona", id: p.id, n: nombreCompleto(p), s: (p.roles ?? []).join(" · "), img: cld(p.foto, "c_fill,g_face,w_80,h_80,f_auto,q_auto") }); });
-    prods?.docs.map((d) => withId<Productora>(d)).forEach((p) => { if (coincide(p.nombre_prod)) out.push({ t: "productora", id: p.id, n: p.nombre_prod, img: cld(p.foto_prod, "c_pad,w_80,h_80,f_auto,q_auto") }); });
+    obras?.docs.map((d) => withId<Obra>(d)).forEach((o) => { if (coincide(o.titulo)) out.push({ t: "obra", id: o.id, n: o.titulo, s: periodo(o.anoinicio, o.anofin), img: cld(o.cartel, T_MINI) }); });
+    personas?.docs.map((d) => withId<Persona>(d)).forEach((p) => { if (coincide(nombreCompleto(p))) out.push({ t: "persona", id: p.id, n: nombreCompleto(p), s: (p.roles ?? []).join(" · "), img: cld(p.foto, T_MINI) }); });
+    prods?.docs.map((d) => withId<Productora>(d)).forEach((p) => { if (coincide(p.nombre_prod)) out.push({ t: "productora", id: p.id, n: p.nombre_prod, img: cld(p.foto_prod, T_MINI) }); });
     return out;
   },
   300,

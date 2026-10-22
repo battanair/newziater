@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import { getProductora, obrasDeProductora } from "@/lib/data";
 import { JsonLd, ObraCard } from "@/components/Cards";
 import { ShareButton } from "@/components/ObraActions";
-import { cld, colorCartel, iniciales, instagramUrl, recortar } from "@/lib/format";
+import { T_LOGO, T_OG, cld, colorCartel, iniciales, instagramUrl, recortar } from "@/lib/format";
 import { SITE_URL } from "@/lib/firebase-config";
 
 export const revalidate = 3600;
@@ -20,7 +20,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const p = await getProductora(id);
   if (!p) return { title: "Compañía no encontrada", robots: { index: false } };
   const description = recortar(p.descripcion, 158) || `${p.nombre_prod}: compañía de artes escénicas en Ziater.`;
-  const image = cld(p.foto_prod, "c_pad,w_1200,h_630,b_rgb:12100e,f_jpg,q_auto");
+  const image = cld(p.foto_prod, T_OG);
   return {
     title: p.nombre_prod,
     description,
@@ -44,7 +44,7 @@ export default async function CompaniaPage({ params }: Props) {
         <div className="wrap hero-ficha-in">
           <div className="hero-media" style={{ maxWidth: 240 }}>
             <div style={{ position: "relative", aspectRatio: "1", borderRadius: 16, overflow: "hidden", background: colorCartel(p.id), display: "flex", alignItems: "center", justifyContent: "center" }}>
-              {cld(p.foto_prod, "c_pad,w_480,h_480,b_rgb:1c1915,f_auto,q_auto") ? <Image src={cld(p.foto_prod, "c_pad,w_480,h_480,b_rgb:1c1915,f_auto,q_auto")!} alt={`Logo de ${p.nombre_prod}`} fill sizes="240px" priority /> : <span className="serif" style={{ fontSize: 72 }}>{iniciales(p.nombre_prod)}</span>}
+              {cld(p.foto_prod, T_LOGO) ? <Image src={cld(p.foto_prod, T_LOGO)!} alt={`Logo de ${p.nombre_prod}`} fill sizes="240px" priority /> : <span className="serif" style={{ fontSize: 72 }}>{iniciales(p.nombre_prod)}</span>}
             </div>
           </div>
           <div className="hero-text">

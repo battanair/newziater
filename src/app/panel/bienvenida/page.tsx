@@ -52,7 +52,7 @@ function Bienvenida({ user }: { user: User }) {
       <div className="stack" style={{ maxWidth: 760 }}>
         {matches.map((m) => (
           <div key={m.id} className="panel" style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 18 }}>
-            {m.img ? <img src={m.img} alt="" className="thumb thumb-round" style={{ width: 64, height: 64 }} /> : <span className="thumb thumb-round" style={{ width: 64, height: 64 }} />}
+            {m.img ? <img src={m.img} alt="" className="thumb thumb-round" style={{ width: 56, height: 84 }} /> : <span className="thumb thumb-round" style={{ width: 56, height: 84 }} />}
             <div style={{ flex: "1 1 240px" }}>
               <strong style={{ fontSize: 18 }}>{m.n}</strong>
               {m.s ? <div className="hint">{m.s}</div> : null}

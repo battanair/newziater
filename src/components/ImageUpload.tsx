@@ -2,6 +2,7 @@
 
 import { useRef, useState } from "react";
 import { authFetch } from "./AuthProvider";
+import { T_CARTEL, cld } from "@/lib/format";
 
 const MAX_MB = 8;
 
@@ -47,7 +48,7 @@ export function ImageUpload({ value, onChange, tipo, label, shape = "poster" }: 
       <button
         type="button"
         className="dropzone"
-        style={{ aspectRatio: shape === "poster" ? "2/3" : "4/5", padding: 0, overflow: "hidden", position: "relative", background: value ? `center/cover no-repeat url(${JSON.stringify(value)})` : undefined }}
+        style={{ aspectRatio: "2/3", padding: 0, overflow: "hidden", position: "relative", background: value ? `center/cover no-repeat url(${JSON.stringify(cld(value, T_CARTEL) ?? value)})` : undefined }}
         onClick={() => input.current?.click()}
         onDragOver={(e) => e.preventDefault()}
         onDrop={(e) => { e.preventDefault(); handle(e.dataTransfer.files[0]); }}

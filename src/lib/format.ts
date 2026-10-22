@@ -40,6 +40,12 @@ export function recortar(texto: string | undefined, max = 160): string {
   return limpio.slice(0, max - 1).replace(/\s+\S*$/, "") + "…";
 }
 
+// Marco 2:3 sin recortes: la imagen entera y el hueco relleno con un fondo difuminado de ella misma
+export const T_CARTEL = "c_pad,b_blurred:400:15,w_600,h_900,f_auto,q_auto";
+export const T_MINI = "c_pad,b_blurred:400:15,w_68,h_102,f_auto,q_auto";
+export const T_LOGO = "c_pad,b_blurred:400:15,w_480,h_480,f_auto,q_auto";
+export const T_OG = "c_pad,b_blurred:400:15,w_1200,h_630,f_jpg,q_auto"; // imagen para compartir en redes
+
 /** Inserta una transformación en una URL de Cloudinary (recorte, tamaño, formato automático). */
 export function cld(url: string | undefined, transform: string): string | undefined {
   // Las imágenes "por defecto" de la web antigua se tratan como si no hubiera foto

@@ -1,10 +1,10 @@
 import Link from "next/link";
 import Image from "next/image";
 import type { Obra, Persona, Productora } from "@/lib/types";
-import { cld, colorCartel, iniciales, nombreCompleto, obraActiva, periodo } from "@/lib/format";
+import { T_CARTEL, T_LOGO, cld, colorCartel, iniciales, nombreCompleto, obraActiva, periodo } from "@/lib/format";
 
 export function Poster({ obra, sizes = "200px", priority = false }: { obra: Pick<Obra, "id" | "titulo" | "cartel">; sizes?: string; priority?: boolean }) {
-  const src = cld(obra.cartel, "c_fill,g_auto,w_600,h_900,f_auto,q_auto");
+  const src = cld(obra.cartel, T_CARTEL);
   return (
     <span className="poster" style={{ background: colorCartel(obra.id) }}>
       {src ? (
@@ -33,13 +33,15 @@ export function ObraCard({ obra }: { obra: Obra }) {
 
 export function Avatar({ persona, size }: { persona: Pick<Persona, "id" | "Nombre" | "Apellidos" | "foto">; size?: number }) {
   const nombre = nombreCompleto(persona);
-  const src = cld(persona.foto, "c_fill,g_face,w_400,h_400,f_auto,q_auto");
+  // Retrato en el mismo marco 2:3 que los carteles, sin recortar la foto
+  const src = cld(persona.foto, T_CARTEL);
+  const peq = size !== undefined && size < 60;
   return (
-    <span className="avatar" style={{ background: colorCartel(persona.id), width: size, height: size, fontSize: size ? size / 2.6 : undefined }}>
+    <span className="avatar" style={{ background: colorCartel(persona.id), width: size, height: size ? size * 1.5 : undefined, flex: size ? "none" : undefined, padding: size ? 0 : undefined, borderRadius: peq ? 4 : undefined }}>
       {src ? (
-        <Image src={src} alt={`Foto de ${nombre}`} fill sizes={size ? `${size}px` : "180px"} />
+        <Image src={src} alt={`Foto de ${nombre}`} fill sizes={size ? `${size}px` : "(max-width: 640px) 50vw, 200px"} />
       ) : (
-        <span aria-hidden="true">{iniciales(nombre)}</span>
+        <span className="avatar-ini" aria-hidden="true" style={size ? { fontSize: Math.max(13, size / 2.8) } : undefined}>{iniciales(nombre)}</span>
       )}
     </span>
   );
@@ -47,7 +49,7 @@ export function Avatar({ persona, size }: { persona: Pick<Persona, "id" | "Nombr
 
 export function PersonaCard({ persona, sub }: { persona: Persona; sub?: string }) {
   return (
-    <Link href={`/persona/${persona.id}`} className="card" style={{ display: "block", textAlign: "center" }}>
+    <Link href={`/persona/${persona.id}`} className="card" style={{ display: "block" }}>
       <Avatar persona={persona} />
       <span className="card-title">{nombreCompleto(persona)}</span>
       {sub || persona.roles?.length ? <span className="card-sub">{sub ?? persona.roles!.slice(0, 2).join(" · ")}</span> : null}
@@ -57,12 +59,12 @@ export function PersonaCard({ persona, sub }: { persona: Persona; sub?: string }
 
 export function ProductoraCard({ p }: { p: Productora }) {
   return (
-    <Link href={`/compania/${p.id}`} className="card" style={{ display: "block", textAlign: "center" }}>
-      <span className="avatar" style={{ background: colorCartel(p.id), borderRadius: 16 }}>
-        {cld(p.foto_prod, "c_pad,w_400,h_400,b_rgb:1c1915,f_auto,q_auto") ? (
-          <Image src={cld(p.foto_prod, "c_pad,w_400,h_400,b_rgb:1c1915,f_auto,q_auto")!} alt={`Logo de ${p.nombre_prod}`} fill sizes="180px" />
+    <Link href={`/compania/${p.id}`} className="card" style={{ display: "block" }}>
+      <span className="avatar cuadrado" style={{ background: colorCartel(p.id) }}>
+        {cld(p.foto_prod, T_LOGO) ? (
+          <Image src={cld(p.foto_prod, T_LOGO)!} alt={`Logo de ${p.nombre_prod}`} fill sizes="180px" />
         ) : (
-          <span aria-hidden="true">{iniciales(p.nombre_prod)}</span>
+          <span className="avatar-ini" aria-hidden="true">{iniciales(p.nombre_prod)}</span>
         )}
       </span>
       <span className="card-title">{p.nombre_prod}</span>

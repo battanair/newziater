@@ -10,7 +10,7 @@ import { PanelNav } from "@/components/PanelNav";
 import { Avatar, Poster } from "@/components/Cards";
 import { Vacio } from "@/components/Vacio";
 import { miPersona, miUsuario, misNotas, porIds, quitarDeLista, type ListaUsuario, type MiNota } from "@/lib/client-data";
-import { cld, colorCartel, nombreCompleto, periodo } from "@/lib/format";
+import { T_MINI, cld, colorCartel, nombreCompleto, periodo } from "@/lib/format";
 import type { Obra, Persona } from "@/lib/types";
 
 const TIPOS = {
@@ -105,7 +105,7 @@ function Lista({ tipo, user }: { tipo: Tipo; user: User }) {
               if (!o) return null;
               return (
                 <li key={n.obra} className="career" style={{ gridTemplateColumns: "56px minmax(0,1fr) auto" }}>
-                  {cld(o.cartel, "c_fill,w_96,h_144,f_auto,q_auto") ? <img src={cld(o.cartel, "c_fill,w_96,h_144,f_auto,q_auto")} alt="" className="thumb" style={{ width: 48, height: 72 }} loading="lazy" /> : <span className="thumb" style={{ width: 48, height: 72, background: colorCartel(o.id) }} />}
+                  {cld(o.cartel, T_MINI) ? <img src={cld(o.cartel, T_MINI)} alt="" className="thumb" style={{ width: 48, height: 72 }} loading="lazy" /> : <span className="thumb" style={{ width: 48, height: 72, background: colorCartel(o.id) }} />}
                   <span>
                     <Link href={`/obra/${o.id}`} style={{ fontWeight: 600, fontSize: 17 }}>{o.titulo}</Link>
                     <span className="hint" style={{ display: "block" }}>{[periodo(o.anoinicio, o.anofin), o.votos ? `Media del público: ${o.nota?.toLocaleString("es-ES", { maximumFractionDigits: 1 })}` : ""].filter(Boolean).join(" · ")}</span>
