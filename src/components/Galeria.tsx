@@ -55,7 +55,7 @@ export function Galeria({ fotos, titulo }: { fotos: string[]; titulo: string }) 
         <div className="carrusel-pista" ref={pista} onScroll={actualizarBordes}>
           {fotos.map((f, i) => (
             <button key={f} type="button" className="carrusel-item" onClick={() => setAbierta(i)} aria-label={`Ver foto ${i + 1} de ${fotos.length} de ${titulo}`}>
-              <Image src={cld(f, "c_fill,g_auto,w_1000,h_750,f_auto,q_auto") ?? f} alt={`${titulo}, foto ${i + 1}`} fill sizes="(max-width: 640px) 85vw, 420px" />
+              <Image src={cld(f, "c_fill,g_auto,w_640,h_480,f_auto,q_auto") ?? f} alt={`${titulo}, foto ${i + 1}`} fill sizes="(max-width: 640px) 45vw, 260px" />
             </button>
           ))}
         </div>

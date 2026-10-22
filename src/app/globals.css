@@ -240,7 +240,7 @@ button.chip[aria-pressed="true"] { background: var(--foco-suave); color: var(--p
 .carrusel { position: relative; }
 .carrusel-pista { display: flex; gap: 12px; overflow-x: auto; scroll-snap-type: x mandatory; scroll-behavior: smooth; scrollbar-width: none; padding-bottom: 2px; }
 .carrusel-pista::-webkit-scrollbar { display: none; }
-.carrusel-item { position: relative; flex: 0 0 calc((100% - 12px) / 2); aspect-ratio: 4 / 3; border: 0; padding: 0; border-radius: 10px; overflow: hidden; cursor: zoom-in; background: var(--capa); scroll-snap-align: start; }
+.carrusel-item { position: relative; flex: 0 0 calc((100% - 36px) / 3.3); /* 3 fotos y parte de la 4.ª */ aspect-ratio: 4 / 3; border: 0; padding: 0; border-radius: 10px; overflow: hidden; cursor: zoom-in; background: var(--capa); scroll-snap-align: start; }
 .carrusel-item img { transition: transform .35s; }
 .carrusel-item:hover img { transform: scale(1.03); }
 .carrusel-btn { position: absolute; top: 50%; transform: translateY(-50%); width: 44px; height: 44px; border-radius: 999px; border: 1px solid var(--linea-2); background: var(--cabecera); backdrop-filter: blur(6px); color: var(--papel); font-size: 26px; line-height: 1; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; box-shadow: 0 6px 18px -8px var(--sombra); transition: opacity .2s; }
@@ -256,7 +256,7 @@ button.chip[aria-pressed="true"] { background: var(--foco-suave); color: var(--p
 .visor-ant { left: 12px; top: 50%; transform: translateY(-50%); }
 .visor-sig { right: 12px; top: 50%; transform: translateY(-50%); }
 .visor-cont { position: absolute; bottom: 16px; left: 50%; transform: translateX(-50%); color: #e8e1d5; font-size: 14px; font-variant-numeric: tabular-nums; }
-@media (max-width: 640px) { .carrusel-item { flex-basis: 85%; } .carrusel-btn { display: none; } .visor-ant, .visor-sig { top: auto; bottom: 8px; transform: none; } }
+@media (max-width: 640px) { .carrusel-item { flex-basis: calc((100% - 24px) / 2.3); } /* móvil: 2 y parte de la 3.ª */ .carrusel-btn { display: none; } .visor-ant, .visor-sig { top: auto; bottom: 8px; transform: none; } }
 
 /* ============ Responsive ============ */
 @media (max-width: 1024px) {
