@@ -13,7 +13,7 @@ import {
   updateProfile,
 } from "firebase/auth";
 import { doc, setDoc } from "firebase/firestore";
-import { auth, db } from "@/lib/firebase-client";
+import { auth, authDisponible, db } from "@/lib/firebase-client";
 
 const ERRORES: Record<string, string> = {
   "auth/invalid-credential": "Email o contraseña incorrectos.",
@@ -98,6 +98,11 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
     <main className="wrap section" style={{ maxWidth: 480 }}>
       {profesional ? <p className="eyebrow" style={{ marginBottom: 12 }}>Soy profesional</p> : null}
       <h1 className="h1" style={{ fontSize: 44, marginBottom: 8 }}>{mode === "signup" ? "Crea tu cuenta" : "Entrar"}</h1>
+      {!authDisponible ? (
+        <p className="panel panel-foco" role="alert" style={{ margin: "16px 0 24px" }}>
+          El acceso con cuenta todavía no está activado en esta versión de Ziater. Vuelve en un rato.
+        </p>
+      ) : null}
       <p className="soft" style={{ marginBottom: 28 }}>
         {mode === "signup"
           ? profesional ? "Después buscaremos si ya tienes ficha para que la reclames." : "Guarda obras, sigue artistas y crea tu ficha si eres profesional."
