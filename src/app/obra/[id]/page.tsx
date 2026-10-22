@@ -6,7 +6,7 @@ import { equipoDeObra, getObra, getProductora, obrasRelacionadas, premiosDeObra 
 import { Avatar, JsonLd, ObraCard, Poster } from "@/components/Cards";
 import { ObraActions } from "@/components/ObraActions";
 import { Valoracion } from "@/components/Valoracion";
-import { T_OG, agruparPorDepartamento, cld, departamento, instagramHandle, instagramUrl, nombreCompleto, obraActiva, periodo, recortar } from "@/lib/format";
+import { fotosDe, T_OG, agruparPorDepartamento, cld, departamento, instagramHandle, instagramUrl, nombreCompleto, obraActiva, periodo, recortar } from "@/lib/format";
 import { SITE_URL } from "@/lib/firebase-config";
 
 // Página estática regenerada en segundo plano: rápida para Google y gratis de servir.
@@ -58,7 +58,7 @@ export default async function ObraPage({ params }: Props) {
   const generos = (obra.categoria ?? []).filter(Boolean);
   const ig = instagramUrl(obra.instagram);
   const yt = youtubeId(obra.trailer);
-  const fotos = (obra.fotos_obra ?? []).filter(Boolean);
+  const fotos = fotosDe(obra);
   const url = `${SITE_URL}/obra/${obra.id}`;
 
   return (
@@ -184,9 +184,9 @@ export default async function ObraPage({ params }: Props) {
               ) : null}
               <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: 10 }}>
                 {fotos.map((f, i) => (
-                  <div key={f} style={{ position: "relative", aspectRatio: "4/3", borderRadius: 8, overflow: "hidden" }}>
+                  <a key={f} href={cld(f, "c_limit,w_2000,f_auto,q_auto") ?? f} target="_blank" rel="noopener" className="card" style={{ position: "relative", display: "block", aspectRatio: "4/3", borderRadius: 8, overflow: "hidden" }} aria-label={`Ver foto ${i + 1} de ${obra.titulo} a tamaño completo`}>
                     <Image src={cld(f, "c_fill,g_auto,w_800,h_600,f_auto,q_auto")!} alt={`${obra.titulo}, foto ${i + 1}`} fill sizes="(max-width: 640px) 100vw, 300px" />
-                  </div>
+                  </a>
                 ))}
               </div>
             </section>

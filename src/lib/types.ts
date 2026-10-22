@@ -9,6 +9,7 @@ export interface Obra {
   anofin?: string | number; // 0 o vacío = sigue en activo
   cartel?: string;
   fotos_obra?: string[];
+  fotosObra?: string[]; // nombre que usaba la web antigua
   categoria?: string[];
   instagram?: string;
   trailer?: string;

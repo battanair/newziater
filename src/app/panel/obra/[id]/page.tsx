@@ -3,17 +3,17 @@
 import Link from "next/link";
 import { Suspense, use, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { addDoc, collection, deleteDoc, doc, serverTimestamp, updateDoc } from "firebase/firestore";
+import { addDoc, collection, deleteDoc, deleteField, doc, serverTimestamp, updateDoc } from "firebase/firestore";
 import type { User } from "firebase/auth";
 import { db } from "@/lib/firebase-client";
 import { RequireAuth } from "@/components/RequireAuth";
 import { PanelNav } from "@/components/PanelNav";
-import { ImageUpload } from "@/components/ImageUpload";
+import { GaleriaUpload, ImageUpload } from "@/components/ImageUpload";
 import { authFetch } from "@/components/AuthProvider";
 import { useBusqueda } from "@/components/SearchBox";
 import { clavesDe } from "@/lib/claves";
 import { anadirCredito, creditosDe, crearPersonaSinCuenta, leer, miPersona } from "@/lib/client-data";
-import { DEPARTAMENTOS, GENEROS, colorCartel, iniciales } from "@/lib/format";
+import { DEPARTAMENTOS, GENEROS, colorCartel, fotosDe, iniciales } from "@/lib/format";
 import type { Obra, Persona, SearchItem } from "@/lib/types";
 
 export default function ObraEditorPage({ params }: { params: Promise<{ id: string }> }) {
@@ -33,7 +33,7 @@ type Miembro = {
 };
 
 const PASOS = [
-  { l: "Lo básico", d: "Título, género, cartel" },
+  { l: "Lo básico", d: "Título, género, imágenes" },
   { l: "Elenco y equipo", d: "Enlaza a las personas" },
   { l: "Publicar", d: "Revisa y envía" },
 ];
@@ -46,7 +46,7 @@ function Editor({ id, user }: { id: string; user: User }) {
   const [obra, setObra] = useState<Obra | null>(null);
   const [yo, setYo] = useState<Persona | null>(null);
   const [paso, setPaso] = useState(0);
-  const [f, setF] = useState({ titulo: sp.get("titulo")?.slice(0, 200) ?? "", sinopsis: "", anoinicio: "", anofin: "", activa: true, cartel: "", instagram: "", trailer: "", categoria: [] as string[], duracion: "", idioma: "Castellano" });
+  const [f, setF] = useState({ titulo: sp.get("titulo")?.slice(0, 200) ?? "", sinopsis: "", anoinicio: "", anofin: "", activa: true, cartel: "", instagram: "", trailer: "", categoria: [] as string[], duracion: "", idioma: "Castellano", fotos: [] as string[] });
   const [equipo, setEquipo] = useState<Miembro[]>([]);
   const [borrados, setBorrados] = useState<string[]>([]);
   const [dep, setDep] = useState("Interpretación");
@@ -63,7 +63,7 @@ function Editor({ id, user }: { id: string; user: User }) {
       setObra(o);
       if (o) {
         const fin = String(o.anofin ?? "");
-        setF({ titulo: o.titulo, sinopsis: o.sinopsis ?? "", anoinicio: String(o.anoinicio ?? ""), anofin: fin === "0" ? "" : fin, activa: !fin || fin === "0", cartel: o.cartel ?? "", instagram: o.instagram ?? "", trailer: o.trailer ?? "", categoria: (o.categoria ?? []).filter(Boolean), duracion: o.duracion ? String(o.duracion) : "", idioma: o.idioma ?? "Castellano" });
+        setF({ titulo: o.titulo, sinopsis: o.sinopsis ?? "", anoinicio: String(o.anoinicio ?? ""), anofin: fin === "0" ? "" : fin, activa: !fin || fin === "0", cartel: o.cartel ?? "", instagram: o.instagram ?? "", trailer: o.trailer ?? "", categoria: (o.categoria ?? []).filter(Boolean), duracion: o.duracion ? String(o.duracion) : "", idioma: o.idioma ?? "Castellano", fotos: fotosDe(o) });
         const cs = await creditosDe("id_obra", id);
         const ps = await Promise.all(cs.map((c) => leer<Persona>("persona", c.id_persona)));
         setEquipo(cs.map((c, i) => ({ key: c.id, creditoId: c.id, personaId: c.id_persona, nombre: ps[i] ? `${ps[i]!.Nombre} ${ps[i]!.Apellidos ?? ""}`.trim() : "Ficha eliminada", img: ps[i]?.foto, dep: c.puesto || "Equipo", titulo: c.titulo ?? "", estado: c.id_persona === user.uid || ps[i]?.coincide === user.uid ? "tu" : "enlazado" })));
@@ -127,11 +127,13 @@ function Editor({ id, user }: { id: string; user: User }) {
         categoria: f.categoria.slice(0, 5),
         idioma: f.idioma.slice(0, 40),
         claves: clavesDe(f.titulo),
+        fotos_obra: f.fotos.slice(0, 30),
         ...(f.duracion ? { duracion: Math.min(600, Number(f.duracion) || 0) } : {}),
       };
       let obraId = id;
-      if (nueva) obraId = (await addDoc(collection(db, "obra"), { ...datos, creacion: user.uid, fotos_obra: [], creado: serverTimestamp() })).id;
-      else await updateDoc(doc(db, "obra", id), datos);
+      if (nueva) obraId = (await addDoc(collection(db, "obra"), { ...datos, creacion: user.uid, creado: serverTimestamp() })).id;
+      // Las fotos de la web antigua (fotosObra) pasan al campo nuevo
+      else await updateDoc(doc(db, "obra", id), { ...datos, ...(obra && "fotosObra" in obra ? { fotosObra: deleteField() } : {}) });
 
       for (const cid of borrados) await deleteDoc(doc(db, "persona_obra", cid));
       const personasTocadas: string[] = [];
@@ -206,6 +208,10 @@ function Editor({ id, user }: { id: string; user: User }) {
                 <div className="field"><label className="label" htmlFor="ig">Instagram de la obra</label><input id="ig" className="input" placeholder="@obra" maxLength={100} value={f.instagram} onChange={(e) => set("instagram", e.target.value)} /></div>
                 <div className="field"><label className="label" htmlFor="tr">Tráiler (YouTube)</label><input id="tr" className="input" type="url" maxLength={500} value={f.trailer} onChange={(e) => set("trailer", e.target.value)} /></div>
                 <div className="field"><label className="label" htmlFor="idi">Idioma</label><input id="idi" className="input" maxLength={40} value={f.idioma} onChange={(e) => set("idioma", e.target.value)} /></div>
+              </div>
+              <div className="field">
+                <span className="label">Galería de imágenes</span>
+                <GaleriaUpload value={f.fotos} onChange={(urls) => set("fotos", urls)} />
               </div>
             </div>
           ) : null}

@@ -30,6 +30,8 @@ export async function POST(req: Request) {
     allowed_formats: "jpg,jpeg,png,webp,heic",
     folder: `ziater/${user.uid}/${tipo}`,
     timestamp: String(Math.floor(ahora / 1000)),
+    // Transformación al subir: nada pasa de 2400 px de lado (ahorra espacio en Cloudinary)
+    transformation: "c_limit,w_2400,h_2400",
   };
   const toSign = Object.keys(params).sort().map((k) => `${k}=${params[k]}`).join("&");
   const signature = createHash("sha1").update(toSign + secret).digest("hex");
