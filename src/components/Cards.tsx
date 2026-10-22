@@ -1,7 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import type { Obra, Persona, Productora } from "@/lib/types";
-import { T_CARTEL, T_LOGO, cld, colorCartel, iniciales, nombreCompleto, obraActiva, periodo } from "@/lib/format";
+import { T_CARTEL, T_LOGO, T_RETRATO, cld, colorCartel, iniciales, nombreCompleto, obraActiva, periodo } from "@/lib/format";
 
 export function Poster({ obra, sizes = "200px", priority = false }: { obra: Pick<Obra, "id" | "titulo" | "cartel">; sizes?: string; priority?: boolean }) {
   const src = cld(obra.cartel, T_CARTEL);
@@ -33,8 +33,8 @@ export function ObraCard({ obra }: { obra: Obra }) {
 
 export function Avatar({ persona, size }: { persona: Pick<Persona, "id" | "Nombre" | "Apellidos" | "foto">; size?: number }) {
   const nombre = nombreCompleto(persona);
-  // Retrato en el mismo marco 2:3 que los carteles, sin recortar la foto
-  const src = cld(persona.foto, T_CARTEL);
+  // Retrato vertical en el mismo marco 2:3 que los carteles
+  const src = cld(persona.foto, T_RETRATO);
   const peq = size !== undefined && size < 60;
   return (
     <span className="avatar" style={{ background: colorCartel(persona.id), width: size, height: size ? size * 1.5 : undefined, flex: size ? "none" : undefined, padding: size ? 0 : undefined, borderRadius: peq ? 4 : undefined }}>

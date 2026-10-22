@@ -1,7 +1,6 @@
 /* ============ Ziater · Sistema de diseño ============
    Fondo oscuro cálido, un único acento ámbar, mucho aire y texto legible.
-   Carteles y retratos comparten marco 2:3 y nunca se recortan:
-   Cloudinary rellena el hueco con un fondo difuminado de la propia imagen. */
+   Carteles y retratos comparten marco vertical 2:3 (si la imagen no encaja, se recorta). */
 :root {
   --sala: #131211;
   --butaca: #1c1b19;
@@ -126,7 +125,7 @@ button.chip[aria-pressed="true"] { background: var(--foco-suave); color: var(--p
 .panel { background: var(--butaca); border: 1px solid transparent; border-radius: var(--radio); padding: 22px; }
 .panel-foco { border-color: rgba(233, 166, 64, .4); background: #1f1b15; }
 .panel h2.eyebrow { margin-bottom: 12px; }
-/* Marco 2:3 común a carteles y retratos (la imagen ya llega entera y con relleno difuminado) */
+/* Marco 2:3 común a carteles y retratos */
 .poster, .avatar { position: relative; display: flex; align-items: flex-end; aspect-ratio: 2 / 3; max-width: 100%; border-radius: var(--radio-cartel); overflow: hidden; padding: 14px; transition: transform .2s, box-shadow .2s; }
 .poster img, .avatar img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
 .avatar.cuadrado { aspect-ratio: 1; }

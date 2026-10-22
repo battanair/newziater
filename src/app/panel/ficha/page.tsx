@@ -11,7 +11,7 @@ import { ImageUpload } from "@/components/ImageUpload";
 import { authFetch } from "@/components/AuthProvider";
 import { useBusqueda } from "@/components/SearchBox";
 import { anadirCredito, creditosDe, leer, miPersona, obrasCreadasPor } from "@/lib/client-data";
-import { T_CARTEL, cld, DEPARTAMENTOS, ROLES, nombreCompleto } from "@/lib/format";
+import { T_RETRATO, cld, DEPARTAMENTOS, ROLES, nombreCompleto } from "@/lib/format";
 import type { Credito, Obra, Persona, SearchItem } from "@/lib/types";
 import { clavesDe } from "@/lib/claves";
 
@@ -172,7 +172,7 @@ function Panel({ user }: { user: User }) {
           <p className="eyebrow" style={{ color: "var(--texto-3)" }}>Vista previa</p>
           <div className="panel" style={{ background: "var(--butaca-2)" }}>
             <div style={{ display: "flex", gap: 16, alignItems: "center" }}>
-              <span style={{ width: 84, height: 126, borderRadius: 8, background: form.foto ? `center/cover url(${JSON.stringify(cld(form.foto, T_CARTEL) ?? form.foto)})` : "var(--linea)", flex: "none" }} />
+              <span style={{ width: 84, height: 126, borderRadius: 8, background: form.foto ? `center/cover url(${JSON.stringify(cld(form.foto, T_RETRATO) ?? form.foto)})` : "var(--linea)", flex: "none" }} />
               <div>
                 <div className="serif" style={{ fontSize: 28, fontWeight: 600, lineHeight: 1.05 }}>{nombreCompleto({ Nombre: form.Nombre ?? "", Apellidos: form.Apellidos })}</div>
                 <div className="soft" style={{ fontSize: 14, marginTop: 6 }}>{(form.roles ?? []).join(" · ") || "Añade tus roles"}</div>

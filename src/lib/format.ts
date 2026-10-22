@@ -40,11 +40,15 @@ export function recortar(texto: string | undefined, max = 160): string {
   return limpio.slice(0, max - 1).replace(/\s+\S*$/, "") + "…";
 }
 
-// Marco 2:3 sin recortes: la imagen entera y el hueco relleno con un fondo difuminado de ella misma
-export const T_CARTEL = "c_pad,b_blurred:400:15,w_600,h_900,f_auto,q_auto";
-export const T_MINI = "c_pad,b_blurred:400:15,w_68,h_102,f_auto,q_auto";
-export const T_LOGO = "c_pad,b_blurred:400:15,w_480,h_480,f_auto,q_auto";
-export const T_OG = "c_pad,b_blurred:400:15,w_1200,h_630,f_jpg,q_auto"; // imagen para compartir en redes
+// Carteles y retratos llenan un marco vertical 2:3. Si la imagen tiene otra
+// proporción, se recorta: Cloudinary elige la zona importante (g_auto) o la cara (g_face).
+export const PROPORCION = { ancho: 2, alto: 3, texto: "vertical 2:3", px: "1000 × 1500 px" };
+export const T_CARTEL = "c_fill,g_auto,w_600,h_900,f_auto,q_auto";
+export const T_RETRATO = "c_fill,g_face,w_600,h_900,f_auto,q_auto";
+export const T_MINI = "c_fill,g_auto,w_68,h_102,f_auto,q_auto";
+export const T_MINI_RETRATO = "c_fill,g_face,w_68,h_102,f_auto,q_auto";
+export const T_LOGO = "c_pad,b_auto,w_480,h_480,f_auto,q_auto";
+export const T_OG = "c_fill,g_auto,w_1200,h_630,f_jpg,q_auto"; // imagen para compartir en redes
 
 /** Inserta una transformación en una URL de Cloudinary (recorte, tamaño, formato automático). */
 export function cld(url: string | undefined, transform: string): string | undefined {

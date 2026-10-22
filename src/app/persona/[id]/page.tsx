@@ -7,7 +7,7 @@ import { Avatar, JsonLd, Poster } from "@/components/Cards";
 import { ShareButton } from "@/components/ObraActions";
 import { SeguirArtista } from "@/components/SeguirArtista";
 import { Trayectoria } from "@/components/Trayectoria";
-import { T_CARTEL, T_OG, cld, colorCartel, departamento, iniciales, instagramUrl, nombreCompleto, periodo, recortar } from "@/lib/format";
+import { T_RETRATO, T_OG, cld, colorCartel, departamento, iniciales, instagramUrl, nombreCompleto, periodo, recortar } from "@/lib/format";
 import { SITE_URL } from "@/lib/firebase-config";
 
 export const revalidate = 3600;
@@ -95,8 +95,8 @@ export default async function PersonaPage({ params }: Props) {
         <div className="wrap hero-ficha-in">
           <div className="hero-media" style={{ maxWidth: 300 }}>
             <div style={{ position: "relative", aspectRatio: "2/3", borderRadius: 8, overflow: "hidden", background: colorCartel(persona.id), display: "flex", alignItems: "center", justifyContent: "center" }}>
-              {cld(persona.foto, T_CARTEL) ? (
-                <Image src={cld(persona.foto, T_CARTEL)!} alt={`Foto de ${nombre}`} fill sizes="300px" priority style={{ objectFit: "cover" }} />
+              {cld(persona.foto, T_RETRATO) ? (
+                <Image src={cld(persona.foto, T_RETRATO)!} alt={`Foto de ${nombre}`} fill sizes="300px" priority style={{ objectFit: "cover" }} />
               ) : (
                 <span className="serif" style={{ fontSize: 96, color: "#f6d9b0" }} aria-hidden="true">{iniciales(nombre)}</span>
               )}
