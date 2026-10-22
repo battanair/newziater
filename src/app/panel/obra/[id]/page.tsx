@@ -127,7 +127,7 @@ function Editor({ id, user }: { id: string; user: User }) {
         categoria: f.categoria.slice(0, 5),
         idioma: f.idioma.slice(0, 40),
         claves: clavesDe(f.titulo),
-        fotos_obra: f.fotos.slice(0, 30),
+        fotos_obra: f.fotos.slice(0, 5),
         ...(f.duracion ? { duracion: Math.min(600, Number(f.duracion) || 0) } : {}),
       };
       let obraId = id;

@@ -2,7 +2,7 @@
 
 import { useRef, useState } from "react";
 import { authFetch } from "./AuthProvider";
-import { PROPORCION, T_CARTEL, T_RETRATO, cld } from "@/lib/format";
+import { MAX_FOTOS_OBRA, PROPORCION, T_CARTEL, T_RETRATO, cld } from "@/lib/format";
 
 export const MAX_MB = 4;
 const MIN_ALTO = 900; // por debajo se ve borrosa en pantallas grandes
@@ -102,7 +102,7 @@ export function ImageUpload({ value, onChange, tipo, label, shape = "poster" }: 
 }
 
 /** Galería de fotos de una obra: varias a la vez, con miniaturas y botón para quitar. */
-export const MAX_FOTOS = 12;
+export const MAX_FOTOS = MAX_FOTOS_OBRA;
 export function GaleriaUpload({ value, onChange }: { value: string[]; onChange: (urls: string[]) => void }) {
   const input = useRef<HTMLInputElement>(null);
   const [subiendo, setSubiendo] = useState(0);

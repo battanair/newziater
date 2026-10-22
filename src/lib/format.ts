@@ -105,7 +105,9 @@ export const DEPARTAMENTOS = ["Interpretación", "Dirección", "Dramaturgia", "A
 export const GENEROS = ["Teatro", "Comedia", "Drama", "Monólogo", "Stand up", "Impro", "Musical", "Danza", "Circo", "Infantil", "Clásico", "Performance", "Títeres", "Ópera"];
 export const ROLES = ["Interpretación", "Dirección", "Dramaturgia", "Producción", "Doblaje", "Danza", "Iluminación", "Escenografía", "Vestuario", "Música", "Técnica"];
 
-/** Fotos de una obra: une el campo nuevo y el de la web antigua, sin repetir. */
+/** Máximo de fotos en la galería de una obra. */
+export const MAX_FOTOS_OBRA = 5;
+/** Fotos de una obra: une el campo nuevo y el de la web antigua, sin repetir (máx. 5). */
 export function fotosDe(o: { fotos_obra?: string[]; fotosObra?: string[] }): string[] {
-  return [...new Set([...(o.fotos_obra ?? []), ...(o.fotosObra ?? [])].filter((u) => typeof u === "string" && u.trim()))];
+  return [...new Set([...(o.fotos_obra ?? []), ...(o.fotosObra ?? [])].filter((u) => typeof u === "string" && u.trim()))].slice(0, MAX_FOTOS_OBRA);
 }
