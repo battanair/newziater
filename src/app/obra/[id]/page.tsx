@@ -7,7 +7,7 @@ import { Avatar, JsonLd, ObraCard, Poster } from "@/components/Cards";
 import { ObraActions } from "@/components/ObraActions";
 import { Galeria } from "@/components/Galeria";
 import { Valoracion } from "@/components/Valoracion";
-import { fotosDe, T_OG, agruparPorDepartamento, cld, departamento, instagramHandle, instagramUrl, nombreCompleto, obraActiva, periodo, recortar } from "@/lib/format";
+import { OG_POR_DEFECTO, fotosDe, T_OG, agruparPorDepartamento, cld, departamento, instagramHandle, instagramUrl, nombreCompleto, obraActiva, periodo, recortar } from "@/lib/format";
 import { SITE_URL } from "@/lib/firebase-config";
 
 // Página estática regenerada en segundo plano: rápida para Google y gratis de servir.
@@ -31,8 +31,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     title,
     description,
     alternates: { canonical: `/obra/${obra.id}` },
-    openGraph: { type: "article", title: obra.titulo, description, url: `/obra/${obra.id}`, images: image ? [{ url: image, width: 1200, height: 630, alt: obra.titulo }] : undefined },
-    twitter: { card: "summary_large_image", title: obra.titulo, description, images: image ? [image] : undefined },
+    openGraph: { type: "article", siteName: "Ziater", locale: "es_ES", title: obra.titulo, description, url: `/obra/${obra.id}`, images: [{ url: image ?? OG_POR_DEFECTO, width: 1200, height: 630, alt: obra.titulo }] },
+    twitter: { card: "summary_large_image", title: obra.titulo, description, images: [image ?? OG_POR_DEFECTO] },
   };
 }
 

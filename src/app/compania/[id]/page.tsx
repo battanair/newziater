@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import { getProductora, obrasDeProductora } from "@/lib/data";
 import { JsonLd, ObraCard } from "@/components/Cards";
 import { ShareButton } from "@/components/ObraActions";
-import { T_LOGO, T_OG, cld, colorCartel, iniciales, instagramUrl, recortar } from "@/lib/format";
+import { OG_POR_DEFECTO, T_LOGO, T_OG, cld, colorCartel, iniciales, instagramUrl, recortar } from "@/lib/format";
 import { SITE_URL } from "@/lib/firebase-config";
 
 export const revalidate = 600;
@@ -25,7 +25,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     title: p.nombre_prod,
     description,
     alternates: { canonical: `/compania/${p.id}` },
-    openGraph: { title: p.nombre_prod, description, url: `/compania/${p.id}`, images: image ? [{ url: image, width: 1200, height: 630 }] : undefined },
+    openGraph: { type: "profile", siteName: "Ziater", locale: "es_ES", title: p.nombre_prod, description, url: `/compania/${p.id}`, images: [{ url: image ?? OG_POR_DEFECTO, width: 1200, height: 630, alt: p.nombre_prod }] },
+    twitter: { card: "summary_large_image", title: p.nombre_prod, description, images: [image ?? OG_POR_DEFECTO] },
   };
 }
 

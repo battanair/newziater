@@ -18,9 +18,11 @@ export const metadata: Metadata = {
   description: "Obras de teatro, danza, circo e improvisación, con sus artistas, compañías y teatros. Descubre qué hay en cartel y la trayectoria de los profesionales de las artes vivas.",
   applicationName: "Ziater",
   openGraph: { type: "website", locale: "es_ES", siteName: "Ziater", url: SITE_URL },
+  formatDetection: { telephone: false },
+  appleWebApp: { title: "Ziater", statusBarStyle: "black-translucent" },
   twitter: { card: "summary_large_image" },
-  alternates: { canonical: "/" },
-  robots: { index: true, follow: true },
+  // La canonical va en cada página (si estuviera aquí, todas las que no la definen apuntarían a la portada)
+  robots: { index: true, follow: true, googleBot: { index: true, follow: true, "max-image-preview": "large", "max-snippet": -1, "max-video-preview": -1 } },
 };
 
 export const viewport: Viewport = { themeColor: "#131210", width: "device-width", initialScale: 1 };

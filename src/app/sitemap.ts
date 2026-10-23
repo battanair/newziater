@@ -1,6 +1,7 @@
 import type { MetadataRoute } from "next";
 import { URLS_POR_SITEMAP, contar, idsPagina } from "@/lib/data";
 import { SITE_URL } from "@/lib/firebase-config";
+import { GENEROS } from "@/lib/format";
 
 // Sitemaps troceados: /sitemap/0.xml, /sitemap/1.xml… con 5.000 fichas cada uno.
 // robots.txt lista todos los tramos para Google. Se regeneran cada hora.
@@ -26,7 +27,10 @@ export default async function sitemap({ id }: { id: number | Promise<number> }):
   const n = Number(await id);
   if (n === 0) {
     const now = new Date();
-    return ["", "/obras", "/obras?orden=recientes", "/personas", "/companias"].map((p) => ({ url: `${SITE_URL}${p}`, lastModified: now, changeFrequency: "daily" as const, priority: p ? 0.8 : 1 }));
+    const generales = ["", "/obras", "/personas", "/companias"].map((p) => ({ url: `${SITE_URL}${p}`, lastModified: now, changeFrequency: "daily" as const, priority: p ? 0.8 : 1 }));
+    // Una página por género («obras de comedia», «obras de danza»…): misma URL que su canonical
+    const generos = GENEROS.map((g) => ({ url: `${SITE_URL}/obras?genero=${encodeURIComponent(g)}`, changeFrequency: "weekly" as const, priority: 0.6 }));
+    return [...generales, ...generos];
   }
   // Localiza qué colección y qué tramo corresponde a este número
   let resto = n - 1;

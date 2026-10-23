@@ -111,3 +111,6 @@ export const MAX_FOTOS_OBRA = 5;
 export function fotosDe(o: { fotos_obra?: string[]; fotosObra?: string[] }): string[] {
   return [...new Set([...(o.fotos_obra ?? []), ...(o.fotosObra ?? [])].filter((u) => typeof u === "string" && u.trim()))].slice(0, MAX_FOTOS_OBRA);
 }
+
+/** Imagen para compartir cuando una ficha no tiene cartel ni foto (la genera app/opengraph-image.tsx). */
+export const OG_POR_DEFECTO = "/opengraph-image";

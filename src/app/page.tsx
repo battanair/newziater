@@ -1,8 +1,11 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { artistasDestacados, obrasMejorValoradas, obrasRecientes, productorasDestacadas } from "@/lib/data";
 import { ObraCard, PersonaCard, ProductoraCard, JsonLd } from "@/components/Cards";
 import { SearchBox } from "@/components/SearchBox";
 import { SITE_URL } from "@/lib/firebase-config";
+
+export const metadata: Metadata = { alternates: { canonical: "/" } };
 
 // La portada nunca carga todas las fichas: solo selecciones pequeñas y
 // ordenadas (12 + 12 + 12 + 8 documentos), cacheadas 10 minutos y renovadas al momento al guardar.
@@ -20,14 +23,28 @@ export default async function Home() {
   return (
     <main>
       <JsonLd
-        data={{
-          "@context": "https://schema.org",
-          "@type": "WebSite",
-          name: "Ziater",
-          url: SITE_URL,
-          inLanguage: "es",
-          potentialAction: { "@type": "SearchAction", target: `${SITE_URL}/buscar?q={search_term_string}`, "query-input": "required name=search_term_string" },
-        }}
+        data={[
+          {
+            "@context": "https://schema.org",
+            "@type": "WebSite",
+            "@id": `${SITE_URL}/#web`,
+            name: "Ziater",
+            alternateName: "Ziater, la base de datos de las artes escénicas",
+            url: SITE_URL,
+            inLanguage: "es",
+            publisher: { "@id": `${SITE_URL}/#organizacion` },
+            potentialAction: { "@type": "SearchAction", target: `${SITE_URL}/buscar?q={search_term_string}`, "query-input": "required name=search_term_string" },
+          },
+          {
+            "@context": "https://schema.org",
+            "@type": "Organization",
+            "@id": `${SITE_URL}/#organizacion`,
+            name: "Ziater",
+            url: SITE_URL,
+            logo: { "@type": "ImageObject", url: `${SITE_URL}/icon-512.png`, width: 512, height: 512 },
+            description: "Base de datos abierta de las artes escénicas: obras, artistas y compañías de teatro, danza, circo e improvisación.",
+          },
+        ]}
       />
 
       <section className="wrap" style={{ paddingTop: 72, paddingBottom: 48 }}>

@@ -7,7 +7,7 @@ import { Avatar, JsonLd, Poster } from "@/components/Cards";
 import { ShareButton } from "@/components/ObraActions";
 import { SeguirArtista } from "@/components/SeguirArtista";
 import { Trayectoria } from "@/components/Trayectoria";
-import { T_RETRATO, T_OG, cld, colorCartel, departamento, iniciales, instagramUrl, nombreCompleto, periodo, recortar } from "@/lib/format";
+import { OG_POR_DEFECTO, T_RETRATO, T_OG, cld, colorCartel, departamento, iniciales, instagramUrl, nombreCompleto, periodo, recortar } from "@/lib/format";
 import { SITE_URL } from "@/lib/firebase-config";
 
 export const revalidate = 600;
@@ -30,8 +30,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     title: `${nombre} · ${roles}`,
     description,
     alternates: { canonical: `/persona/${p.id}` },
-    openGraph: { type: "profile", title: nombre, description, url: `/persona/${p.id}`, images: image ? [{ url: image, width: 1200, height: 630, alt: nombre }] : undefined },
-    twitter: { card: "summary_large_image", title: nombre, description, images: image ? [image] : undefined },
+    openGraph: { type: "profile", siteName: "Ziater", locale: "es_ES", title: nombre, description, url: `/persona/${p.id}`, images: [{ url: image ?? OG_POR_DEFECTO, width: 1200, height: 630, alt: nombre }] },
+    twitter: { card: "summary_large_image", title: nombre, description, images: [image ?? OG_POR_DEFECTO] },
   };
 }
 

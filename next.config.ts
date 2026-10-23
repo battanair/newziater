@@ -40,7 +40,11 @@ const nextConfig: NextConfig = {
     ],
   },
   async headers() {
-    return [{ source: "/:path*", headers: securityHeaders }];
+    return [
+      { source: "/:path*", headers: securityHeaders },
+      // Solo se indexa el dominio oficial; ziater.vercel.app y las vistas previas no compiten con él
+      { source: "/:path*", missing: [{ type: "host", value: "ziater.com" }], headers: [{ key: "X-Robots-Tag", value: "noindex" }] },
+    ];
   },
   async redirects() {
     // Mantiene vivas las URLs antiguas que Google ya tiene indexadas
