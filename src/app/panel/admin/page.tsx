@@ -10,6 +10,7 @@ import { authFetch } from "@/components/AuthProvider";
 import { leer } from "@/lib/client-data";
 import { nombreCompleto } from "@/lib/format";
 import type { Obra, Persona } from "@/lib/types";
+import { ResumenAdmin } from "@/components/ResumenAdmin";
 import { aprobarSolicitudObra, rechazarSolicitudObra, resolverSugerencia, solicitudesObra, sugerenciasPendientes, type SolicitudObra, type Sugerencia } from "@/lib/colaboracion";
 
 type Reclamacion = { id: string; id_persona: string; uid: string; metodo: string; contacto: string; persona?: Persona | null };
@@ -25,7 +26,7 @@ function Admin({ user }: { user: User }) {
   const [lista, setLista] = useState<Reclamacion[]>([]);
   const [obras, setObras] = useState<(SolicitudObra & { obraDoc?: Obra | null })[]>([]);
   const [sugs, setSugs] = useState<Sugerencia[]>([]);
-  const [tab, setTab] = useState<"fichas" | "obras" | "sugerencias">("fichas");
+  const [tab, setTab] = useState<"resumen" | "fichas" | "obras" | "sugerencias">("resumen");
 
   const cargar = useCallback(async () => {
     const t = await user.getIdTokenResult(true);
@@ -63,17 +64,20 @@ function Admin({ user }: { user: User }) {
     cargar();
   }
   const tabs = [
+    { k: "resumen" as const, l: "Resumen", n: null },
     { k: "fichas" as const, l: "Fichas de artista", n: lista.length },
     { k: "obras" as const, l: "Gestionar obras", n: obras.length },
     { k: "sugerencias" as const, l: "Sugerencias", n: sugs.length },
   ];
 
   return (
-    <main className="wrap section" style={{ maxWidth: 1000 }}>
+    <main className="wrap section" style={{ maxWidth: 1100 }}>
       <h1 className="h1" style={{ fontSize: 44, marginBottom: 24 }}>Administración</h1>
       <div role="tablist" aria-label="Tipo de solicitud" className="tabs" style={{ marginBottom: 24 }}>
-        {tabs.map((t) => <button key={t.k} type="button" role="tab" className="tab" aria-selected={tab === t.k} onClick={() => setTab(t.k)}>{t.l} <span style={{ opacity: .7 }}>{t.n}</span></button>)}
+        {tabs.map((t) => <button key={t.k} type="button" role="tab" className="tab" aria-selected={tab === t.k} onClick={() => setTab(t.k)}>{t.l} {t.n !== null ? <span style={{ opacity: .7 }}>{t.n}</span> : null}</button>)}
       </div>
+
+      {tab === "resumen" ? <ResumenAdmin pendientes={{ fichas: lista.length, obras: obras.length, sugerencias: sugs.length }} /> : null}
 
       {tab === "obras" ? (
         <div className="stack">

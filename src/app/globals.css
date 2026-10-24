@@ -28,6 +28,7 @@
   --cabecera: rgba(19, 18, 16, .92);
   --borde-panel: transparent;
   --sombra: rgba(0, 0, 0, .6);
+  --dato: #b9823a; /* barras de gráficos (validado para fondo oscuro) */
   --radio: 12px;
   --radio-cartel: 8px;
   --max: 1240px;
@@ -57,6 +58,7 @@
   --cabecera: rgba(246, 242, 234, .94);
   --borde-panel: var(--linea);
   --sombra: rgba(60, 45, 25, .18);
+  --dato: #9a6626;
   color-scheme: light;
 }
 
@@ -293,6 +295,25 @@ button.chip[aria-pressed="true"] { background: var(--foco-suave); color: var(--p
 .ayuda-btn { font-family: var(--font-sans), system-ui, sans-serif; width: 20px; height: 20px; border-radius: 999px; border: 1px solid var(--linea-3); background: transparent; color: var(--texto-3); font-size: 12px; font-weight: 700; line-height: 1; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; padding: 0; }
 .ayuda-btn:hover, .ayuda-btn[aria-expanded="true"] { color: var(--papel); border-color: var(--foco); }
 .ayuda-pop { font-family: var(--font-sans), system-ui, sans-serif; position: absolute; z-index: 60; top: calc(100% + 8px); left: 50%; transform: translateX(-50%); width: min(300px, 80vw); padding: 12px 14px; border-radius: 10px; background: var(--capa); border: 1px solid var(--linea-2); color: var(--texto-2); font-size: 14px; font-weight: 400; line-height: 1.5; text-align: left; box-shadow: 0 16px 34px -14px var(--sombra); white-space: normal; text-transform: none; letter-spacing: 0; }
+
+
+/* ---------- Panel de estadísticas ---------- */
+.tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 12px; }
+.tile { display: flex; flex-direction: column; gap: 4px; padding: 16px 18px; border-radius: var(--radio); background: var(--butaca); border: 1px solid var(--borde-panel); }
+.tile-et { font-size: 13px; color: var(--texto-3); }
+.tile-valor { font-family: var(--font-serif), serif; font-weight: 600; font-size: 34px; line-height: 1.05; font-variant-numeric: tabular-nums; color: var(--papel); }
+.tile-nota { font-size: 12.5px; color: var(--texto-3); }
+.grafico { position: relative; }
+.grafico-tip { position: absolute; top: 0; transform: translateX(-50%); pointer-events: none; display: flex; flex-direction: column; gap: 2px; padding: 8px 10px; border-radius: 8px; background: var(--capa); border: 1px solid var(--linea-2); font-size: 13px; white-space: nowrap; box-shadow: 0 10px 24px -12px var(--sombra); }
+.tabla-datos { width: 100%; border-collapse: collapse; margin-top: 8px; font-size: 14px; font-variant-numeric: tabular-nums; }
+.tabla-datos th, .tabla-datos td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--linea); }
+.tabla-datos th { color: var(--texto-3); font-weight: 600; }
+.barras { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+.barras li { display: grid; grid-template-columns: 130px minmax(0, 1fr) 56px; gap: 10px; align-items: center; font-size: 14px; }
+.barras-et { color: var(--texto-2); }
+.barras-pista { display: block; height: 14px; }
+.barras-barra { display: block; height: 100%; background: var(--dato); border-radius: 0 4px 4px 0; }
+.barras-val { text-align: right; font-variant-numeric: tabular-nums; color: var(--papel); }
 
 /* ============ Responsive ============ */
 @media (max-width: 1024px) {

@@ -168,7 +168,7 @@ service cloud.firestore {
 
     // ---------- Valoraciones (una por persona y obra) ----------
     match /valoraciones/{valId} {
-      allow read: if signedIn() && resource.data.uid == uid();
+      allow read: if isAdmin() || (signedIn() && resource.data.uid == uid());
       allow create: if signedIn() && valId == data().obra + '_' + uid()
         && data().uid == uid() && data().nota is int && data().nota >= 1 && data().nota <= 10
         && exists(/databases/$(database)/documents/obra/$(data().obra))
@@ -273,6 +273,22 @@ service cloud.firestore {
         && data().nombre is string && data().nombre.size() <= 100
         && data().publico is bool && str('persona_id', 64);
       allow delete: if signedIn() && userId == uid();
+    }
+
+    // ---------- Estadísticas de visitas (contador diario anónimo) ----------
+    // Cada visita suma 1; nadie puede restar, saltarse números ni leerlas salvo administración.
+    function camposVisita() { return ['total', 'visitantes', 'inicio', 'obra', 'persona', 'compania', 'listados', 'busqueda', 'otras']; }
+    function nuevo(k) { return data().get(k, 0) in [0, 1]; }
+    function sube(k) { return data().get(k, 0) - resource.data.get(k, 0) in [0, 1]; }
+    match /estadisticas/{dia} {
+      allow read: if isAdmin();
+      allow create: if dia.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$') && data().keys().hasOnly(camposVisita())
+        && data().total == 1 && nuevo('visitantes') && nuevo('inicio') && nuevo('obra') && nuevo('persona')
+        && nuevo('compania') && nuevo('listados') && nuevo('busqueda') && nuevo('otras');
+      allow update: if data().keys().hasOnly(camposVisita()) && data().total == resource.data.total + 1
+        && sube('visitantes') && sube('inicio') && sube('obra') && sube('persona')
+        && sube('compania') && sube('listados') && sube('busqueda') && sube('otras');
+      allow delete: if false;
     }
 
     // ---------- Todo lo demás: cerrado ----------

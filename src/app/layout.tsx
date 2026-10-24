@@ -7,6 +7,7 @@ import { Footer } from "@/components/Footer";
 import { TabBar } from "@/components/TabBar";
 import { ToastProvider } from "@/components/Toast";
 import { PendientesProvider } from "@/components/Pendientes";
+import { ContadorVisitas } from "@/components/ContadorVisitas";
 import { SCRIPT_MODO } from "@/components/ModoToggle";
 import { SITE_URL } from "@/lib/firebase-config";
 // Analítica de Vercel: sin cookies ni datos personales, así que no necesita banner
@@ -47,6 +48,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               <div id="contenido">{children}</div>
               <Footer />
               <TabBar />
+              <ContadorVisitas />
             </ToastProvider>
           </PendientesProvider>
         </AuthProvider>
