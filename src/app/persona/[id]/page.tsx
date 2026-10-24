@@ -8,7 +8,7 @@ import { SugerirCambio } from "@/components/SugerirCambio";
 import { ShareButton } from "@/components/ObraActions";
 import { SeguirArtista } from "@/components/SeguirArtista";
 import { Trayectoria } from "@/components/Trayectoria";
-import { OG_POR_DEFECTO, T_RETRATO, T_OG, cld, colorCartel, departamento, iniciales, instagramUrl, nombreCompleto, periodo, recortar } from "@/lib/format";
+import { T_MINI, OG_POR_DEFECTO, T_RETRATO, T_OG, cld, colorCartel, departamento, iniciales, instagramUrl, nombreCompleto, periodo, recortar } from "@/lib/format";
 import { SITE_URL } from "@/lib/firebase-config";
 
 export const revalidate = 600;
@@ -63,7 +63,7 @@ export default async function PersonaPage({ params }: Props) {
   const grupos = new Map<string, { y: string; obraId: string; titulo: string; detalle: string; rol: string }[]>();
   for (const c of tray) {
     const dep = departamento(c);
-    const fila = { y: periodo(c.fecha_inicio || c.obra.anoinicio, c.fecha_fin || c.obra.anofin).split(" ")[0] || "—", obraId: c.obra.id, titulo: c.obra.titulo, detalle: (c.obra.categoria ?? []).filter(Boolean).join(" · "), rol: c.titulo?.trim() || dep };
+    const fila = { y: periodo(c.fecha_inicio || c.obra.anoinicio, c.fecha_fin || c.obra.anofin).split(" ")[0] || "—", obraId: c.obra.id, titulo: c.obra.titulo, detalle: (c.obra.categoria ?? []).filter(Boolean).join(" · "), rol: c.titulo?.trim() || dep, img: cld(c.obra.cartel, T_MINI), color: colorCartel(c.obra.id) };
     grupos.set(dep, [...(grupos.get(dep) ?? []), fila]);
   }
   const url = `${SITE_URL}/persona/${persona.id}`;

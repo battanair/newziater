@@ -181,6 +181,10 @@ button.chip[aria-pressed="true"] { background: var(--foco-suave); color: var(--p
 .credit-row .dep { font-size: 14px; color: var(--texto-3); }
 .career-row { display: grid; grid-template-columns: 58px minmax(0, 1fr) auto; gap: 16px; align-items: center; padding: 14px 0; }
 .year { font-weight: 600; font-size: 15px; color: var(--texto-3); font-variant-numeric: tabular-nums; }
+/* Trayectoria con miniatura del cartel */
+.tray-row { grid-template-columns: 52px 40px minmax(0, 1fr) auto; gap: 14px; padding: 10px 0; }
+.tray-cartel { width: 40px; height: 60px; border-radius: 4px; overflow: hidden; display: flex; align-items: center; justify-content: center; font-family: var(--font-serif), serif; font-weight: 600; font-size: 18px; color: #f6e6cc; flex: none; }
+.tray-cartel img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .dl { margin: 0; display: grid; grid-template-columns: auto 1fr; gap: 10px 18px; font-size: 15px; }
 .dl dt { color: var(--texto-3); }
 .dl dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
@@ -342,8 +346,12 @@ button.chip[aria-pressed="true"] { background: var(--foco-suave); color: var(--p
   .cifras .panel { padding: 14px 12px; }
   .cifra { font-size: 30px; }
   .cifras .muted { font-size: 12.5px !important; line-height: 1.3; display: block; margin-top: 4px; }
-  .career-row:not([style]) { grid-template-columns: 44px minmax(0, 1fr); gap: 2px 12px; }
-  .career-row:not([style]) > :nth-child(3) { grid-column: 2; text-align: left !important; }
+  .career-row:not([style]):not(.tray-row) { grid-template-columns: 44px minmax(0, 1fr); gap: 2px 12px; }
+  .career-row:not([style]):not(.tray-row) > :nth-child(3) { grid-column: 2; text-align: left !important; }
+  .tray-row { grid-template-columns: 40px 36px minmax(0, 1fr); gap: 2px 12px; }
+  .tray-row .tray-cartel { grid-row: span 2; width: 36px; height: 54px; }
+  .tray-row .year { grid-row: span 2; font-size: 14px; }
+  .tray-row > :nth-child(4) { grid-column: 3; text-align: left !important; }
   .footer-in { flex-direction: column; gap: 8px; }
 }
 

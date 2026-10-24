@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 
-type Fila = { y: string; obraId: string; titulo: string; detalle: string; rol: string };
+type Fila = { y: string; obraId: string; titulo: string; detalle: string; rol: string; img?: string; color: string };
 
 export function Trayectoria({ grupos }: { grupos: { dep: string; filas: Fila[] }[] }) {
   const [tab, setTab] = useState(0);
@@ -23,9 +23,15 @@ export function Trayectoria({ grupos }: { grupos: { dep: string; filas: Fila[] }
       {grupos.map((g, i) => (
         <ol key={g.dep} className="list" role="tabpanel" hidden={g !== actual} aria-label={g.dep}>
           {g.filas.map((f, j) => (
-            <li key={f.obraId + j} className="career-row">
+            <li key={f.obraId + j} className="career-row tray-row">
               <span className="year">{f.y}</span>
-              <span>
+              <Link href={`/obra/${f.obraId}`} className="tray-cartel" style={{ background: f.color }} tabIndex={-1} aria-hidden="true">
+                {f.img ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={f.img} alt="" width={40} height={60} loading="lazy" />
+                ) : <span>{f.titulo.trim().charAt(0).toUpperCase()}</span>}
+              </Link>
+              <span style={{ minWidth: 0 }}>
                 <Link href={`/obra/${f.obraId}`} style={{ display: "block", fontWeight: 600, fontSize: 17 }}>{f.titulo}</Link>
                 {f.detalle ? <span className="hint">{f.detalle}</span> : null}
               </span>
