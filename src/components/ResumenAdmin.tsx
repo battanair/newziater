@@ -15,7 +15,7 @@ type Evento = { cuando: number; texto: string; href?: string; tipo: string };
 
 const SECCIONES: [string, string][] = [["inicio", "Portada"], ["obra", "Fichas de obra"], ["persona", "Fichas de artista"], ["compania", "Compañías"], ["listados", "Listados"], ["busqueda", "Búsqueda"], ["otras", "Otras"]];
 
-const n = (x: number) => x.toLocaleString("es-ES");
+const n = (x: number) => (x < 0 ? "—" : x.toLocaleString("es-ES")); // −1 = sin permiso para contarlo todavía
 const ts = (v: unknown): number => {
   const x = v as { toMillis?: () => number; seconds?: number } | null | undefined;
   return x?.toMillis ? x.toMillis() : x?.seconds ? x.seconds * 1000 : 0;
@@ -24,7 +24,8 @@ const hace = (ms: number) => {
   const m = Math.round((Date.now() - ms) / 60000);
   if (m < 60) return `hace ${Math.max(1, m)} min`;
   if (m < 1440) return `hace ${Math.round(m / 60)} h`;
-  return `hace ${Math.round(m / 1440)} d`;
+  if (m < 43200) return `hace ${Math.round(m / 1440)} d`;
+  return new Date(ms).toLocaleDateString("es-ES", { day: "numeric", month: "short", year: "numeric" });
 };
 function diaISO(d: Date) {
   return new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Madrid", year: "numeric", month: "2-digit", day: "2-digit" }).format(d);
@@ -127,7 +128,7 @@ export function ResumenAdmin({ pendientes }: { pendientes: { fichas: number; obr
           <Tile valor={n(datos.totales.companias)} etiqueta="Compañías" />
           <Tile valor={n(datos.totales.creditos)} etiqueta="Créditos" />
           <Tile valor={n(datos.totales.usuarios)} etiqueta="Cuentas" nota="usuarios registrados" />
-          <Tile valor={n(datos.totales.notas)} etiqueta="Notas" nota={`+${n(datos.semana.notas)} esta semana`} />
+          <Tile valor={n(datos.totales.notas)} etiqueta="Notas" nota={datos.semana.notas >= 0 ? `+${n(datos.semana.notas)} esta semana` : "se verán al publicar las reglas"} />
           <Tile valor={n(datos.semana.cambios)} etiqueta="Ediciones (7 días)" />
           <Tile valor={n(datos.totales.colaboradores)} etiqueta="Colaboradores públicos" />
         </div>
