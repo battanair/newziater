@@ -60,7 +60,7 @@ export default async function PersonaPage({ params }: Props) {
   }
   const colaboradores = [...cuenta.values()].sort((a, b) => b.n - a.n).slice(0, 6);
 
-  const grupos = new Map<string, { y: string; obraId: string; titulo: string; detalle: string; rol: string }[]>();
+  const grupos = new Map<string, { y: string; obraId: string; titulo: string; detalle: string; rol: string; img?: string; color: string }[]>();
   for (const c of tray) {
     const dep = departamento(c);
     const fila = { y: periodo(c.fecha_inicio || c.obra.anoinicio, c.fecha_fin || c.obra.anofin).split(" ")[0] || "—", obraId: c.obra.id, titulo: c.obra.titulo, detalle: (c.obra.categoria ?? []).filter(Boolean).join(" · "), rol: c.titulo?.trim() || dep, img: cld(c.obra.cartel, T_MINI), color: colorCartel(c.obra.id) };
