@@ -5,6 +5,8 @@ import { notFound } from "next/navigation";
 import { aportacionPublica, getPersona, trayectoriaDePersona, equipoDeObra } from "@/lib/data";
 import { Avatar, JsonLd, Poster } from "@/components/Cards";
 import { SugerirCambio } from "@/components/SugerirCambio";
+import { EditarFicha } from "@/components/EditarFicha";
+import { Ayuda } from "@/components/Ayuda";
 import { ShareButton } from "@/components/ObraActions";
 import { SeguirArtista } from "@/components/SeguirArtista";
 import { Trayectoria } from "@/components/Trayectoria";
@@ -108,7 +110,7 @@ export default async function PersonaPage({ params }: Props) {
             <nav aria-label="Ruta" className="breadcrumb"><Link href="/personas">Artistas</Link></nav>
             <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 14 }}>
               <h1 className="h1">{nombre}</h1>
-              {persona.verificado ? <span className="chip chip-foco">✓ Perfil verificado</span> : null}
+              {persona.verificado ? <span className="chip chip-foco">✓ Perfil verificado <Ayuda etiqueta="Qué significa perfil verificado">El equipo de Ziater ha comprobado que esta ficha la gestiona la propia persona.</Ayuda></span> : null}
             </div>
             {roles.length ? <p className="soft" style={{ margin: "14px 0 0", fontSize: 18 }}>{roles.join(" · ")}</p> : null}
             </div>
@@ -134,6 +136,7 @@ export default async function PersonaPage({ params }: Props) {
             ) : null}
 
             <div className="actions" style={{ marginTop: 24 }}>
+              <EditarFicha dueno={persona.coincide || undefined} href="/panel/ficha" texto="Editar mi ficha" />
               {ig ? <a href={ig} className="btn" target="_blank" rel="noopener noreferrer nofollow">Instagram</a> : null}
               <SeguirArtista personaId={persona.id} />
               <ShareButton />
@@ -189,7 +192,7 @@ export default async function PersonaPage({ params }: Props) {
           ) : null}
           {!reclamada ? (
             <div className="panel panel-foco">
-              <h2 className="eyebrow">¿Eres {persona.Nombre}?</h2>
+              <h2 className="eyebrow">¿Eres {persona.Nombre}? <Ayuda etiqueta="Qué es reclamar una ficha">Reclamar es pedir el control de tu ficha: podrás editar tu biografía y tu foto y confirmar en qué obras has participado. Antes de aprobarlo, el equipo comprueba que eres tú (por Instagram, tu compañía o tu representante).</Ayuda></h2>
               <p className="soft" style={{ marginTop: 0 }}>Reclama tu ficha para editar tu biografía, tu foto y confirmar tus créditos.</p>
               <Link href={`/reclamar/${persona.id}`} className="btn btn-primary" style={{ width: "100%" }}>Reclamar ficha</Link>
             </div>

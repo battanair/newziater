@@ -10,6 +10,8 @@ export interface Obra {
   cartel?: string;
   fotos_obra?: string[];
   fotosObra?: string[]; // nombre que usaba la web antigua
+  funciones?: Funcion[]; // «Dónde verla»
+  ultima?: string; // fecha de la última función (AAAA-MM-DD): sirve para buscar las obras en cartel
   categoria?: string[];
   instagram?: string;
   trailer?: string;
@@ -92,4 +94,13 @@ export interface SearchItem {
   n: string; // nombre visible
   s?: string; // subtítulo
   img?: string;
+}
+
+/** Una función (pase) de una obra: dónde y cuándo verla. */
+export interface Funcion {
+  fecha: string; // AAAA-MM-DD
+  hora?: string; // HH:MM
+  sala: string;
+  ciudad?: string;
+  entradas?: string; // enlace para comprar entradas
 }

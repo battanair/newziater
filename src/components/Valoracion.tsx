@@ -7,6 +7,7 @@ import { db } from "@/lib/firebase-client";
 import { anadirALista } from "@/lib/client-data";
 import { media, puntuacion } from "@/lib/claves";
 import { authFetch, useAuth } from "./AuthProvider";
+import { useToast } from "./Toast";
 
 // Nota de 1 a 10. Se guarda en valoraciones/{obra}_{uid} y, en la misma
 // transacción, se actualizan los contadores de la obra (votos, suma, media y
@@ -19,6 +20,7 @@ export function Valoracion({ obraId, votos: v0 = 0, nota: n0 = 0 }: { obraId: st
   const [hover, setHover] = useState(0);
   const [stats, setStats] = useState({ votos: v0, nota: n0 });
   const [estado, setEstado] = useState<"idle" | "saving" | "error">("idle");
+  const avisar = useToast();
 
   useEffect(() => {
     if (!user) return;
@@ -44,6 +46,7 @@ export function Valoracion({ obraId, votos: v0 = 0, nota: n0 = 0 }: { obraId: st
       });
       setMia(nota);
       setStats(res);
+      avisar(`Nota guardada: ${nota}. También la hemos añadido a «La he visto».`);
       anadirALista(user.uid, "vistas", obraId).catch(() => {}); // puntuarla implica haberla visto
       setEstado("idle");
       authFetch("/api/revalidar", { obras: [obraId] }).catch(() => {});

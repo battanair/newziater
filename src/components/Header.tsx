@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { useAuth } from "./AuthProvider";
 import { SearchBox } from "./SearchBox";
 import { ModoToggle } from "./ModoToggle";
+import { Insignia, usePendientes } from "./Pendientes";
 
 const LINKS = [
   { href: "/obras", label: "Obras" },
@@ -25,6 +26,7 @@ export function Logo() {
 export function Header() {
   const pathname = usePathname();
   const { user, loading } = useAuth();
+  const { total } = usePendientes();
   return (
     <header className="header">
       <div className="wrap header-in">
@@ -47,6 +49,7 @@ export function Header() {
                 <Image src={user.photoURL} alt="" width={26} height={26} style={{ borderRadius: "50%" }} />
               ) : null}
               Mi espacio
+              <Insignia n={total} />
             </Link>
           ) : (
             <>

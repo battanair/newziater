@@ -11,10 +11,10 @@ import { PanelNav } from "@/components/PanelNav";
 import { GaleriaUpload, ImageUpload } from "@/components/ImageUpload";
 import { authFetch } from "@/components/AuthProvider";
 import { useBusqueda } from "@/components/SearchBox";
-import { clavesDe } from "@/lib/claves";
+import { clavesDe, normalizar } from "@/lib/claves";
 import { anadirCredito, creditosDe, crearPersonaSinCuenta, leer, miPersona } from "@/lib/client-data";
 import { DEPARTAMENTOS, GENEROS, colorCartel, fotosDe, iniciales } from "@/lib/format";
-import type { Obra, Persona, SearchItem } from "@/lib/types";
+import type { Funcion, Obra, Persona, SearchItem } from "@/lib/types";
 import { SugerirCambio } from "@/components/SugerirCambio";
 import { Historial } from "@/components/Historial";
 import { guardarVersion, pedirGestionarObra, vinculoConObra } from "@/lib/colaboracion";
@@ -49,12 +49,13 @@ function Editor({ id, user }: { id: string; user: User }) {
   const [obra, setObra] = useState<Obra | null>(null);
   const [yo, setYo] = useState<Persona | null>(null);
   const [paso, setPaso] = useState(0);
-  const [f, setF] = useState({ titulo: sp.get("titulo")?.slice(0, 200) ?? "", sinopsis: "", anoinicio: "", anofin: "", activa: true, cartel: "", instagram: "", trailer: "", categoria: [] as string[], duracion: "", idioma: "Castellano", fotos: [] as string[] });
+  const [f, setF] = useState({ titulo: sp.get("titulo")?.slice(0, 200) ?? "", sinopsis: "", anoinicio: "", anofin: "", activa: true, cartel: "", instagram: "", trailer: "", categoria: [] as string[], duracion: "", idioma: "Castellano", fotos: [] as string[], funciones: [] as Funcion[] });
   const [equipo, setEquipo] = useState<Miembro[]>([]);
   const [borrados, setBorrados] = useState<string[]>([]);
   const [dep, setDep] = useState("Interpretación");
   const [q, setQ] = useState("");
   const [personaje, setPersonaje] = useState("");
+  const [dudosas, setDudosas] = useState<SearchItem[] | null>(null);
   const [estado, setEstado] = useState<"idle" | "saving" | "error">("idle");
   const [error, setError] = useState("");
 
@@ -66,7 +67,7 @@ function Editor({ id, user }: { id: string; user: User }) {
       setObra(o);
       if (o) {
         const fin = String(o.anofin ?? "");
-        setF({ titulo: o.titulo, sinopsis: o.sinopsis ?? "", anoinicio: String(o.anoinicio ?? ""), anofin: fin === "0" ? "" : fin, activa: !fin || fin === "0", cartel: o.cartel ?? "", instagram: o.instagram ?? "", trailer: o.trailer ?? "", categoria: (o.categoria ?? []).filter(Boolean), duracion: o.duracion ? String(o.duracion) : "", idioma: o.idioma ?? "Castellano", fotos: fotosDe(o) });
+        setF({ titulo: o.titulo, sinopsis: o.sinopsis ?? "", anoinicio: String(o.anoinicio ?? ""), anofin: fin === "0" ? "" : fin, activa: !fin || fin === "0", cartel: o.cartel ?? "", instagram: o.instagram ?? "", trailer: o.trailer ?? "", categoria: (o.categoria ?? []).filter(Boolean), duracion: o.duracion ? String(o.duracion) : "", idioma: o.idioma ?? "Castellano", fotos: fotosDe(o), funciones: o.funciones ?? [] });
         const cs = await creditosDe("id_obra", id);
         const ps = await Promise.all(cs.map((c) => leer<Persona>("persona", c.id_persona)));
         setEquipo(cs.map((c, i) => ({ key: c.id, creditoId: c.id, personaId: c.id_persona, nombre: ps[i] ? `${ps[i]!.Nombre} ${ps[i]!.Apellidos ?? ""}`.trim() : "Ficha eliminada", img: ps[i]?.foto, dep: c.puesto || "Equipo", titulo: c.titulo ?? "", estado: c.id_persona === user.uid || ps[i]?.coincide === user.uid ? "tu" : "enlazado" })));
@@ -101,9 +102,18 @@ function Editor({ id, user }: { id: string; user: User }) {
 
   const set = (k: keyof typeof f, v: (typeof f)[keyof typeof f]) => setF((x) => ({ ...x, [k]: v }));
 
+  /** Antes de crear una ficha nueva, avisa si ya hay alguien con un nombre parecido. */
+  function anadirNueva() {
+    const parecidas = sugerencias.filter((s) => nombresParecidos(s.n, q));
+    if (parecidas.length) return setDudosas(parecidas);
+    anadir();
+  }
+
   function anadir(p?: SearchItem) {
     const nombre = (p?.n ?? q).trim();
     if (!nombre) return;
+    setDudosas(null);
+    if (p && equipo.some((m) => m.personaId === p.id && m.dep === dep)) { setQ(""); return; } // ya estaba en ese departamento
     const esYo = Boolean(p && yo && p.id === yo.id);
     setEquipo((e) => [...e, { key: crypto.randomUUID(), personaId: p?.id, nombre, img: p?.img, dep, titulo: dep === "Interpretación" ? personaje.trim() : "", estado: esYo ? "tu" : p ? "enlazado" : "nuevo" }]);
     setQ("");
@@ -132,6 +142,7 @@ function Editor({ id, user }: { id: string; user: User }) {
         idioma: f.idioma.slice(0, 40),
         claves: clavesDe(f.titulo),
         fotos_obra: f.fotos.slice(0, 5),
+        ...limpiarFunciones(f.funciones),
         ...(f.duracion ? { duracion: Math.min(600, Number(f.duracion) || 0) } : {}),
       };
       let obraId = id;
@@ -221,6 +232,10 @@ function Editor({ id, user }: { id: string; user: User }) {
                 <span className="label">Galería de imágenes</span>
                 <GaleriaUpload value={f.fotos} onChange={(urls) => set("fotos", urls)} />
               </div>
+              <div className="field">
+                <span className="label">Dónde verla</span>
+                <FuncionesEditor value={f.funciones} onChange={(v) => set("funciones", v)} />
+              </div>
               {!nueva ? (
                 <Historial tipo="obra" refId={id} onRecuperar={(a) => {
                   const fin = String(a.anofin ?? "");
@@ -230,6 +245,7 @@ function Editor({ id, user }: { id: string; user: User }) {
                     anofin: fin === "0" ? "" : fin, activa: !fin || fin === "0", cartel: String(a.cartel ?? ""), instagram: String(a.instagram ?? ""),
                     trailer: String(a.trailer ?? ""), categoria: Array.isArray(a.categoria) ? (a.categoria as string[]) : [], idioma: String(a.idioma ?? "Castellano"),
                     duracion: a.duracion ? String(a.duracion) : "", fotos: fotosDe(a as { fotos_obra?: string[]; fotosObra?: string[] }),
+                    funciones: Array.isArray(a.funciones) ? (a.funciones as Funcion[]) : [],
                   }));
                   window.scrollTo({ top: 0, behavior: "smooth" });
                 }} />
@@ -246,12 +262,31 @@ function Editor({ id, user }: { id: string; user: User }) {
                 <div role="group" aria-label="Departamento" style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 14 }}>
                   {DEPARTAMENTOS.map((d) => <button key={d} type="button" className="chip" aria-pressed={dep === d} onClick={() => setDep(d)}>{d}</button>)}
                 </div>
-                <form onSubmit={(e) => { e.preventDefault(); anadir(sugerencias[0] && sugerencias[0].n.toLowerCase() === q.trim().toLowerCase() ? sugerencias[0] : undefined); }} style={{ display: "flex", flexWrap: "wrap", gap: 10 }}>
+                <form onSubmit={(e) => { e.preventDefault(); if (sugerencias[0] && normalizar(sugerencias[0].n) === normalizar(q)) anadir(sugerencias[0]); else anadirNueva(); }} style={{ display: "flex", flexWrap: "wrap", gap: 10 }}>
                   <label className="sr-only" htmlFor="who">Nombre</label>
                   <input id="who" type="search" className="input" style={{ flex: "2 1 240px", background: "var(--sala)" }} placeholder="Nombre de la persona…" value={q} onChange={(e) => setQ(e.target.value)} maxLength={120} autoComplete="off" />
                   {dep === "Interpretación" ? <><label className="sr-only" htmlFor="pj">Personaje</label><input id="pj" className="input" style={{ flex: "1 1 160px", background: "var(--sala)" }} placeholder="Personaje" value={personaje} onChange={(e) => setPersonaje(e.target.value)} maxLength={150} /></> : null}
                 </form>
-                {q.trim() ? (
+                {dudosas ? (
+                  <div className="panel panel-foco" role="alert" style={{ marginTop: 10 }}>
+                    <strong style={{ display: "block", marginBottom: 6 }}>¿Es alguna de estas personas?</strong>
+                    <p className="hint" style={{ margin: "0 0 10px" }}>Ya hay fichas con un nombre parecido a «{q.trim()}». Enlazar la existente evita duplicados y su trayectoria queda completa.</p>
+                    <div className="stack" style={{ gap: 6 }}>
+                      {dudosas.map((p) => (
+                        <button key={p.id} type="button" className="suggest-item" style={{ borderRadius: 10 }} onClick={() => anadir(p)}>
+                          {p.img ? <img src={p.img} alt="" className="thumb thumb-round" /> : <span className="thumb thumb-round" />}
+                          <span style={{ flex: 1 }}><strong style={{ display: "block" }}>{p.n}</strong><span className="hint">{p.s || "Ficha en Ziater"}</span></span>
+                          <span style={{ color: "var(--foco)", fontWeight: 600, fontSize: 14 }}>Sí, es esta</span>
+                        </button>
+                      ))}
+                    </div>
+                    <div className="actions" style={{ marginTop: 10 }}>
+                      <button type="button" className="btn btn-ghost" onClick={() => setDudosas(null)}>Cancelar</button>
+                      <button type="button" className="btn" onClick={() => anadir()}>No, es otra persona: crear ficha nueva</button>
+                    </div>
+                  </div>
+                ) : null}
+                {q.trim() && !dudosas ? (
                   <div className="suggest">
                     {sugerencias.map((p) => (
                       <button key={p.id} type="button" className="suggest-item" onClick={() => anadir(p)}>
@@ -260,7 +295,7 @@ function Editor({ id, user }: { id: string; user: User }) {
                         <span style={{ color: "var(--foco)", fontWeight: 600, fontSize: 14 }}>Enlazar</span>
                       </button>
                     ))}
-                    <button type="button" className="suggest-item" onClick={() => anadir()}>
+                    <button type="button" className="suggest-item" onClick={anadirNueva}>
                       <span className="thumb thumb-round" style={{ border: "1px dashed var(--linea-3)", background: "transparent" }} />
                       <span><strong style={{ display: "block" }}>Añadir «{q.trim()}» sin ficha</strong><span className="hint">Le crearemos una ficha que podrá reclamar</span></span>
                     </button>
@@ -359,4 +394,56 @@ function PedirGestion({ obra, user, personaId }: { obra: Obra; user: User; perso
       )}
     </section>
   );
+}
+
+/** Quita filas vacías, ordena por fecha y calcula «ultima» (para encontrar las obras en cartel). */
+function limpiarFunciones(fs: Funcion[]) {
+  const ok = fs
+    .filter((x) => /^\d{4}-\d{2}-\d{2}$/.test(x.fecha) && x.sala.trim())
+    .map((x) => ({ fecha: x.fecha, hora: (x.hora ?? "").slice(0, 5), sala: x.sala.trim().slice(0, 120), ciudad: (x.ciudad ?? "").trim().slice(0, 80), entradas: /^https?:\/\//.test(x.entradas ?? "") ? x.entradas!.trim().slice(0, 500) : "" }))
+    .sort((a, b) => (a.fecha + a.hora).localeCompare(b.fecha + b.hora))
+    .slice(0, 40);
+  return { funciones: ok, ultima: ok.length ? ok[ok.length - 1].fecha : "" };
+}
+
+/** Funciones de la obra: fecha, hora, sala, ciudad y enlace a entradas. */
+function FuncionesEditor({ value, onChange }: { value: Funcion[]; onChange: (v: Funcion[]) => void }) {
+  const cambiar = (i: number, k: keyof Funcion, v: string) => onChange(value.map((x, j) => (j === i ? { ...x, [k]: v } : x)));
+  const ultima = value[value.length - 1];
+  return (
+    <div className="stack" style={{ gap: 10 }}>
+      {value.map((x, i) => (
+        <div key={i} className="funcion-fila">
+          <input className="input" type="date" aria-label="Fecha" value={x.fecha} onChange={(e) => cambiar(i, "fecha", e.target.value)} />
+          <input className="input" type="time" aria-label="Hora" value={x.hora ?? ""} onChange={(e) => cambiar(i, "hora", e.target.value)} />
+          <input className="input" aria-label="Sala o teatro" placeholder="Sala o teatro" maxLength={120} value={x.sala} onChange={(e) => cambiar(i, "sala", e.target.value)} />
+          <input className="input" aria-label="Ciudad" placeholder="Ciudad" maxLength={80} value={x.ciudad ?? ""} onChange={(e) => cambiar(i, "ciudad", e.target.value)} />
+          <input className="input" type="url" aria-label="Enlace a entradas" placeholder="Enlace a entradas (opcional)" maxLength={500} value={x.entradas ?? ""} onChange={(e) => cambiar(i, "entradas", e.target.value)} />
+          <button type="button" className="btn btn-ghost" aria-label={`Quitar función ${i + 1}`} onClick={() => onChange(value.filter((_, j) => j !== i))}>×</button>
+        </div>
+      ))}
+      {value.length < 40 ? (
+        <div className="actions">
+          <button type="button" className="btn" onClick={() => onChange([...value, { fecha: "", hora: ultima?.hora ?? "20:00", sala: ultima?.sala ?? "", ciudad: ultima?.ciudad ?? "", entradas: ultima?.entradas ?? "" }])}>+ Añadir función</button>
+        </div>
+      ) : null}
+      <span className="hint">Fecha, sala y ciudad de cada pase. Al añadir otra, se copian la sala y el enlace de la anterior. Las funciones pasadas se guardan como historial de la obra.</span>
+    </div>
+  );
+}
+
+/** ¿Dos nombres podrían ser la misma persona? (sin tildes ni mayúsculas; mismo nombre y apellido parecido, o casi iguales) */
+function nombresParecidos(a: string, b: string) {
+  const x = normalizar(a), y = normalizar(b);
+  if (!x || !y) return false;
+  if (x === y || x.includes(y) || y.includes(x)) return true;
+  const [xa, ...xr] = x.split(" "), [ya, ...yr] = y.split(" ");
+  if (xa === ya && xr.length && yr.length && (xr[0].startsWith(yr[0].slice(0, 3)) || yr[0].startsWith(xr[0].slice(0, 3)))) return true;
+  return distancia(x, y) <= Math.max(1, Math.floor(Math.min(x.length, y.length) / 6));
+}
+function distancia(a: string, b: string) {
+  const d = Array.from({ length: a.length + 1 }, (_, i) => [i, ...Array(b.length).fill(0)]);
+  for (let j = 1; j <= b.length; j++) d[0][j] = j;
+  for (let i = 1; i <= a.length; i++) for (let j = 1; j <= b.length; j++) d[i][j] = Math.min(d[i - 1][j] + 1, d[i][j - 1] + 1, d[i - 1][j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
+  return d[a.length][b.length];
 }

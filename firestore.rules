@@ -47,7 +47,7 @@ service cloud.firestore {
       return data().titulo is string && data().titulo.size() > 0 && data().titulo.size() <= 200
         && str('sinopsis', 3000) && img('cartel') && list('fotos_obra', 30) && list('categoria', 5)
         && str('instagram', 100) && str('trailer', 500) && str('idioma', 40) && str('edad', 20)
-        && list('claves', 200)
+        && list('claves', 200) && list('funciones', 40) && str('ultima', 10)
         && (!('duracion' in data()) || (data().duracion is number && data().duracion >= 0 && data().duracion <= 600));
     }
 

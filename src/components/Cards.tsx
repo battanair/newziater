@@ -16,7 +16,7 @@ export function Poster({ obra, sizes = "200px", priority = false }: { obra: Pick
   );
 }
 
-export function ObraCard({ obra }: { obra: Obra }) {
+export function ObraCard({ obra, etiqueta }: { obra: Obra; etiqueta?: string }) {
   const cat = obra.categoria?.filter(Boolean)[0];
   return (
     <Link href={`/obra/${obra.id}`} className="card" style={{ display: "block" }}>
@@ -26,7 +26,7 @@ export function ObraCard({ obra }: { obra: Obra }) {
         {obra.votos ? <span style={{ whiteSpace: "nowrap", fontSize: 14 }}><span style={{ color: "var(--foco)" }} aria-hidden="true">★</span> {obra.nota?.toLocaleString("es-ES", { maximumFractionDigits: 1 })}<span className="sr-only"> de 10</span></span> : null}
       </span>
       <span className="card-sub">{[cat, periodo(obra.anoinicio, obra.anofin)].filter(Boolean).join(" · ")}</span>
-      {obraActiva(obra) ? <span className="card-sub" style={{ color: "var(--foco)" }}>En activo</span> : null}
+      {etiqueta ? <span className="card-sub" style={{ color: "var(--foco)", fontWeight: 600 }}>{etiqueta}</span> : obraActiva(obra) ? <span className="card-sub" style={{ color: "var(--foco)" }}>En activo</span> : null}
     </Link>
   );
 }

@@ -6,9 +6,11 @@ import { equipoDeObra, getObra, getProductora, obrasRelacionadas, premiosDeObra 
 import { Avatar, JsonLd, ObraCard, Poster } from "@/components/Cards";
 import { ObraActions } from "@/components/ObraActions";
 import { SugerirCambio } from "@/components/SugerirCambio";
+import { EditarFicha } from "@/components/EditarFicha";
+import { Anadirme } from "@/components/Anadirme";
 import { Galeria } from "@/components/Galeria";
 import { Valoracion } from "@/components/Valoracion";
-import { OG_POR_DEFECTO, fotosDe, T_OG, agruparPorDepartamento, cld, departamento, instagramHandle, instagramUrl, nombreCompleto, obraActiva, periodo, recortar } from "@/lib/format";
+import { fechaCorta, partirFunciones, OG_POR_DEFECTO, fotosDe, T_OG, agruparPorDepartamento, cld, departamento, instagramHandle, instagramUrl, nombreCompleto, obraActiva, periodo, recortar } from "@/lib/format";
 import { SITE_URL } from "@/lib/firebase-config";
 
 // Página estática regenerada en segundo plano: rápida para Google y gratis de servir.
@@ -61,6 +63,7 @@ export default async function ObraPage({ params }: Props) {
   const ig = instagramUrl(obra.instagram);
   const yt = youtubeId(obra.trailer);
   const fotos = fotosDe(obra);
+  const { proximas, pasadas } = partirFunciones(obra.funciones);
   const url = `${SITE_URL}/obra/${obra.id}`;
 
   return (
@@ -86,6 +89,22 @@ export default async function ObraPage({ params }: Props) {
             sameAs: ig ? [ig] : undefined,
             aggregateRating: obra.votos && obra.votos > 0 ? { "@type": "AggregateRating", ratingValue: obra.nota, bestRating: 10, worstRating: 1, ratingCount: obra.votos } : undefined,
           },
+          // Cada función próxima como evento: Google puede mostrarlas en la búsqueda
+          ...proximas.slice(0, 10).map((fn) => ({
+            "@context": "https://schema.org",
+            "@type": "TheaterEvent",
+            name: obra.titulo,
+            url,
+            startDate: fn.hora ? `${fn.fecha}T${fn.hora}` : fn.fecha,
+            eventStatus: "https://schema.org/EventScheduled",
+            eventAttendanceMode: "https://schema.org/OfflineEventAttendanceMode",
+            image: obra.cartel ? [obra.cartel] : undefined,
+            description: obra.sinopsis?.slice(0, 300),
+            location: { "@type": "Place", name: fn.sala, address: { "@type": "PostalAddress", addressLocality: fn.ciudad || undefined, addressCountry: "ES" } },
+            offers: fn.entradas ? { "@type": "Offer", url: fn.entradas, availability: "https://schema.org/InStock" } : undefined,
+            performer: elenco.slice(0, 6).map((c) => ({ "@type": "Person", name: nombreCompleto(c.persona) })),
+            organizer: productora ? { "@type": "Organization", name: productora.nombre_prod, url: `${SITE_URL}/compania/${productora.id}` } : undefined,
+          })),
           {
             "@context": "https://schema.org",
             "@type": "BreadcrumbList",
@@ -109,7 +128,7 @@ export default async function ObraPage({ params }: Props) {
               {generos[0] ? <> / <Link href={`/obras?genero=${encodeURIComponent(generos[0])}`}>{generos[0]}</Link></> : null}
             </nav>
             <div className="chips" style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 16 }}>
-              {obraActiva(obra) ? <span className="chip chip-foco chip-dot">En activo</span> : <span className="chip">Finalizada</span>}
+              {proximas.length ? <span className="chip chip-foco chip-dot">En cartel · {fechaCorta(proximas[0].fecha)}</span> : obraActiva(obra) ? <span className="chip chip-foco chip-dot">En activo</span> : <span className="chip">Finalizada</span>}
               {generos.map((g) => <span key={g} className="chip">{g}</span>)}
             </div>
             <h1 className="h1">{obra.titulo}</h1>
@@ -121,7 +140,8 @@ export default async function ObraPage({ params }: Props) {
             ) : null}
             </div>
             <Valoracion obraId={obra.id} votos={obra.votos} nota={obra.nota} />
-            <div>
+            <div className="actions">
+              <EditarFicha dueno={obra.creacion} href={`/panel/obra/${obra.id}`} texto="Editar obra" />
               <ObraActions obraId={obra.id} />
             </div>
             {obra.sinopsis ? (
@@ -136,6 +156,30 @@ export default async function ObraPage({ params }: Props) {
 
       <div className="wrap row section">
         <div className="main-col">
+          {proximas.length || pasadas.length ? (
+            <section id="donde-verla" style={{ marginBottom: 56 }}>
+              <h2 className="h2" style={{ marginBottom: 16 }}>Dónde verla</h2>
+              {proximas.length ? (
+                <ul className="list">
+                  {proximas.map((fn, i) => (
+                    <li key={i} className="funcion">
+                      <span className="funcion-fecha"><strong>{fechaCorta(fn.fecha)}</strong>{fn.hora ? <span className="hint">{fn.hora} h</span> : null}</span>
+                      <span style={{ minWidth: 0 }}><strong style={{ display: "block" }}>{fn.sala}</strong>{fn.ciudad ? <span className="hint">{fn.ciudad}</span> : null}</span>
+                      {fn.entradas ? <a href={fn.entradas} className="btn btn-primary" target="_blank" rel="noopener noreferrer nofollow">Entradas</a> : <span />}
+                    </li>
+                  ))}
+                </ul>
+              ) : <p className="muted" style={{ margin: 0 }}>No hay funciones próximas anunciadas.</p>}
+              {pasadas.length ? (
+                <details style={{ marginTop: 14 }}>
+                  <summary className="hint" style={{ cursor: "pointer" }}>Funciones pasadas ({pasadas.length})</summary>
+                  <ul className="list" style={{ marginTop: 8 }}>
+                    {pasadas.map((fn, i) => <li key={i} className="hint" style={{ padding: "8px 0" }}>{fechaCorta(fn.fecha)} · {fn.sala}{fn.ciudad ? ` (${fn.ciudad})` : ""}</li>)}
+                  </ul>
+                </details>
+              ) : null}
+            </section>
+          ) : null}
           <section id="elenco">
             <h2 className="h2" style={{ marginBottom: 20 }}>Elenco</h2>
             {elenco.length ? (
@@ -149,13 +193,13 @@ export default async function ObraPage({ params }: Props) {
                 ))}
               </div>
             ) : (
-              <p className="muted">Aún no hay intérpretes en esta ficha. <Link href={`/panel/obra/${obra.id}`} style={{ color: "var(--foco)" }}>¿Formaste parte? Añádete</Link></p>
+              <p className="muted">Aún no hay intérpretes en esta ficha. <Anadirme obraId={obra.id} titulo={obra.titulo} duenoObra={obra.creacion} anoinicio={obra.anoinicio} anofin={obra.anofin} /></p>
             )}
           </section>
 
           <section id="equipo" style={{ marginTop: 56 }}>
             <h2 className="h2" style={{ marginBottom: 8 }}>Equipo artístico y técnico</h2>
-            <p className="muted" style={{ marginTop: 0, marginBottom: 20 }}>¿Trabajaste en esta obra? <Link href={`/panel/obra/${obra.id}`} style={{ color: "var(--foco)" }}>Añade tu crédito</Link></p>
+            <p className="muted" style={{ marginTop: 0, marginBottom: 20 }}>¿Trabajaste en esta obra? <Anadirme obraId={obra.id} titulo={obra.titulo} duenoObra={obra.creacion} anoinicio={obra.anoinicio} anofin={obra.anofin} texto="Añade tu crédito" /></p>
             {tecnico.length ? (
               <ul className="list">
                 {tecnico.map((g) => (

@@ -12,6 +12,9 @@ import { confirmarCredito, creditosDe, leer, miPersona, obrasCreadasPor } from "
 import { nombreCompleto } from "@/lib/format";
 import type { Credito, Obra, Persona } from "@/lib/types";
 import { resolverSugerencia, sugerenciasPendientes, type Sugerencia } from "@/lib/colaboracion";
+import { usePendientes } from "@/components/Pendientes";
+import { useToast } from "@/components/Toast";
+import { Ayuda } from "@/components/Ayuda";
 
 export default function VinculosPage() {
   return <RequireAuth>{(user) => <Vinculos user={user} />}</RequireAuth>;
@@ -28,6 +31,8 @@ function Vinculos({ user }: { user: User }) {
   const [fichas, setFichas] = useState<Persona[]>([]);
   const [cargando, setCargando] = useState(true);
   const [copiado, setCopiado] = useState("");
+  const { recargar } = usePendientes();
+  const avisar = useToast();
 
   const cargar = useCallback(async () => {
     const p = await miPersona(user.uid);
@@ -55,16 +60,20 @@ function Vinculos({ user }: { user: User }) {
   async function confirmar(c: Item) {
     await confirmarCredito(c.id);
     await authFetch("/api/revalidar", { obras: [c.id_obra], personas: [c.id_persona] }).catch(() => {});
-    cargar();
+    avisar("Crédito confirmado: ya aparece en la obra y en la trayectoria.");
+    cargar(); recargar();
   }
   async function rechazar(c: Item) {
     await deleteDoc(doc(db, "persona_obra", c.id));
     await authFetch("/api/revalidar", { obras: [c.id_obra], personas: [c.id_persona] }).catch(() => {});
-    cargar();
+    avisar("Crédito rechazado.");
+    cargar(); recargar();
   }
   async function resolver(sg: Sugerencia, estado: "aplicada" | "descartada") {
     await resolverSugerencia(sg.id, estado);
     setSugerencias((l) => l.filter((x) => x.id !== sg.id));
+    avisar(estado === "aplicada" ? "Sugerencia marcada como hecha. ¡Gracias por mantener la ficha al día!" : "Sugerencia descartada.");
+    recargar();
   }
   async function copiar(p: Persona) {
     await navigator.clipboard.writeText(`${location.origin}/reclamar/${p.id}`);
@@ -83,7 +92,7 @@ function Vinculos({ user }: { user: User }) {
     <>
       <PanelNav personaId={yo?.id} pendientes={mios.length + enObras.length + sugerencias.length} />
       <main className="wrap section" style={{ maxWidth: 1000 }}>
-        <h1 className="h1" style={{ fontSize: 48 }}>Vínculos</h1>
+        <h1 className="h1" style={{ fontSize: 48 }}>Vínculos <Ayuda etiqueta="Qué son los vínculos">Un vínculo une a una persona con una obra. Para que salga en público tienen que estar de acuerdo las dos partes: quien gestiona la obra y la propia persona. Aquí confirmas o rechazas los que te afectan, y respondes a las sugerencias de cambio en tus fichas.</Ayuda></h1>
         <p className="lead soft" style={{ margin: "10px 0 28px" }}>Aquí se cruzan las fichas: quién te ha añadido a una obra, quién se ha añadido a las tuyas y a quién has dado de alta.</p>
         <div role="tablist" aria-label="Tipo de vínculo" className="tabs" style={{ marginBottom: 24 }}>
           {tabs.map((t) => <button key={t.k} type="button" role="tab" className="tab" aria-selected={tab === t.k} onClick={() => setTab(t.k)}>{t.l} <span style={{ opacity: .7 }}>{t.n}</span></button>)}

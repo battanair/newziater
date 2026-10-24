@@ -68,7 +68,7 @@ export async function resolverSugerencia(id: string, estado: "aplicada" | "desca
 // ------------------------------------------------------------------ Historial
 // Antes de guardar cambios en una obra o ficha se guarda cómo estaba, para poder recuperarlo.
 export const CAMPOS_HISTORIAL: Record<"obra" | "persona", string[]> = {
-  obra: ["titulo", "sinopsis", "anoinicio", "anofin", "cartel", "instagram", "trailer", "categoria", "idioma", "duracion", "fotos_obra", "fotosObra"],
+  obra: ["titulo", "sinopsis", "anoinicio", "anofin", "cartel", "instagram", "trailer", "categoria", "idioma", "duracion", "fotos_obra", "fotosObra", "funciones"],
   persona: ["Nombre", "Apellidos", "biografia", "foto", "instagram", "ciudad", "roles", "destacadas"],
 };
 

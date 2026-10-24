@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { artistasDestacados, obrasMejorValoradas, obrasRecientes, productorasDestacadas } from "@/lib/data";
+import { artistasDestacados, obrasEnCartel, obrasMejorValoradas, obrasRecientes, productorasDestacadas } from "@/lib/data";
+import { fechaCorta, hoyES } from "@/lib/format";
+import { ParaTi } from "@/components/ParaTi";
 import { ObraCard, PersonaCard, ProductoraCard, JsonLd } from "@/components/Cards";
 import { SearchBox } from "@/components/SearchBox";
 import { SITE_URL } from "@/lib/firebase-config";
@@ -12,7 +14,8 @@ export const metadata: Metadata = { alternates: { canonical: "/" } };
 export const revalidate = 600;
 
 export default async function Home() {
-  const [top, recientes, artistas, prods] = await Promise.all([
+  const [enCartel, top, recientes, artistas, prods] = await Promise.all([
+    obrasEnCartel(hoyES(), 6),
     obrasMejorValoradas(12),
     obrasRecientes(12),
     artistasDestacados(12),
@@ -57,6 +60,20 @@ export default async function Home() {
         </p>
         <SearchBox hero />
       </section>
+
+      <ParaTi />
+
+      {enCartel.length ? (
+        <section className="wrap section">
+          <div className="section-head">
+            <div>
+              <h2 className="h2">En cartel</h2>
+              <p className="muted" style={{ margin: "6px 0 0" }}>Próximas funciones</p>
+            </div>
+          </div>
+          <div className="grid-posters">{enCartel.map((o) => <ObraCard key={o.id} obra={o} etiqueta={`Próxima: ${fechaCorta(o.proxima)}`} />)}</div>
+        </section>
+      ) : null}
 
       {top.length ? (
         <section className="wrap section">

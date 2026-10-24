@@ -9,7 +9,8 @@ import { RequireAuth } from "@/components/RequireAuth";
 import { PanelNav } from "@/components/PanelNav";
 import { Avatar, Poster } from "@/components/Cards";
 import { Vacio } from "@/components/Vacio";
-import { miPersona, miUsuario, misNotas, porIds, quitarDeLista, type ListaUsuario, type MiNota } from "@/lib/client-data";
+import { anadirALista, miPersona, miUsuario, misNotas, porIds, quitarDeLista, type ListaUsuario, type MiNota } from "@/lib/client-data";
+import { useToast } from "@/components/Toast";
 import { T_MINI, cld, colorCartel, nombreCompleto, periodo } from "@/lib/format";
 import type { Obra, Persona } from "@/lib/types";
 
@@ -33,6 +34,7 @@ function Lista({ tipo, user }: { tipo: Tipo; user: User }) {
   const [personaId, setPersonaId] = useState<string>();
   // Notas: paginadas en Firestore. Listas: ids guardados en la cuenta, cargados de 24 en 24.
   const [ids, setIds] = useState<string[] | null>(null);
+  const avisar = useToast();
   const [visibles, setVisibles] = useState(POR_PAGINA);
   const [obras, setObras] = useState<Map<string, Obra>>(new Map());
   const [personas, setPersonas] = useState<Map<string, Persona>>(new Map());
@@ -77,8 +79,18 @@ function Lista({ tipo, user }: { tipo: Tipo; user: User }) {
 
   async function quitar(id: string) {
     if (tipo === "notas") return;
+    const campo = CAMPO[tipo];
+    const antes = ids;
     setIds((xs) => xs?.filter((x) => x !== id) ?? null);
-    await quitarDeLista(user.uid, CAMPO[tipo], id).catch(() => {});
+    try {
+      await quitarDeLista(user.uid, campo, id);
+      avisar(tipo === "artistas" ? "Has dejado de seguirle." : "Quitada de la lista.", {
+        deshacer: async () => { await anadirALista(user.uid, campo, id); setIds(antes); },
+      });
+    } catch {
+      setIds(antes);
+      avisar("No se pudo quitar. Inténtalo de nuevo.", { error: true });
+    }
   }
 
   const total = tipo === "notas" ? notas.length : ids?.length ?? 0;

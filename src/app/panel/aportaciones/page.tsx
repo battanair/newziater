@@ -8,6 +8,7 @@ import { PanelNav } from "@/components/PanelNav";
 import { Vacio } from "@/components/Vacio";
 import { miPersona, misAportaciones, miUsuario, porIds } from "@/lib/client-data";
 import { guardarColaborador, miColaborador } from "@/lib/colaboracion";
+import { Ayuda } from "@/components/Ayuda";
 import { departamento, nombreCompleto, periodo } from "@/lib/format";
 import type { Credito, Obra, Persona } from "@/lib/types";
 
@@ -69,7 +70,7 @@ function Aportaciones({ user }: { user: User }) {
                         {c.obra ? <Link href={`/obra/${c.id_obra}`} style={{ fontWeight: 600 }}>{c.obra.titulo}</Link> : <span className="muted">obra eliminada</span>}
                         <span className="hint" style={{ display: "block" }}>{[departamento(c), c.titulo && c.titulo.trim() !== c.puesto ? c.titulo : ""].filter(Boolean).join(" · ")}</span>
                       </span>
-                      <span className={`chip ${c.estado === "pendiente" ? "" : "chip-ok"}`}>{c.estado === "pendiente" ? "Pendiente de confirmar" : "✓ Confirmado"}</span>
+                      <span className={`chip ${c.estado === "pendiente" ? "" : "chip-ok"}`}>{c.estado === "pendiente" ? "Pendiente de confirmar" : "✓ Confirmado"}{c.estado === "pendiente" ? <Ayuda etiqueta="Qué significa pendiente">Falta que lo confirme la otra parte: la persona acreditada (si la has añadido tú) o quien gestiona la obra (si te has añadido tú). Hasta entonces no aparece públicamente.</Ayuda> : null}</span>
                     </li>
                   ))}
                 </ul>

@@ -4,12 +4,14 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { anadirALista, miUsuario, quitarDeLista } from "@/lib/client-data";
 import { useAuth } from "./AuthProvider";
+import { useToast } from "./Toast";
 
 // Usa el campo existente users.favoritos_persona (de la web anterior).
 export function SeguirArtista({ personaId }: { personaId: string }) {
   const { user } = useAuth();
   const router = useRouter();
   const [sigo, setSigo] = useState(false);
+  const avisar = useToast();
 
   useEffect(() => {
     if (user) miUsuario(user.uid).then((u) => setSigo((u.favoritos_persona ?? []).includes(personaId))).catch(() => {});
@@ -21,8 +23,10 @@ export function SeguirArtista({ personaId }: { personaId: string }) {
     setSigo(!antes);
     try {
       await (antes ? quitarDeLista : anadirALista)(user.uid, "favoritos_persona", personaId);
+      if (!antes) avisar("Le sigues. Verás sus obras en tu portada.");
     } catch {
       setSigo(antes);
+      avisar("No se pudo guardar. Inténtalo de nuevo.", { error: true });
     }
   }
 

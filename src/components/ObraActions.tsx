@@ -5,11 +5,13 @@ import { useRouter } from "next/navigation";
 import { arrayRemove, arrayUnion, doc, getDoc, setDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase-client";
 import { useAuth } from "./AuthProvider";
+import { useToast } from "./Toast";
 
 // "Quiero verla" usa el campo existente users.favoritos_obra; "La he visto", users.vistas.
 export function ObraActions({ obraId }: { obraId: string }) {
   const { user } = useAuth();
   const router = useRouter();
+  const avisar = useToast();
   const [fav, setFav] = useState(false);
   const [seen, setSeen] = useState(false);
 
@@ -22,13 +24,17 @@ export function ObraActions({ obraId }: { obraId: string }) {
     });
   }, [user, obraId]);
 
-  async function toggle(field: "favoritos_obra" | "vistas", on: boolean, set: (v: boolean) => void) {
+  async function toggle(field: "favoritos_obra" | "vistas", on: boolean, set: (v: boolean) => void, deshaciendo = false) {
     if (!user) return router.push(`/login?next=/obra/${obraId}`);
     set(!on);
     try {
       await setDoc(doc(db, "users", user.uid), { [field]: on ? arrayRemove(obraId) : arrayUnion(obraId) }, { merge: true });
+      if (deshaciendo) return;
+      const lista = field === "vistas" ? "«La he visto»" : "«Quiero verla»";
+      avisar(on ? `Quitada de ${lista}.` : `Añadida a ${lista}. La tienes en Mi espacio.`, { deshacer: () => toggle(field, !on, set, true) });
     } catch {
       set(on);
+      avisar("No se pudo guardar. Inténtalo de nuevo.", { error: true });
     }
   }
 

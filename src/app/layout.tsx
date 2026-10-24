@@ -5,8 +5,12 @@ import { AuthProvider } from "@/components/AuthProvider";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { TabBar } from "@/components/TabBar";
+import { ToastProvider } from "@/components/Toast";
+import { PendientesProvider } from "@/components/Pendientes";
 import { SCRIPT_MODO } from "@/components/ModoToggle";
 import { SITE_URL } from "@/lib/firebase-config";
+// Analítica de Vercel: sin cookies ni datos personales, así que no necesita banner
+import { Analytics } from "@vercel/analytics/next";
 
 // Dos fuentes legibles: Fraunces para titulares y Source Sans 3 para el texto.
 const serif = Fraunces({ subsets: ["latin"], variable: "--font-serif", display: "swap", weight: ["500", "600"] });
@@ -37,11 +41,16 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body>
         <a href="#contenido" className="sr-only">Saltar al contenido</a>
         <AuthProvider>
-          <Header />
-          <div id="contenido">{children}</div>
-          <Footer />
-          <TabBar />
+          <PendientesProvider>
+            <ToastProvider>
+              <Header />
+              <div id="contenido">{children}</div>
+              <Footer />
+              <TabBar />
+            </ToastProvider>
+          </PendientesProvider>
         </AuthProvider>
+        <Analytics />
       </body>
     </html>
   );

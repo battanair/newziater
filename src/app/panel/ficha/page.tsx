@@ -16,6 +16,8 @@ import type { Credito, Obra, Persona, SearchItem } from "@/lib/types";
 import { clavesDe } from "@/lib/claves";
 import { Historial } from "@/components/Historial";
 import { guardarVersion } from "@/lib/colaboracion";
+import { useToast } from "@/components/Toast";
+import { Ayuda } from "@/components/Ayuda";
 
 export default function FichaArtistaPage() {
   return <RequireAuth>{(user) => <Panel user={user} />}</RequireAuth>;
@@ -30,6 +32,7 @@ function Panel({ user }: { user: User }) {
   const [misObras, setMisObras] = useState<Obra[]>([]);
   const [estado, setEstado] = useState<"idle" | "saving" | "saved" | "error">("idle");
   const [versionesRecarga, setVersionesRecarga] = useState(0);
+  const avisar = useToast();
 
   const cargar = useCallback(async () => {
     const p = await miPersona(user.uid);
@@ -89,11 +92,27 @@ function Panel({ user }: { user: User }) {
       await updateDoc(doc(db, "persona", persona.id), datos);
       setPersona({ ...persona, ...datos });
       if (hubo) setVersionesRecarga((n) => n + 1);
+      avisar("Ficha guardada y publicada.");
       await authFetch("/api/revalidar", { personas: [persona.id] }).catch(() => {});
       setEstado("saved");
     } catch {
       setEstado("error");
     }
+  }
+
+  async function quitarCredito(c: CreditoObra) {
+    if (!persona) return;
+    await deleteDoc(doc(db, "persona_obra", c.id));
+    await authFetch("/api/revalidar", { personas: [persona.id], obras: [c.id_obra] }).catch(() => {});
+    cargar();
+    avisar(`Quitado de «${c.obra?.titulo ?? "la obra"}».`, {
+      // Se vuelve a crear igual; si estaba confirmado y la obra no es tuya, quedará pendiente de confirmar
+      deshacer: async () => {
+        await anadirCredito({ id_obra: c.id_obra, id_persona: c.id_persona, puesto: c.puesto, titulo: c.titulo, fecha_inicio: c.fecha_inicio, fecha_fin: c.fecha_fin }, c.obra?.creacion === user.uid);
+        await authFetch("/api/revalidar", { personas: [persona.id], obras: [c.id_obra] }).catch(() => {});
+        cargar();
+      },
+    });
   }
 
   function toggleDestacada(obraId: string) {
@@ -178,7 +197,8 @@ function Panel({ user }: { user: User }) {
                   </span>
                   <span style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap", justifyContent: "flex-end" }}>
                     <span className={`chip ${c.estado === "pendiente" ? "" : "chip-ok"}`}>{c.estado === "pendiente" ? (c.creado_por === user.uid ? "Pendiente de la compañía" : "Por confirmar") : "✓ Confirmado"}</span>
-                    <button type="button" className="btn btn-ghost" aria-label="Quitar crédito" onClick={async () => { await deleteDoc(doc(db, "persona_obra", c.id)); await authFetch("/api/revalidar", { personas: [persona.id], obras: [c.id_obra] }).catch(() => {}); cargar(); }}>✕</button>
+                    {c.estado === "pendiente" ? <Ayuda etiqueta="Qué significa pendiente">{c.creado_por === user.uid ? "Quien gestiona la obra todavía no ha confirmado que participaste. Hasta entonces no aparece en la ficha de la obra." : "Alguien te ha añadido a esta obra. Confírmalo en Vínculos para que aparezca en tu trayectoria."}</Ayuda> : null}
+                    <button type="button" className="btn btn-ghost" aria-label={`Quitar crédito en ${c.obra?.titulo ?? "esta obra"}`} onClick={() => quitarCredito(c)}>✕</button>
                   </span>
                 </li>
               ))}

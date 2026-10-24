@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { Insignia, usePendientes } from "./Pendientes";
 
 const Icono = ({ d }: { d: React.ReactNode }) => (
   <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">{d}</svg>
@@ -18,11 +19,15 @@ const ITEMS = [
 /** Navegación inferior en móvil, como en una app. En escritorio se oculta por CSS. */
 export function TabBar() {
   const path = usePathname();
+  const { total } = usePendientes();
   return (
     <nav className="tabbar" aria-label="Navegación">
       {ITEMS.map((i) => (
         <Link key={i.href} href={i.href} aria-current={i.activo(path) ? "page" : undefined}>
-          <Icono d={i.icono} />
+          <span style={{ position: "relative", display: "inline-flex" }}>
+            <Icono d={i.icono} />
+            {i.href === "/panel" ? <span className="insignia-tab"><Insignia n={total} /></span> : null}
+          </span>
           <span>{i.label}</span>
         </Link>
       ))}

@@ -307,3 +307,15 @@ export const rankingColaboradores = memo("rankingColaboradores", async (): Promi
   const lista = await Promise.all(s.docs.map(async (d) => ({ uid: d.id, nombre: d.data().nombre ?? "", persona_id: d.data().persona_id || undefined, ...(await contarAportaciones(d.id)) })));
   return lista.filter((a) => a.total > 0 && a.nombre.trim()).sort((a, b) => b.total - a.total).slice(0, 100);
 }, 3600);
+
+/** Obras con funciones a partir de hoy, de la más próxima a la más lejana. */
+export const obrasEnCartel = memo("obrasEnCartel", async (hoy: string, n: number): Promise<(Obra & { proxima: string })[]> => {
+  const s = await getDocs(query(collection(db, "obra"), where("ultima", ">=", hoy), orderBy("ultima"), limit(48))).catch(() => null);
+  if (!s) return [];
+  return s.docs
+    .map((d) => withId<Obra>(d))
+    .map((o) => ({ ...o, proxima: (o.funciones ?? []).map((f) => f.fecha).filter((f) => f >= hoy).sort()[0] ?? "" }))
+    .filter((o) => o.proxima)
+    .sort((a, b) => a.proxima.localeCompare(b.proxima))
+    .slice(0, n);
+}, 600);

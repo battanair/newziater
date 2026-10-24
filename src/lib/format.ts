@@ -1,3 +1,4 @@
+import type { Funcion } from "./types";
 import type { Credito, Obra, Persona } from "./types";
 
 export function nombreCompleto(p: Pick<Persona, "Nombre" | "Apellidos">): string {
@@ -114,3 +115,22 @@ export function fotosDe(o: { fotos_obra?: string[]; fotosObra?: string[] }): str
 
 /** Imagen para compartir cuando una ficha no tiene cartel ni foto (la genera app/opengraph-image.tsx). */
 export const OG_POR_DEFECTO = "/opengraph-image";
+
+/** Hoy en España (AAAA-MM-DD), para separar funciones próximas de pasadas. */
+export function hoyES(): string {
+  return new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Madrid", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
+}
+/** «vie 14 nov» (y el año si no es el actual). */
+export function fechaCorta(iso: string): string {
+  const [y, m, d] = iso.split("-").map(Number);
+  if (!y || !m || !d) return iso;
+  const f = new Date(Date.UTC(y, m - 1, d, 12));
+  const anio = y !== new Date().getFullYear() ? { year: "numeric" as const } : {};
+  return new Intl.DateTimeFormat("es-ES", { weekday: "short", day: "numeric", month: "short", timeZone: "UTC", ...anio }).format(f).replace(/\./g, "");
+}
+/** Funciones ordenadas y separadas en próximas y pasadas. */
+export function partirFunciones(fs: Funcion[] = []) {
+  const hoy = hoyES();
+  const orden = [...fs].filter((f) => f?.fecha).sort((a, b) => (a.fecha + (a.hora ?? "")).localeCompare(b.fecha + (b.hora ?? "")));
+  return { proximas: orden.filter((f) => f.fecha >= hoy), pasadas: orden.filter((f) => f.fecha < hoy).reverse() };
+}

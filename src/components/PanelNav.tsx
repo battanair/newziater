@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { usePendientes } from "./Pendientes";
 
 // Navegación del espacio personal. La tiene cualquier usuario con sesión;
 // «Ficha de artista» y «Vínculos» sirven a quien trabaja en las artes escénicas.
@@ -16,6 +17,8 @@ const ITEMS = [
 
 export function PanelNav({ pendientes = 0, personaId }: { pendientes?: number; personaId?: string }) {
   const path = usePathname();
+  const { total } = usePendientes();
+  pendientes = Math.max(pendientes, total);
   return (
     <div className="panel-nav">
       <div className="wrap panel-nav-in">
