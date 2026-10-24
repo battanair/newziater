@@ -6,7 +6,8 @@ import type { User } from "firebase/auth";
 import { RequireAuth } from "@/components/RequireAuth";
 import { PanelNav } from "@/components/PanelNav";
 import { Vacio } from "@/components/Vacio";
-import { miPersona, misAportaciones, porIds } from "@/lib/client-data";
+import { miPersona, misAportaciones, miUsuario, porIds } from "@/lib/client-data";
+import { guardarColaborador, miColaborador } from "@/lib/colaboracion";
 import { departamento, nombreCompleto, periodo } from "@/lib/format";
 import type { Credito, Obra, Persona } from "@/lib/types";
 
@@ -38,7 +39,8 @@ function Aportaciones({ user }: { user: User }) {
       <PanelNav personaId={personaId} />
       <main className="wrap section" style={{ maxWidth: 1040 }}>
         <h1 className="h1" style={{ fontSize: 44 }}>Tus aportaciones</h1>
-        <p className="soft" style={{ margin: "10px 0 32px" }}>Las obras, fichas y créditos que has añadido a Ziater. Gracias por ayudar a que no se pierda nada de lo que pasa en un escenario.</p>
+        <p className="soft" style={{ margin: "10px 0 24px" }}>Las obras, fichas y créditos que has añadido a Ziater. Gracias por ayudar a que no se pierda nada de lo que pasa en un escenario.</p>
+        <PerfilColaborador user={user} personaId={personaId} />
         {!d ? <p className="muted">Cargando…</p> : (
           <div className="stack" style={{ gap: 44 }}>
             <section>
@@ -92,5 +94,56 @@ function Aportaciones({ user }: { user: User }) {
         )}
       </main>
     </>
+  );
+}
+
+/** Activar el perfil público de colaborador: aparece en /colaboradores y en su ficha de artista. */
+function PerfilColaborador({ user, personaId }: { user: User; personaId?: string }) {
+  const [publico, setPublico] = useState<boolean | null>(null);
+  const [nombre, setNombre] = useState("");
+  const [estado, setEstado] = useState<"idle" | "saving" | "ok" | "error">("idle");
+
+  useEffect(() => {
+    (async () => {
+      const [c, u] = await Promise.all([miColaborador(user.uid), miUsuario(user.uid).catch(() => null)]);
+      setPublico(c?.publico ?? false);
+      setNombre(c?.nombre || [u?.Nombre, u?.Apellidos].filter(Boolean).join(" ") || user.displayName || "");
+    })();
+  }, [user]);
+
+  async function guardar(nuevo: boolean) {
+    if (nuevo && !nombre.trim()) return setEstado("error");
+    setEstado("saving");
+    try {
+      await guardarColaborador(user.uid, { nombre, publico: nuevo, persona_id: personaId });
+      setPublico(nuevo);
+      setEstado("ok");
+    } catch {
+      setEstado("error");
+    }
+  }
+
+  if (publico === null) return null;
+  return (
+    <section className="panel" style={{ marginBottom: 36, display: "flex", flexWrap: "wrap", gap: "14px 24px", alignItems: "center" }}>
+      <div style={{ flex: "1 1 340px" }}>
+        <h2 className="eyebrow" style={{ marginBottom: 6 }}>Perfil de colaborador</h2>
+        <p className="soft" style={{ margin: 0 }}>
+          {publico
+            ? <>Apareces en el <Link href="/colaboradores" style={{ textDecoration: "underline" }}>ranking de colaboradores</Link>{personaId ? " y en tu ficha de artista" : ""} como <strong>{nombre}</strong>.</>
+            : "Si quieres, tu nombre y tus aportaciones pueden aparecer en el ranking de colaboradores" + (personaId ? " y en tu ficha de artista." : ".")}
+        </p>
+        {!publico ? (
+          <div className="field" style={{ marginTop: 12, maxWidth: 360 }}>
+            <label className="label" htmlFor="nombre-colab">Nombre que se mostrará</label>
+            <input id="nombre-colab" className="input" maxLength={100} value={nombre} onChange={(e) => setNombre(e.target.value)} />
+          </div>
+        ) : null}
+        {estado === "error" ? <p className="error" role="alert" style={{ margin: "8px 0 0" }}>{nombre.trim() ? "No se pudo guardar." : "Escribe el nombre que quieres mostrar."}</p> : null}
+      </div>
+      <button type="button" className={publico ? "btn" : "btn btn-primary"} disabled={estado === "saving"} onClick={() => guardar(!publico)}>
+        {estado === "saving" ? "Guardando…" : publico ? "Dejar de aparecer" : "Aparecer en el ranking"}
+      </button>
+    </section>
   );
 }

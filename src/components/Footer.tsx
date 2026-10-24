@@ -8,6 +8,7 @@ export function Footer() {
         <nav aria-label="Pie" style={{ display: "flex", flexWrap: "wrap", gap: 20 }}>
           <Link href="/obras">Obras</Link>
           <Link href="/personas">Artistas</Link>
+          <Link href="/colaboradores">Colaboradores</Link>
           <Link href="/contacto">Contacto</Link>
           <Link href="/politica-de-privacidad">Privacidad</Link>
           <Link href="/politica-de-cookies">Cookies</Link>

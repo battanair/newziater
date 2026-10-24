@@ -15,6 +15,9 @@ import { clavesDe } from "@/lib/claves";
 import { anadirCredito, creditosDe, crearPersonaSinCuenta, leer, miPersona } from "@/lib/client-data";
 import { DEPARTAMENTOS, GENEROS, colorCartel, fotosDe, iniciales } from "@/lib/format";
 import type { Obra, Persona, SearchItem } from "@/lib/types";
+import { SugerirCambio } from "@/components/SugerirCambio";
+import { Historial } from "@/components/Historial";
+import { guardarVersion, pedirGestionarObra, vinculoConObra } from "@/lib/colaboracion";
 
 export default function ObraEditorPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
@@ -78,18 +81,19 @@ function Editor({ id, user }: { id: string; user: User }) {
   if (cargando) return <main className="wrap section"><p className="muted">Cargando…</p></main>;
   if (!nueva && !obra) return <main className="wrap section"><p>Esta obra no existe.</p></main>;
 
-  // Quien no creó la obra solo puede añadir su propio crédito (desde Mi ficha)
+  // Quien no creó la obra: añadir su crédito, sugerir un cambio o, si tiene vínculo, pedir gestionarla
   if (!esDuena) {
     return (
       <>
         <PanelNav personaId={yo?.id} />
         <main className="wrap section" style={{ maxWidth: 720 }}>
           <h1 className="h1" style={{ fontSize: 44 }}>{obra!.titulo}</h1>
-          <p className="lead soft">Esta ficha la gestiona quien la creó. Puedes añadir tu propio crédito y le pediremos que lo confirme, o sugerirnos una corrección.</p>
+          <p className="lead soft">Esta ficha la gestiona quien la creó. Puedes añadir tu propio crédito y le pediremos que lo confirme, o sugerir un cambio y le llegará.</p>
           <div className="actions">
             <Link href="/panel/ficha" className="btn btn-primary">Añadir mi crédito</Link>
-            <Link href="/contacto" className="btn">Sugerir una corrección</Link>
+            <SugerirCambio tipo="obra" refId={obra!.id} nombre={obra!.titulo} />
           </div>
+          <PedirGestion obra={obra!} user={user} personaId={yo?.id} />
         </main>
       </>
     );
@@ -133,7 +137,11 @@ function Editor({ id, user }: { id: string; user: User }) {
       let obraId = id;
       if (nueva) obraId = (await addDoc(collection(db, "obra"), { ...datos, creacion: user.uid, creado: serverTimestamp() })).id;
       // Las fotos de la web antigua (fotosObra) pasan al campo nuevo
-      else await updateDoc(doc(db, "obra", id), { ...datos, ...(obra && "fotosObra" in obra ? { fotosObra: deleteField() } : {}) });
+      else {
+        // Antes de cambiarla, se guarda cómo estaba (historial con «Recuperar»)
+        await guardarVersion("obra", id, obra as unknown as Record<string, unknown>, datos).catch(() => {});
+        await updateDoc(doc(db, "obra", id), { ...datos, ...(obra && "fotosObra" in obra ? { fotosObra: deleteField() } : {}) });
+      }
 
       for (const cid of borrados) await deleteDoc(doc(db, "persona_obra", cid));
       const personasTocadas: string[] = [];
@@ -213,6 +221,19 @@ function Editor({ id, user }: { id: string; user: User }) {
                 <span className="label">Galería de imágenes</span>
                 <GaleriaUpload value={f.fotos} onChange={(urls) => set("fotos", urls)} />
               </div>
+              {!nueva ? (
+                <Historial tipo="obra" refId={id} onRecuperar={(a) => {
+                  const fin = String(a.anofin ?? "");
+                  setF((x) => ({
+                    ...x,
+                    titulo: String(a.titulo ?? x.titulo), sinopsis: String(a.sinopsis ?? ""), anoinicio: String(a.anoinicio ?? ""),
+                    anofin: fin === "0" ? "" : fin, activa: !fin || fin === "0", cartel: String(a.cartel ?? ""), instagram: String(a.instagram ?? ""),
+                    trailer: String(a.trailer ?? ""), categoria: Array.isArray(a.categoria) ? (a.categoria as string[]) : [], idioma: String(a.idioma ?? "Castellano"),
+                    duracion: a.duracion ? String(a.duracion) : "", fotos: fotosDe(a as { fotos_obra?: string[]; fotosObra?: string[] }),
+                  }));
+                  window.scrollTo({ top: 0, behavior: "smooth" });
+                }} />
+              ) : null}
             </div>
           ) : null}
 
@@ -300,5 +321,42 @@ function TituloDuplicado({ titulo, actual }: { titulo: string; actual: string })
     <span className="hint" style={{ color: "var(--foco)" }}>
       Ya existe una ficha con este título: <Link href={`/obra/${iguales[0].id}`} target="_blank" style={{ textDecoration: "underline" }}>ver «{iguales[0].n}»</Link>. Si es la misma obra, añade tu crédito allí en lugar de crear otra.
     </span>
+  );
+}
+
+/** Obras sin dueño activo: quien tiene un crédito confirmado o la compañía puede pedir gestionarla. */
+function PedirGestion({ obra, user, personaId }: { obra: Obra; user: User; personaId?: string }) {
+  const [vinculo, setVinculo] = useState<Awaited<ReturnType<typeof vinculoConObra>> | undefined>(undefined);
+  const [motivo, setMotivo] = useState("");
+  const [estado, setEstado] = useState<"idle" | "enviando" | "ok" | "error">("idle");
+
+  useEffect(() => { vinculoConObra(user.uid, obra, personaId).then(setVinculo).catch(() => setVinculo(null)); }, [user.uid, obra, personaId]);
+
+  if (vinculo === undefined) return null;
+  return (
+    <section className="panel" style={{ marginTop: 32 }}>
+      <h2 className="eyebrow">¿Quien creó la ficha ya no la gestiona?</h2>
+      {!vinculo ? (
+        <p className="soft" style={{ margin: 0 }}>Pueden pedir gestionarla las personas con un crédito confirmado en la obra o la compañía que la produce. Si es tu caso, confirma primero tu crédito desde tu ficha de artista.</p>
+      ) : estado === "ok" ? (
+        <p className="soft" style={{ margin: 0 }}>Solicitud enviada. El equipo de Ziater la revisará y, si todo encaja, podrás editar la obra desde aquí.</p>
+      ) : (
+        <form className="stack" style={{ gap: 12 }} onSubmit={async (e) => {
+          e.preventDefault();
+          setEstado("enviando");
+          try { await pedirGestionarObra(obra.id, vinculo, motivo); setEstado("ok"); } catch { setEstado("error"); }
+        }}>
+          <p className="soft" style={{ margin: 0 }}>
+            Como {vinculo.via === "reparto" ? "parte del reparto o del equipo confirmado" : "dueño de la compañía que la produce"}, puedes pedir encargarte de esta ficha para mantenerla al día.
+          </p>
+          <div className="field">
+            <label className="label" htmlFor="motivo">Cuéntanos por qué (opcional)</label>
+            <textarea id="motivo" className="textarea" rows={3} maxLength={1000} value={motivo} onChange={(e) => setMotivo(e.target.value)} placeholder="Por ejemplo: soy la directora y quien la creó ya no usa Ziater." />
+          </div>
+          {estado === "error" ? <p className="error" role="alert" style={{ margin: 0 }}>No se pudo enviar. Puede que ya tengas una solicitud pendiente.</p> : null}
+          <div><button type="submit" className="btn btn-primary" disabled={estado === "enviando"}>{estado === "enviando" ? "Enviando…" : "Pedir gestionar esta obra"}</button></div>
+        </form>
+      )}
+    </section>
   );
 }

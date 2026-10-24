@@ -2,8 +2,9 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import Image from "next/image";
 import { notFound } from "next/navigation";
-import { getPersona, trayectoriaDePersona, equipoDeObra } from "@/lib/data";
+import { aportacionPublica, getPersona, trayectoriaDePersona, equipoDeObra } from "@/lib/data";
 import { Avatar, JsonLd, Poster } from "@/components/Cards";
+import { SugerirCambio } from "@/components/SugerirCambio";
 import { ShareButton } from "@/components/ObraActions";
 import { SeguirArtista } from "@/components/SeguirArtista";
 import { Trayectoria } from "@/components/Trayectoria";
@@ -41,7 +42,7 @@ export default async function PersonaPage({ params }: Props) {
   if (!persona) notFound();
 
   const nombre = nombreCompleto(persona);
-  const tray = await trayectoriaDePersona(persona.id);
+  const [tray, aporta] = await Promise.all([trayectoriaDePersona(persona.id), persona.coincide ? aportacionPublica(persona.coincide) : Promise.resolve(null)]);
   const ig = instagramUrl(persona.instagram);
   const reclamada = Boolean(persona.coincide);
 
@@ -136,6 +137,7 @@ export default async function PersonaPage({ params }: Props) {
               {ig ? <a href={ig} className="btn" target="_blank" rel="noopener noreferrer nofollow">Instagram</a> : null}
               <SeguirArtista personaId={persona.id} />
               <ShareButton />
+              <SugerirCambio tipo="persona" refId={persona.id} nombre={nombre} className="btn btn-ghost" />
               {!reclamada ? <Link href={`/reclamar/${persona.id}`} className="btn btn-primary">¿Eres tú? Reclama esta ficha</Link> : null}
             </div>
           </div>
@@ -163,6 +165,15 @@ export default async function PersonaPage({ params }: Props) {
           {grupos.size ? <Trayectoria grupos={[...grupos.entries()].map(([dep, filas]) => ({ dep, filas }))} /> : <p className="muted">Todavía no hay obras en esta ficha.</p>}
         </div>
         <aside className="side-col">
+          {aporta && aporta.total > 0 ? (
+            <div className="panel panel-foco">
+              <h2 className="eyebrow">Colabora en Ziater</h2>
+              <p className="soft" style={{ margin: "0 0 10px" }}>
+                {persona.Nombre} ha aportado {[aporta.obras && `${aporta.obras} ${aporta.obras === 1 ? "obra" : "obras"}`, aporta.fichas && `${aporta.fichas} ${aporta.fichas === 1 ? "ficha" : "fichas"}`, aporta.creditos && `${aporta.creditos} ${aporta.creditos === 1 ? "crédito" : "créditos"}`].filter(Boolean).join(", ")} a la base de datos. ¡Gracias!
+              </p>
+              <Link href="/colaboradores" className="hint" style={{ textDecoration: "underline" }}>Ver quién más colabora</Link>
+            </div>
+          ) : null}
           {colaboradores.length ? (
             <div className="panel">
               <h2 className="eyebrow">Colaboradores frecuentes</h2>

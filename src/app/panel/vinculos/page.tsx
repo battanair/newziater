@@ -11,6 +11,7 @@ import { authFetch } from "@/components/AuthProvider";
 import { confirmarCredito, creditosDe, leer, miPersona, obrasCreadasPor } from "@/lib/client-data";
 import { nombreCompleto } from "@/lib/format";
 import type { Credito, Obra, Persona } from "@/lib/types";
+import { resolverSugerencia, sugerenciasPendientes, type Sugerencia } from "@/lib/colaboracion";
 
 export default function VinculosPage() {
   return <RequireAuth>{(user) => <Vinculos user={user} />}</RequireAuth>;
@@ -19,7 +20,8 @@ export default function VinculosPage() {
 type Item = Credito & { obra?: Obra | null; persona?: Persona | null };
 
 function Vinculos({ user }: { user: User }) {
-  const [tab, setTab] = useState<"mios" | "obras" | "fichas">("mios");
+  const [tab, setTab] = useState<"mios" | "obras" | "sugerencias" | "fichas">("mios");
+  const [sugerencias, setSugerencias] = useState<Sugerencia[]>([]);
   const [yo, setYo] = useState<Persona | null>(null);
   const [mios, setMios] = useState<Item[]>([]);
   const [enObras, setEnObras] = useState<Item[]>([]);
@@ -43,6 +45,8 @@ function Vinculos({ user }: { user: User }) {
     // 3) Fichas que he creado para personas sin cuenta
     const q = await getDocs(query(collection(db, "persona"), where("creacion", "==", user.uid), where("coincide", "==", "")));
     setFichas(q.docs.map((d) => ({ id: d.id, ...(d.data() as Omit<Persona, "id">) })));
+    // 4) Sugerencias de cambio en fichas que gestiono
+    setSugerencias(await sugerenciasPendientes(user.uid).catch(() => []));
     setCargando(false);
   }, [user.uid]);
 
@@ -58,6 +62,10 @@ function Vinculos({ user }: { user: User }) {
     await authFetch("/api/revalidar", { obras: [c.id_obra], personas: [c.id_persona] }).catch(() => {});
     cargar();
   }
+  async function resolver(sg: Sugerencia, estado: "aplicada" | "descartada") {
+    await resolverSugerencia(sg.id, estado);
+    setSugerencias((l) => l.filter((x) => x.id !== sg.id));
+  }
   async function copiar(p: Persona) {
     await navigator.clipboard.writeText(`${location.origin}/reclamar/${p.id}`);
     setCopiado(p.id);
@@ -67,12 +75,13 @@ function Vinculos({ user }: { user: User }) {
   const tabs = [
     { k: "mios" as const, l: "Te han añadido", n: mios.length },
     { k: "obras" as const, l: "En tus obras", n: enObras.length },
+    { k: "sugerencias" as const, l: "Sugerencias", n: sugerencias.length },
     { k: "fichas" as const, l: "Fichas por reclamar", n: fichas.length },
   ];
 
   return (
     <>
-      <PanelNav personaId={yo?.id} pendientes={mios.length + enObras.length} />
+      <PanelNav personaId={yo?.id} pendientes={mios.length + enObras.length + sugerencias.length} />
       <main className="wrap section" style={{ maxWidth: 1000 }}>
         <h1 className="h1" style={{ fontSize: 48 }}>Vínculos</h1>
         <p className="lead soft" style={{ margin: "10px 0 28px" }}>Aquí se cruzan las fichas: quién te ha añadido a una obra, quién se ha añadido a las tuyas y a quién has dado de alta.</p>
@@ -116,6 +125,31 @@ function Vinculos({ user }: { user: User }) {
                 </div>
               </div>
             ))}
+          </div>
+        ) : null}
+
+        {tab === "sugerencias" && !cargando ? (
+          <div className="stack">
+            {!sugerencias.length ? <Vacio texto="Nadie ha sugerido cambios en tus fichas. Cuando alguien proponga una corrección, aparecerá aquí." /> : null}
+            {sugerencias.map((sg) => {
+              const enlace = sg.tipo === "obra" ? `/obra/${sg.ref}` : sg.tipo === "persona" ? `/persona/${sg.ref}` : `/compania/${sg.ref}`;
+              const editar = sg.tipo === "obra" ? `/panel/obra/${sg.ref}` : sg.tipo === "persona" && yo?.id === sg.ref ? "/panel/ficha" : null;
+              return (
+                <div key={sg.id} className="panel" style={{ display: "flex", flexWrap: "wrap", gap: 20, alignItems: "flex-start" }}>
+                  <div style={{ flex: "1 1 360px" }}>
+                    <div className="hint">{sg.autor_nombre || "Alguien"} sugiere un cambio en {sg.tipo === "obra" ? "la obra" : sg.tipo === "persona" ? "la ficha" : "la compañía"}</div>
+                    <Link href={enlace} className="serif" style={{ fontSize: 24, fontWeight: 600 }}>{sg.titulo_ficha || "Ficha"}</Link>
+                    <div style={{ marginTop: 8 }}><span className="chip">{sg.campo}</span></div>
+                    <p className="soft" style={{ margin: "12px 0 0", whiteSpace: "pre-line" }}>{sg.texto}</p>
+                  </div>
+                  <div className="actions">
+                    <button type="button" className="btn btn-ghost" onClick={() => resolver(sg, "descartada")}>Descartar</button>
+                    {editar ? <Link href={editar} className="btn">Editar ficha</Link> : null}
+                    <button type="button" className="btn btn-primary" onClick={() => resolver(sg, "aplicada")}>Hecho</button>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         ) : null}
 

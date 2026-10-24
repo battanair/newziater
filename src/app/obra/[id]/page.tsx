@@ -5,6 +5,7 @@ import { notFound } from "next/navigation";
 import { equipoDeObra, getObra, getProductora, obrasRelacionadas, premiosDeObra } from "@/lib/data";
 import { Avatar, JsonLd, ObraCard, Poster } from "@/components/Cards";
 import { ObraActions } from "@/components/ObraActions";
+import { SugerirCambio } from "@/components/SugerirCambio";
 import { Galeria } from "@/components/Galeria";
 import { Valoracion } from "@/components/Valoracion";
 import { OG_POR_DEFECTO, fotosDe, T_OG, agruparPorDepartamento, cld, departamento, instagramHandle, instagramUrl, nombreCompleto, obraActiva, periodo, recortar } from "@/lib/format";
@@ -208,7 +209,12 @@ export default async function ObraPage({ params }: Props) {
               </ul>
             </div>
           ) : null}
-          <Link href={`/panel/obra/${obra.id}`} className="btn" style={{ borderStyle: "dashed", borderRadius: 12 }}>Sugerir una corrección</Link>
+          <div className="panel stack" style={{ gap: 10 }}>
+            <h2 className="eyebrow" style={{ marginBottom: 0 }}>¿Algo no cuadra?</h2>
+            <p className="hint" style={{ margin: 0 }}>Propón una corrección y le llegará a quien gestiona esta ficha.</p>
+            <SugerirCambio tipo="obra" refId={obra.id} nombre={obra.titulo} className="btn" />
+            <Link href={`/panel/obra/${obra.id}`} className="hint" style={{ textAlign: "center" }}>¿Es tu obra o formas parte de ella? Gestionar ficha</Link>
+          </div>
         </aside>
       </div>
 

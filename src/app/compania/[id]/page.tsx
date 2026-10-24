@@ -3,6 +3,7 @@ import Image from "next/image";
 import { notFound } from "next/navigation";
 import { getProductora, obrasDeProductora } from "@/lib/data";
 import { JsonLd, ObraCard } from "@/components/Cards";
+import { SugerirCambio } from "@/components/SugerirCambio";
 import { ShareButton } from "@/components/ObraActions";
 import { OG_POR_DEFECTO, T_LOGO, T_OG, cld, colorCartel, iniciales, instagramUrl, recortar } from "@/lib/format";
 import { SITE_URL } from "@/lib/firebase-config";
@@ -57,6 +58,7 @@ export default async function CompaniaPage({ params }: Props) {
             <div className="actions">
               {ig ? <a href={ig} className="btn" target="_blank" rel="noopener noreferrer nofollow">Instagram</a> : null}
               <ShareButton />
+              <SugerirCambio tipo="productora" refId={p.id} nombre={p.nombre_prod} className="btn btn-ghost" />
             </div>
           </div>
         </div>

@@ -272,3 +272,36 @@ export const idsPagina = memo("idsPagina", async (col: "obra" | "persona" | "pro
   }
   return [];
 });
+
+// ---------- Colaboradores (perfil público voluntario) ----------
+export interface Aportacion { uid: string; nombre: string; persona_id?: string; obras: number; fichas: number; creditos: number; total: number }
+
+/** Cifras reales de lo que ha aportado alguien (se cuentan en las colecciones públicas, no se pueden inflar). */
+async function contarAportaciones(uid: string) {
+  const n = async (col: string, campo: string) => (await getCountFromServer(query(collection(db, col), where(campo, "==", uid)))).data().count;
+  const [obras, personas, creditos, propia] = await Promise.all([
+    n("obra", "creacion"), n("persona", "creacion"), n("persona_obra", "creado_por"),
+    getDoc(doc(db, "persona", uid)).then((s) => s.exists() && s.data()?.creacion === uid).catch(() => false),
+  ]);
+  const fichas = Math.max(0, personas - (propia ? 1 : 0)); // su propia ficha no cuenta como aportación
+  return { obras, fichas, creditos, total: obras * 3 + fichas + creditos }; // una obra completa vale más
+}
+
+/** Perfil público de colaborador de un usuario (null si no ha querido hacerlo público). */
+export const aportacionPublica = memo("aportacionPublica", async (uid: string): Promise<Aportacion | null> => {
+  if (!uid || !validId(uid)) return null;
+  try {
+    const s = await getDoc(doc(db, "colaboradores", uid));
+    if (!s.exists() || s.data().publico !== true) return null;
+    return { uid, nombre: s.data().nombre ?? "", persona_id: s.data().persona_id || undefined, ...(await contarAportaciones(uid)) };
+  } catch {
+    return null; // perfil privado: las reglas no dejan leerlo
+  }
+}, 3600);
+
+/** Ranking de colaboradores que han elegido aparecer. */
+export const rankingColaboradores = memo("rankingColaboradores", async (): Promise<Aportacion[]> => {
+  const s = await getDocs(query(collection(db, "colaboradores"), where("publico", "==", true), limit(200)));
+  const lista = await Promise.all(s.docs.map(async (d) => ({ uid: d.id, nombre: d.data().nombre ?? "", persona_id: d.data().persona_id || undefined, ...(await contarAportaciones(d.id)) })));
+  return lista.filter((a) => a.total > 0 && a.nombre.trim()).sort((a, b) => b.total - a.total).slice(0, 100);
+}, 3600);

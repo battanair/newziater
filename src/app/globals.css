@@ -258,6 +258,11 @@ button.chip[aria-pressed="true"] { background: var(--foco-suave); color: var(--p
 .visor-cont { position: absolute; bottom: 16px; left: 50%; transform: translateX(-50%); color: #e8e1d5; font-size: 14px; font-variant-numeric: tabular-nums; }
 @media (max-width: 640px) { .carrusel-item { flex-basis: calc((100% - 24px) / 2.3); } /* móvil: 2 y parte de la 3.ª */ .carrusel-btn { display: none; } .visor-ant, .visor-sig { top: auto; bottom: 8px; transform: none; } }
 
+
+/* ---------- Ventana modal ---------- */
+.modal { position: fixed; inset: 0; z-index: 90; background: rgba(8, 7, 6, .72); display: flex; align-items: center; justify-content: center; padding: 16px; }
+.modal-caja { width: 100%; max-width: 520px; max-height: calc(100vh - 32px); overflow: auto; background: var(--sala); border: 1px solid var(--linea-2); border-radius: 16px; padding: 28px; box-shadow: 0 30px 60px -20px var(--sombra); }
+
 /* ============ Responsive ============ */
 @media (max-width: 1024px) {
   .hero-ficha-in { gap: 32px; }

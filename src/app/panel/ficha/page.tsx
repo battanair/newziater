@@ -14,6 +14,8 @@ import { anadirCredito, creditosDe, leer, miPersona, obrasCreadasPor } from "@/l
 import { T_RETRATO, cld, DEPARTAMENTOS, ROLES, nombreCompleto } from "@/lib/format";
 import type { Credito, Obra, Persona, SearchItem } from "@/lib/types";
 import { clavesDe } from "@/lib/claves";
+import { Historial } from "@/components/Historial";
+import { guardarVersion } from "@/lib/colaboracion";
 
 export default function FichaArtistaPage() {
   return <RequireAuth>{(user) => <Panel user={user} />}</RequireAuth>;
@@ -27,6 +29,7 @@ function Panel({ user }: { user: User }) {
   const [creditos, setCreditos] = useState<CreditoObra[]>([]);
   const [misObras, setMisObras] = useState<Obra[]>([]);
   const [estado, setEstado] = useState<"idle" | "saving" | "saved" | "error">("idle");
+  const [versionesRecarga, setVersionesRecarga] = useState(0);
 
   const cargar = useCallback(async () => {
     const p = await miPersona(user.uid);
@@ -70,7 +73,7 @@ function Panel({ user }: { user: User }) {
     if (!persona || !form.Nombre?.trim()) return;
     setEstado("saving");
     try {
-      await updateDoc(doc(db, "persona", persona.id), {
+      const datos = {
         Nombre: form.Nombre.trim().slice(0, 100),
         Apellidos: (form.Apellidos ?? "").trim().slice(0, 150),
         ciudad: (form.ciudad ?? "").trim().slice(0, 80),
@@ -80,7 +83,12 @@ function Panel({ user }: { user: User }) {
         roles: (form.roles ?? []).slice(0, 10),
         claves: clavesDe(form.Nombre, form.Apellidos),
         destacadas: (form.destacadas ?? []).slice(0, 4),
-      });
+      };
+      // Antes de cambiarla, se guarda cómo estaba (historial con «Recuperar»)
+      const hubo = await guardarVersion("persona", persona.id, persona as unknown as Record<string, unknown>, datos).catch(() => false);
+      await updateDoc(doc(db, "persona", persona.id), datos);
+      setPersona({ ...persona, ...datos });
+      if (hubo) setVersionesRecarga((n) => n + 1);
       await authFetch("/api/revalidar", { personas: [persona.id] }).catch(() => {});
       setEstado("saved");
     } catch {
@@ -141,6 +149,18 @@ function Panel({ user }: { user: User }) {
               <button type="button" className="btn btn-primary" onClick={guardar} disabled={estado === "saving"}>{estado === "saving" ? "Guardando…" : "Guardar y publicar"}</button>
               {estado === "saved" ? <span className="ok" role="status">✓ Publicado. Tu ficha ya está actualizada.</span> : null}
               {estado === "error" ? <span className="error" role="alert">No se pudo guardar.</span> : null}
+            </div>
+            <div style={{ marginTop: 20 }}>
+              <Historial tipo="persona" refId={persona.id} recarga={versionesRecarga} onRecuperar={(a) => {
+                setForm((f) => ({
+                  ...f,
+                  Nombre: String(a.Nombre ?? f.Nombre ?? ""), Apellidos: String(a.Apellidos ?? ""), ciudad: String(a.ciudad ?? ""),
+                  biografia: String(a.biografia ?? ""), instagram: String(a.instagram ?? ""), foto: String(a.foto ?? ""),
+                  roles: Array.isArray(a.roles) ? (a.roles as string[]) : [], destacadas: Array.isArray(a.destacadas) ? (a.destacadas as string[]) : [],
+                }));
+                setEstado("idle");
+                window.scrollTo({ top: 0, behavior: "smooth" });
+              }} />
             </div>
           </section>
 

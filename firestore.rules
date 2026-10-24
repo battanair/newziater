@@ -211,6 +211,70 @@ service cloud.firestore {
       allow read, update, delete: if isAdmin();
     }
 
+    // ---------- Sugerencias de cambio ----------
+    // Llegan al dueño de la ficha (o a administración si no tiene). El campo
+    // "dueno" se comprueba aquí para que nadie pueda enviarlas a otra persona.
+    function fichaDe(tipo, ref) {
+      return get(/databases/$(database)/documents/$(tipo == 'productora' ? 'productoras' : tipo)/$(ref)).data;
+    }
+    function duenoDe(tipo, ref) {
+      let f = fichaDe(tipo, ref);
+      return tipo == 'persona'
+        ? (claimed(f) ? f.coincide : f.get('creacion', ''))
+        : f.get('creacion', '');
+    }
+    match /sugerencias/{sugId} {
+      allow create: if signedIn() && data().autor == uid() && data().estado == 'pendiente'
+        && data().tipo in ['obra', 'persona', 'productora'] && data().ref is string
+        && data().texto is string && data().texto.size() >= 3 && data().texto.size() <= 2000
+        && str('campo', 40) && str('autor_nombre', 100) && str('titulo_ficha', 200)
+        && data().dueno == duenoDe(data().tipo, data().ref);
+      allow read: if isAdmin() || (signedIn() && (resource.data.dueno == uid() || resource.data.autor == uid()));
+      allow update: if (isAdmin() || (signedIn() && resource.data.dueno == uid()))
+        && onlyChanges(['estado', 'resuelta']) && data().estado in ['aplicada', 'descartada'];
+      allow delete: if isAdmin();
+    }
+
+    // ---------- Historial de versiones ----------
+    // Solo quien puede editar la ficha guarda su versión anterior; nadie la modifica después.
+    match /historial/{verId} {
+      allow create: if signedIn() && data().autor == uid() && data().dueno == uid()
+        && data().antes is map && data().cambios is list && data().cambios.size() <= 20
+        && ((data().tipo == 'obra' && (isAdmin() || obraDe(data().ref).creacion == uid()))
+            || (data().tipo == 'persona' && (isAdmin() || ownsPersona(data().ref))));
+      allow read: if isAdmin() || (signedIn() && resource.data.dueno == uid());
+      allow update, delete: if false;
+    }
+
+    // ---------- Solicitudes para gestionar obras sin dueño activo ----------
+    // Puede pedirlo alguien con un crédito confirmado en la obra o el dueño de su compañía. Aprueba administración.
+    match /reclamaciones_obra/{recId} {
+      allow create: if signedIn() && recId == data().obra + '_' + uid()
+        && data().uid == uid() && data().estado == 'pendiente'
+        && str('motivo', 1000) && str('nombre', 100)
+        && obraDe(data().obra).get('creacion', '') != uid()
+        && ((data().via == 'reparto'
+              && get(/databases/$(database)/documents/persona_obra/$(data().credito)).data.id_obra == data().obra
+              && get(/databases/$(database)/documents/persona_obra/$(data().credito)).data.get('estado', 'confirmado') == 'confirmado'
+              && ownsPersona(get(/databases/$(database)/documents/persona_obra/$(data().credito)).data.id_persona))
+            || (data().via == 'compania'
+              && obraDe(data().obra).get('id_productora', '') == data().compania
+              && get(/databases/$(database)/documents/productoras/$(data().compania)).data.creacion == uid()));
+      allow read: if isAdmin() || (signedIn() && resource.data.uid == uid());
+      allow update, delete: if isAdmin();
+    }
+
+    // ---------- Perfil público de colaborador (voluntario) ----------
+    // Solo nombre y si quiere aparecer; las cifras se calculan con los datos reales.
+    match /colaboradores/{userId} {
+      allow read: if resource.data.publico == true || (signedIn() && userId == uid()) || isAdmin();
+      allow create, update: if signedIn() && userId == uid()
+        && data().keys().hasOnly(['nombre', 'publico', 'persona_id'])
+        && data().nombre is string && data().nombre.size() <= 100
+        && data().publico is bool && str('persona_id', 64);
+      allow delete: if signedIn() && userId == uid();
+    }
+
     // ---------- Todo lo demás: cerrado ----------
     match /{document=**} {
       allow read, write: if false;
