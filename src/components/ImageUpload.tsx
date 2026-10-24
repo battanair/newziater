@@ -4,12 +4,44 @@ import { useRef, useState } from "react";
 import { authFetch } from "./AuthProvider";
 import { MAX_FOTOS_OBRA, PROPORCION, T_CARTEL, T_RETRATO, cld } from "@/lib/format";
 
-export const MAX_MB = 4;
+export const MAX_MB = 4; // tamaño máximo de lo que se sube (ya comprimido)
+const MAX_MB_ORIGINAL = 25; // la foto tal como sale del móvil o la cámara
 const MIN_ALTO = 900; // por debajo se ve borrosa en pantallas grandes
+const MAX_LADO = 2000; // px del lado mayor tras comprimir: de sobra para verse nítida en pantallas grandes
+const CALIDAD = 0.82;
 
-export async function subirImagen(file: File, tipo: "cartel" | "foto" | "galeria" | "logo"): Promise<string> {
-  if (!file.type.startsWith("image/")) throw new Error("El archivo tiene que ser una imagen");
-  if (file.size > MAX_MB * 1024 * 1024) throw new Error(`«${file.name}» pesa ${(file.size / 1048576).toFixed(1)} MB. El máximo son ${MAX_MB} MB: reduce la foto o expórtala con menos calidad.`);
+/**
+ * Comprime la foto en el navegador antes de subirla: la reduce a 2000 px de lado
+ * como mucho y la guarda en WebP (o JPEG si el navegador no sabe hacer WebP).
+ * Una foto de móvil de 5–10 MB suele quedar en 300–700 KB sin diferencia visible.
+ * Si algo falla o no mejora, se sube la original.
+ */
+async function comprimir(file: File, tipo: string): Promise<File> {
+  if (!/^image\/(jpeg|png|webp|heic|heif)$/.test(file.type)) return file;
+  let bmp: ImageBitmap;
+  try { bmp = await createImageBitmap(file); } catch { return file; } // p. ej. HEIC fuera de Safari: lo convierte Cloudinary
+  const k = Math.min(1, MAX_LADO / Math.max(bmp.width, bmp.height));
+  if (k === 1 && file.size < 400 * 1024) { bmp.close(); return file; } // ya es ligera
+  const canvas = document.createElement("canvas");
+  canvas.width = Math.round(bmp.width * k);
+  canvas.height = Math.round(bmp.height * k);
+  canvas.getContext("2d")!.drawImage(bmp, 0, 0, canvas.width, canvas.height);
+  bmp.close();
+  const aBlob = (type: string) => new Promise<Blob | null>((ok) => canvas.toBlob(ok, type, CALIDAD));
+  let blob = await aBlob("image/webp");
+  if (!blob || blob.type !== "image/webp") {
+    if (tipo === "logo") return file; // JPEG perdería la transparencia del logo
+    blob = await aBlob("image/jpeg");
+  }
+  if (!blob || blob.size >= file.size) return file;
+  return new File([blob], file.name.replace(/\.[^.]+$/, "") + (blob.type === "image/webp" ? ".webp" : ".jpg"), { type: blob.type });
+}
+
+export async function subirImagen(original: File, tipo: "cartel" | "foto" | "galeria" | "logo"): Promise<string> {
+  if (!original.type.startsWith("image/")) throw new Error("El archivo tiene que ser una imagen");
+  if (original.size > MAX_MB_ORIGINAL * 1024 * 1024) throw new Error(`«${original.name}» pesa ${(original.size / 1048576).toFixed(1)} MB. El máximo son ${MAX_MB_ORIGINAL} MB.`);
+  const file = await comprimir(original, tipo);
+  if (file.size > MAX_MB * 1024 * 1024) throw new Error(`«${original.name}» sigue pesando ${(file.size / 1048576).toFixed(1)} MB después de comprimirla. Prueba con otra versión de la foto.`);
   const firma = await authFetch("/api/cloudinary-firma", { tipo });
   const form = new FormData();
   form.append("file", file);
@@ -93,7 +125,7 @@ export function ImageUpload({ value, onChange, tipo, label, shape = "poster" }: 
       </button>
       <input ref={input} type="file" accept="image/jpeg,image/png,image/webp,image/heic" hidden onChange={(e) => handle(e.target.files?.[0])} />
       <p id={`${tipo}-formato`} className="hint" style={{ margin: "8px 0 0" }}>
-        Formato <strong style={{ color: "var(--texto-2)" }}>{PROPORCION.texto}</strong>, recomendado {PROPORCION.px}. JPG, PNG o WebP de hasta {MAX_MB} MB. Si tiene otra forma, se recortará.
+        Formato <strong style={{ color: "var(--texto-2)" }}>{PROPORCION.texto}</strong>, recomendado {PROPORCION.px}. JPG, PNG o WebP; se comprime sola al subirla. Si tiene otra forma, se recortará.
       </p>
       {aviso ? <p className="hint" role="status" style={{ margin: "8px 0 0", color: "var(--foco)" }}>{aviso}</p> : null}
       {error ? <p className="error" role="alert" style={{ margin: "8px 0 0" }}>{error}</p> : null}
@@ -149,7 +181,7 @@ export function GaleriaUpload({ value, onChange }: { value: string[]; onChange: 
       </div>
       <input ref={input} type="file" accept="image/jpeg,image/png,image/webp,image/heic" multiple hidden onChange={(e) => handle(e.target.files)} />
       <p className="hint" style={{ margin: "8px 0 0" }}>
-        Fotos de la función o de ensayos. Mejor en horizontal (4:3, a partir de 1600 × 1200 px). JPG, PNG o WebP de hasta {MAX_MB} MB cada una; máximo {MAX_FOTOS}.
+        Fotos de la función o de ensayos. Mejor en horizontal (4:3, a partir de 1600 × 1200 px). JPG, PNG o WebP; se comprimen solas al subirlas. Máximo {MAX_FOTOS}.
       </p>
       {error ? <p className="error" role="alert" style={{ margin: "8px 0 0" }}>{error}</p> : null}
     </div>
