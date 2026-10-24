@@ -301,7 +301,9 @@ export const aportacionPublica = memo("aportacionPublica", async (uid: string): 
 
 /** Ranking de colaboradores que han elegido aparecer. */
 export const rankingColaboradores = memo("rankingColaboradores", async (): Promise<Aportacion[]> => {
-  const s = await getDocs(query(collection(db, "colaboradores"), where("publico", "==", true), limit(200)));
+  // Si las reglas aún no permiten leer «colaboradores», la página sale vacía en vez de fallar
+  const s = await getDocs(query(collection(db, "colaboradores"), where("publico", "==", true), limit(200))).catch(() => null);
+  if (!s) return [];
   const lista = await Promise.all(s.docs.map(async (d) => ({ uid: d.id, nombre: d.data().nombre ?? "", persona_id: d.data().persona_id || undefined, ...(await contarAportaciones(d.id)) })));
   return lista.filter((a) => a.total > 0 && a.nombre.trim()).sort((a, b) => b.total - a.total).slice(0, 100);
 }, 3600);
