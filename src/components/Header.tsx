@@ -7,6 +7,7 @@ import { useAuth } from "./AuthProvider";
 import { SearchBox } from "./SearchBox";
 import { ModoToggle } from "./ModoToggle";
 import { Insignia, usePendientes } from "./Pendientes";
+import { useEsAdmin } from "./EsAdmin";
 
 const LINKS = [
   { href: "/obras", label: "Obras" },
@@ -27,6 +28,7 @@ export function Header() {
   const pathname = usePathname();
   const { user, loading } = useAuth();
   const { total } = usePendientes();
+  const esAdmin = useEsAdmin();
   return (
     <header className="header">
       <div className="wrap header-in">
@@ -43,6 +45,12 @@ export function Header() {
         </nav>
         <div className="actions">
           <ModoToggle />
+          {esAdmin ? (
+            <Link href="/panel/admin" className="btn btn-admin" aria-label="Administración" title="Administración">
+              <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 3v18h18" /><path d="M7 15l4-4 3 3 5-6" /></svg>
+              <span className="solo-escritorio">Admin</span>
+            </Link>
+          ) : null}
           {loading ? null : user ? (
             <Link href="/panel" className="btn btn-primary solo-escritorio" aria-label="Mi espacio">
               {user.photoURL ? (

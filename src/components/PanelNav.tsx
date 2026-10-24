@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { usePendientes } from "./Pendientes";
+import { useEsAdmin } from "./EsAdmin";
 
 // Navegación del espacio personal. La tiene cualquier usuario con sesión;
 // «Ficha de artista» y «Vínculos» sirven a quien trabaja en las artes escénicas.
@@ -18,6 +19,7 @@ const ITEMS = [
 export function PanelNav({ pendientes = 0, personaId }: { pendientes?: number; personaId?: string }) {
   const path = usePathname();
   const { total } = usePendientes();
+  const esAdmin = useEsAdmin();
   pendientes = Math.max(pendientes, total);
   return (
     <div className="panel-nav">
@@ -30,6 +32,7 @@ export function PanelNav({ pendientes = 0, personaId }: { pendientes?: number; p
               {i.href === "/panel/vinculos" && pendientes ? <span className="chip chip-foco" style={{ marginLeft: 6, minHeight: 20, padding: "0 7px", fontSize: 12 }}>{pendientes}</span> : null}
             </Link>
           ))}
+          {esAdmin ? <Link href="/panel/admin" aria-current={path.startsWith("/panel/admin") ? "page" : undefined} style={{ color: "var(--foco)" }}>Administración</Link> : null}
         </nav>
         {personaId ? <Link href={`/persona/${personaId}`} className="btn">Ver mi ficha pública</Link> : null}
         <Link href="/panel/obra/nueva" className="btn btn-primary">+ Crear obra</Link>

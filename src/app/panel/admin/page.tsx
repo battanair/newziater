@@ -11,6 +11,7 @@ import { leer } from "@/lib/client-data";
 import { nombreCompleto } from "@/lib/format";
 import type { Obra, Persona } from "@/lib/types";
 import { ResumenAdmin } from "@/components/ResumenAdmin";
+import { EMAIL_ADMIN } from "@/components/EsAdmin";
 import { aprobarSolicitudObra, rechazarSolicitudObra, resolverSugerencia, solicitudesObra, sugerenciasPendientes, type SolicitudObra, type Sugerencia } from "@/lib/colaboracion";
 
 type Reclamacion = { id: string; id_persona: string; uid: string; metodo: string; contacto: string; persona?: Persona | null };
@@ -30,7 +31,7 @@ function Admin({ user }: { user: User }) {
 
   const cargar = useCallback(async () => {
     const t = await user.getIdTokenResult(true);
-    if (t.claims.admin !== true) return setEsAdmin(false);
+    if (t.claims.admin !== true || user.email !== EMAIL_ADMIN || !user.emailVerified) return setEsAdmin(false);
     setEsAdmin(true);
     const q = await getDocs(query(collection(db, "reclamaciones"), where("estado", "==", "pendiente")));
     const rs = q.docs.map((d) => ({ id: d.id, ...(d.data() as Omit<Reclamacion, "id">) }));
@@ -56,7 +57,7 @@ function Admin({ user }: { user: User }) {
   }
 
   if (esAdmin === null) return <main className="wrap section"><p className="muted">Comprobando permisos…</p></main>;
-  if (!esAdmin) return <main className="wrap section"><p>Esta sección es solo para el equipo de Ziater.</p></main>;
+  if (!esAdmin) return <main className="wrap section"><h1 className="h2">Página no disponible</h1><p className="soft">Esta sección es privada.</p></main>;
 
   async function aprobarObra(x: SolicitudObra) {
     await aprobarSolicitudObra(x);
