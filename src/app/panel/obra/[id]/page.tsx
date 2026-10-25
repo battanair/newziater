@@ -156,8 +156,17 @@ function Editor({ id, user }: { id: string; user: User }) {
 
       for (const cid of borrados) await deleteDoc(doc(db, "persona_obra", cid));
       const personasTocadas: string[] = [];
+      // Una misma persona nueva puede tener varios puestos (dirige, escribe y actúa):
+      // se crea una sola ficha por nombre y todos sus créditos apuntan a ella.
+      const nuevas = new Map<string, string>();
+      const normal = (n: string) => n.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/\s+/g, " ").trim();
       for (const m of equipo.filter((x) => !x.creditoId)) {
-        const personaId = m.personaId ?? (await crearPersonaSinCuenta(m.nombre));
+        let personaId = m.personaId;
+        if (!personaId) {
+          const k = normal(m.nombre);
+          personaId = nuevas.get(k) ?? (await crearPersonaSinCuenta(m.nombre));
+          nuevas.set(k, personaId);
+        }
         personasTocadas.push(personaId);
         await anadirCredito({ id_obra: obraId, id_persona: personaId, puesto: m.dep, titulo: m.titulo || m.dep, fecha_inicio: f.anoinicio, fecha_fin: f.activa ? "" : f.anofin }, m.estado === "tu");
       }
