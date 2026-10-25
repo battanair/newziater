@@ -58,6 +58,9 @@ export interface Credito {
   titulo?: string; // personaje o descripción del cargo
   fecha_inicio?: string;
   fecha_fin?: string;
+  /** Relevos: mes de entrada ("AAAA-MM"; vacío = desde el estreno) y de salida (vacío = sigue). */
+  desde?: string;
+  hasta?: string;
   // Campos nuevos (opcionales; los créditos antiguos se tratan como confirmados)
   estado?: EstadoCredito;
   creado_por?: string;

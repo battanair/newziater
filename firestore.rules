@@ -134,13 +134,14 @@ service cloud.firestore {
         && data().creado_por == uid()
         && (data().estado == 'pendiente'
             || (data().estado == 'confirmado' && esDuenaObra(data().id_obra) && ownsPersona(data().id_persona)))
-        && str('puesto', 100) && str('titulo', 150) && str('fecha_inicio', 10) && str('fecha_fin', 10);
+        && str('puesto', 100) && str('titulo', 150) && str('fecha_inicio', 10) && str('fecha_fin', 10)
+        && str('desde', 7) && str('hasta', 7);
 
       // Confirmar o corregir: el dueño de la obra o la persona acreditada. No se puede mover a otra obra/persona.
       allow update: if isAdmin()
         || ((esDuenaObra(resource.data.id_obra) || ownsPersona(resource.data.id_persona))
             && unchanged('id_obra') && unchanged('id_persona') && unchanged('creado_por')
-            && str('puesto', 100) && str('titulo', 150)
+            && str('puesto', 100) && str('titulo', 150) && str('desde', 7) && str('hasta', 7)
             && (!('estado' in data()) || data().estado in ['pendiente', 'confirmado']));
 
       allow delete: if isAdmin() || esDuenaObra(resource.data.id_obra) || ownsPersona(resource.data.id_persona);

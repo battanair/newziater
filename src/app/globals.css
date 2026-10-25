@@ -409,3 +409,21 @@ button.chip[aria-pressed="true"] { background: var(--foco-suave); color: var(--p
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { transition: none !important; animation: none !important; }
 }
+
+/* Menú pequeño «⋯» (opciones de cada miembro en el editor de obra) */
+.menu-mini { position: relative; }
+.menu-mini > summary { list-style: none; cursor: pointer; }
+.menu-mini > summary::-webkit-details-marker { display: none; }
+.menu-mini-caja { position: absolute; right: 0; top: calc(100% + 4px); z-index: 20; min-width: 200px; display: flex; flex-direction: column; padding: 6px; border-radius: 10px; background: var(--campo); border: 1px solid var(--linea-2); box-shadow: 0 18px 40px -12px var(--sombra); }
+.menu-mini-caja button { text-align: left; padding: 10px 12px; border-radius: 6px; background: none; border: 0; color: inherit; font: inherit; cursor: pointer; }
+.menu-mini-caja button:hover { background: var(--capa); color: var(--papel); }
+/* Botones Actual / Original / Todos */
+.vista-elenco { display: inline-flex; flex-wrap: wrap; gap: 6px; }
+.tramo { display: block; font-size: 12px; color: var(--texto-3); margin-top: 2px; }
+.cred-lista { display: inline-flex; flex-wrap: wrap; gap: 2px 18px; }
+.tramo-linea { color: var(--texto-3); font-size: 14px; }
+.con-vista .tramo { display: none; }
+.con-vista[data-vista="todos"] .tramo { display: block; }
+.con-vista[data-vista="actual"] .fuera-actual, .con-vista[data-vista="original"] .fuera-original { display: none; }
+.con-vista[data-vista="actual"] .credit-row:not(:has(.cred:not(.fuera-actual))),
+.con-vista[data-vista="original"] .credit-row:not(:has(.cred:not(.fuera-original))) { display: none; }

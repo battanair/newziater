@@ -9,8 +9,9 @@ import { SugerirCambio } from "@/components/SugerirCambio";
 import { EditarFicha } from "@/components/EditarFicha";
 import { Anadirme } from "@/components/Anadirme";
 import { Galeria } from "@/components/Galeria";
+import { VistaElenco } from "@/components/VistaElenco";
 import { Valoracion } from "@/components/Valoracion";
-import { fechaCorta, partirFunciones, OG_POR_DEFECTO, fotosDe, T_OG, agruparPorDepartamento, cld, departamento, instagramHandle, instagramUrl, nombreCompleto, obraActiva, periodo, recortar } from "@/lib/format";
+import { fechaCorta, partirFunciones, OG_POR_DEFECTO, fotosDe, T_OG, agruparPorDepartamento, cld, departamento, instagramHandle, instagramUrl, nombreCompleto, obraActiva, periodo, recortar, tramo } from "@/lib/format";
 import { SITE_URL } from "@/lib/firebase-config";
 
 // Página estática regenerada en segundo plano: rápida para Google y gratis de servir.
@@ -59,6 +60,53 @@ export default async function ObraPage({ params }: Props) {
   const elenco = equipo.filter((c) => departamento(c) === "Interpretación");
   const tecnico = agruparPorDepartamento(equipo.filter((c) => departamento(c) !== "Interpretación"));
   const cuando = periodo(obra.anoinicio, obra.anofin);
+  // Relevos: si alguien entró más tarde o dejó la obra, se ofrecen los botones Actual / Original / Todos
+  const hayRelevos = equipo.some((c) => c.desde || c.hasta);
+  const fuera = (c: { desde?: string; hasta?: string }) => [c.hasta ? "fuera-actual" : "", c.desde ? "fuera-original" : ""].filter(Boolean).join(" ");
+  const SECCIONES = (
+    <>
+          <section id="elenco">
+            <h2 className="h2" style={{ marginBottom: 20 }}>Elenco</h2>
+            {elenco.length ? (
+              <div className="scroller">
+                {elenco.map((c) => (
+                  <Link key={c.id} href={`/persona/${c.persona.id}`} className={`card ${fuera(c)}`}>
+                    <Avatar persona={c.persona} />
+                    <span className="card-title" style={{ textAlign: "center" }}>{nombreCompleto(c.persona)}</span>
+                    {c.titulo ? <span className="card-sub" style={{ textAlign: "center" }}>{c.titulo}</span> : null}
+                    {hayRelevos ? <span className="tramo" style={{ textAlign: "center" }}>{tramo(c, true)}</span> : null}
+                  </Link>
+                ))}
+              </div>
+            ) : (
+              <p className="muted">Aún no hay intérpretes en esta ficha. <Anadirme obraId={obra.id} titulo={obra.titulo} duenoObra={obra.creacion} anoinicio={obra.anoinicio} anofin={obra.anofin} /></p>
+            )}
+          </section>
+
+          <section id="equipo" style={{ marginTop: 56 }}>
+            <h2 className="h2" style={{ marginBottom: 8 }}>Equipo artístico y técnico</h2>
+            <p className="muted" style={{ marginTop: 0, marginBottom: 20 }}>¿Trabajaste en esta obra? <Anadirme obraId={obra.id} titulo={obra.titulo} duenoObra={obra.creacion} anoinicio={obra.anoinicio} anofin={obra.anofin} texto="Añade tu crédito" /></p>
+            {tecnico.length ? (
+              <ul className="list">
+                {tecnico.map((g) => (
+                  <li key={g.dep} className="credit-row">
+                    <span className="dep">{g.dep}</span>
+                    <span className="cred-lista">
+                      {g.items.map((c) => (
+                        <span key={c.id} className={`cred ${fuera(c)}`}>
+                          <Link href={`/persona/${c.persona.id}`} style={{ fontWeight: 500 }}>{nombreCompleto(c.persona)}</Link>
+                          {c.titulo && c.titulo.trim() !== g.dep ? <span className="muted"> ({c.titulo.trim()})</span> : null}
+                          {hayRelevos && (c.desde || c.hasta) ? <span className="tramo-linea"> · {tramo(c)}</span> : null}
+                        </span>
+                      ))}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            ) : null}
+          </section>
+    </>
+  );
   const generos = (obra.categoria ?? []).filter(Boolean);
   const ig = instagramUrl(obra.instagram);
   const yt = youtubeId(obra.trailer);
@@ -180,45 +228,7 @@ export default async function ObraPage({ params }: Props) {
               ) : null}
             </section>
           ) : null}
-          <section id="elenco">
-            <h2 className="h2" style={{ marginBottom: 20 }}>Elenco</h2>
-            {elenco.length ? (
-              <div className="scroller">
-                {elenco.map((c) => (
-                  <Link key={c.id} href={`/persona/${c.persona.id}`} className="card">
-                    <Avatar persona={c.persona} />
-                    <span className="card-title" style={{ textAlign: "center" }}>{nombreCompleto(c.persona)}</span>
-                    {c.titulo ? <span className="card-sub" style={{ textAlign: "center" }}>{c.titulo}</span> : null}
-                  </Link>
-                ))}
-              </div>
-            ) : (
-              <p className="muted">Aún no hay intérpretes en esta ficha. <Anadirme obraId={obra.id} titulo={obra.titulo} duenoObra={obra.creacion} anoinicio={obra.anoinicio} anofin={obra.anofin} /></p>
-            )}
-          </section>
-
-          <section id="equipo" style={{ marginTop: 56 }}>
-            <h2 className="h2" style={{ marginBottom: 8 }}>Equipo artístico y técnico</h2>
-            <p className="muted" style={{ marginTop: 0, marginBottom: 20 }}>¿Trabajaste en esta obra? <Anadirme obraId={obra.id} titulo={obra.titulo} duenoObra={obra.creacion} anoinicio={obra.anoinicio} anofin={obra.anofin} texto="Añade tu crédito" /></p>
-            {tecnico.length ? (
-              <ul className="list">
-                {tecnico.map((g) => (
-                  <li key={g.dep} className="credit-row">
-                    <span className="dep">{g.dep}</span>
-                    <span>
-                      {g.items.map((c, i) => (
-                        <span key={c.id}>
-                          {i ? ", " : ""}
-                          <Link href={`/persona/${c.persona.id}`} style={{ fontWeight: 500 }}>{nombreCompleto(c.persona)}</Link>
-                          {c.titulo && c.titulo.trim() !== g.dep ? <span className="muted"> ({c.titulo.trim()})</span> : null}
-                        </span>
-                      ))}
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            ) : null}
-          </section>
+          {hayRelevos ? <VistaElenco activa={obraActiva(obra)} total={equipo.length}>{SECCIONES}</VistaElenco> : SECCIONES}
 
           {yt || fotos.length ? (
             <section id="galeria" style={{ marginTop: 56 }}>

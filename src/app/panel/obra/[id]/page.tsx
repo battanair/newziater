@@ -13,7 +13,7 @@ import { authFetch } from "@/components/AuthProvider";
 import { useBusqueda } from "@/components/SearchBox";
 import { clavesDe, normalizar } from "@/lib/claves";
 import { anadirCredito, creditosDe, crearPersonaSinCuenta, leer, miPersona } from "@/lib/client-data";
-import { DEPARTAMENTOS, GENEROS, colorCartel, fotosDe, iniciales } from "@/lib/format";
+import { DEPARTAMENTOS, GENEROS, colorCartel, fotosDe, iniciales, mesActual, tramo } from "@/lib/format";
 import type { Funcion, Obra, Persona, SearchItem } from "@/lib/types";
 import { SugerirCambio } from "@/components/SugerirCambio";
 import { Historial } from "@/components/Historial";
@@ -33,6 +33,9 @@ type Miembro = {
   dep: string;
   titulo: string;
   estado: "tu" | "enlazado" | "nuevo";
+  desde?: string; // "AAAA-MM"; vacío = desde el estreno
+  hasta?: string; // "AAAA-MM"; vacío = sigue
+  cambiado?: boolean; // crédito ya guardado cuyas fechas hay que actualizar
 };
 
 const PASOS = [
@@ -56,6 +59,10 @@ function Editor({ id, user }: { id: string; user: User }) {
   const [q, setQ] = useState("");
   const [personaje, setPersonaje] = useState("");
   const [dudosas, setDudosas] = useState<SearchItem[] | null>(null);
+  // Relevos: quién entra en lugar de quién, quién deja la obra y si alguien se incorpora tarde
+  const [incorpora, setIncorpora] = useState(""); // "" = desde el estreno
+  const [relevo, setRelevo] = useState<{ key: string; q: string; desde: string } | null>(null);
+  const [salida, setSalida] = useState<{ key: string; hasta: string } | null>(null);
   const [estado, setEstado] = useState<"idle" | "saving" | "error">("idle");
   const [error, setError] = useState("");
 
@@ -70,7 +77,7 @@ function Editor({ id, user }: { id: string; user: User }) {
         setF({ titulo: o.titulo, sinopsis: o.sinopsis ?? "", anoinicio: String(o.anoinicio ?? ""), anofin: fin === "0" ? "" : fin, activa: !fin || fin === "0", cartel: o.cartel ?? "", instagram: o.instagram ?? "", trailer: o.trailer ?? "", categoria: (o.categoria ?? []).filter(Boolean), duracion: o.duracion ? String(o.duracion) : "", idioma: o.idioma ?? "Castellano", fotos: fotosDe(o), funciones: o.funciones ?? [] });
         const cs = await creditosDe("id_obra", id);
         const ps = await Promise.all(cs.map((c) => leer<Persona>("persona", c.id_persona)));
-        setEquipo(cs.map((c, i) => ({ key: c.id, creditoId: c.id, personaId: c.id_persona, nombre: ps[i] ? `${ps[i]!.Nombre} ${ps[i]!.Apellidos ?? ""}`.trim() : "Ficha eliminada", img: ps[i]?.foto, dep: c.puesto || "Equipo", titulo: c.titulo ?? "", estado: c.id_persona === user.uid || ps[i]?.coincide === user.uid ? "tu" : "enlazado" })));
+        setEquipo(cs.map((c, i) => ({ key: c.id, creditoId: c.id, personaId: c.id_persona, nombre: ps[i] ? `${ps[i]!.Nombre} ${ps[i]!.Apellidos ?? ""}`.trim() : "Ficha eliminada", img: ps[i]?.foto, dep: c.puesto || "Equipo", titulo: c.titulo ?? "", estado: c.id_persona === user.uid || ps[i]?.coincide === user.uid ? "tu" : "enlazado", desde: c.desde ?? "", hasta: c.hasta ?? "" })));
       }
       setCargando(false);
     })();
@@ -78,6 +85,7 @@ function Editor({ id, user }: { id: string; user: User }) {
 
   const esDuena = nueva || obra?.creacion === user.uid;
   const { items: sugerencias } = useBusqueda(q, ["persona"]);
+  const { items: sugRelevo } = useBusqueda(relevo?.q ?? "", ["persona"]);
 
   if (cargando) return <main className="wrap section"><p className="muted">Cargando…</p></main>;
   if (!nueva && !obra) return <main className="wrap section"><p>Esta obra no existe.</p></main>;
@@ -115,9 +123,29 @@ function Editor({ id, user }: { id: string; user: User }) {
     setDudosas(null);
     if (p && equipo.some((m) => m.personaId === p.id && m.dep === dep)) { setQ(""); return; } // ya estaba en ese departamento
     const esYo = Boolean(p && yo && p.id === yo.id);
-    setEquipo((e) => [...e, { key: crypto.randomUUID(), personaId: p?.id, nombre, img: p?.img, dep, titulo: dep === "Interpretación" ? personaje.trim() : "", estado: esYo ? "tu" : p ? "enlazado" : "nuevo" }]);
+    setEquipo((e) => [...e, { key: crypto.randomUUID(), personaId: p?.id, nombre, img: p?.img, dep, titulo: dep === "Interpretación" ? personaje.trim() : "", estado: esYo ? "tu" : p ? "enlazado" : "nuevo", desde: nueva ? "" : incorpora }]);
     setQ("");
     setPersonaje("");
+  }
+
+  /** Cambia las fechas de un miembro (si ya estaba guardado, se actualizará al publicar). */
+  function fechas(key: string, cambios: Partial<Pick<Miembro, "desde" | "hasta">>) {
+    setEquipo((e) => e.map((x) => (x.key === key ? { ...x, ...cambios, cambiado: Boolean(x.creditoId) } : x)));
+  }
+
+  /** Relevo: quien estaba sale ese mes y entra otra persona con el mismo puesto y personaje. */
+  function hacerRelevo(m: Miembro, p?: SearchItem) {
+    if (!relevo) return;
+    const nombre = (p?.n ?? relevo.q).trim();
+    if (!nombre || !relevo.desde) return;
+    const esYo = Boolean(p && yo && p.id === yo.id);
+    setEquipo((e) => {
+      const sin = e.map((x) => (x.key === m.key ? { ...x, hasta: relevo.desde, cambiado: Boolean(x.creditoId) } : x));
+      const i = sin.findIndex((x) => x.key === m.key);
+      const nuevo: Miembro = { key: crypto.randomUUID(), personaId: p?.id, nombre, img: p?.img, dep: m.dep, titulo: m.titulo, estado: esYo ? "tu" : p ? "enlazado" : "nuevo", desde: relevo.desde };
+      return [...sin.slice(0, i), nuevo, ...sin.slice(i)];
+    });
+    setRelevo(null);
   }
 
   function quitar(m: Miembro) {
@@ -160,15 +188,16 @@ function Editor({ id, user }: { id: string; user: User }) {
       // se crea una sola ficha por nombre y todos sus créditos apuntan a ella.
       const nuevas = new Map<string, string>();
       const normal = (n: string) => n.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/\s+/g, " ").trim();
+      for (const m of equipo.filter((x) => x.creditoId && x.cambiado)) {
+        await updateDoc(doc(db, "persona_obra", m.creditoId!), { desde: (m.desde ?? "").slice(0, 7), hasta: (m.hasta ?? "").slice(0, 7) });
+        if (m.personaId) personasTocadas.push(m.personaId);
+      }
       for (const m of equipo.filter((x) => !x.creditoId)) {
-        let personaId = m.personaId;
-        if (!personaId) {
-          const k = normal(m.nombre);
-          personaId = nuevas.get(k) ?? (await crearPersonaSinCuenta(m.nombre));
-          nuevas.set(k, personaId);
-        }
+        const k = normal(m.nombre);
+        const personaId: string = m.personaId ?? nuevas.get(k) ?? (await crearPersonaSinCuenta(m.nombre));
+        if (!m.personaId) nuevas.set(k, personaId);
         personasTocadas.push(personaId);
-        await anadirCredito({ id_obra: obraId, id_persona: personaId, puesto: m.dep, titulo: m.titulo || m.dep, fecha_inicio: f.anoinicio, fecha_fin: f.activa ? "" : f.anofin }, m.estado === "tu");
+        await anadirCredito({ id_obra: obraId, id_persona: personaId, puesto: m.dep, titulo: m.titulo || m.dep, fecha_inicio: f.anoinicio, fecha_fin: f.activa ? "" : f.anofin, desde: m.desde, hasta: m.hasta }, m.estado === "tu");
       }
       await authFetch("/api/revalidar", { obras: [obraId], personas: personasTocadas }).catch(() => {});
       router.push(`/obra/${obraId}`);
@@ -178,6 +207,7 @@ function Editor({ id, user }: { id: string; user: User }) {
     }
   }
 
+  const hayRelevos = equipo.some((m) => m.desde || m.hasta);
   const grupos = DEPARTAMENTOS.concat(["Equipo"]).map((d) => ({ d, items: equipo.filter((m) => m.dep === d) })).filter((g) => g.items.length);
   const otros = equipo.filter((m) => !DEPARTAMENTOS.includes(m.dep) && m.dep !== "Equipo");
   if (otros.length) grupos.push({ d: "Otros", items: otros });
@@ -276,6 +306,13 @@ function Editor({ id, user }: { id: string; user: User }) {
                   <input id="who" type="search" className="input" style={{ flex: "2 1 240px", background: "var(--sala)" }} placeholder="Nombre de la persona…" value={q} onChange={(e) => setQ(e.target.value)} maxLength={120} autoComplete="off" />
                   {dep === "Interpretación" ? <><label className="sr-only" htmlFor="pj">Personaje</label><input id="pj" className="input" style={{ flex: "1 1 160px", background: "var(--sala)" }} placeholder="Personaje" value={personaje} onChange={(e) => setPersonaje(e.target.value)} maxLength={150} /></> : null}
                 </form>
+                {!nueva ? (
+                  <div role="group" aria-label="Desde cuándo" style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 6, marginTop: 10 }}>
+                    <button type="button" className="chip" aria-pressed={!incorpora} onClick={() => setIncorpora("")}>Desde el estreno</button>
+                    <button type="button" className="chip" aria-pressed={Boolean(incorpora)} onClick={() => setIncorpora(incorpora || mesActual())}>Se incorpora más tarde</button>
+                    {incorpora ? <><label className="sr-only" htmlFor="inc">Mes en que se incorpora</label><input id="inc" type="month" className="input" style={{ width: "auto", minHeight: 36, background: "var(--sala)" }} value={incorpora} max={mesActual()} onChange={(e) => setIncorpora(e.target.value)} /></> : null}
+                  </div>
+                ) : null}
                 {dudosas ? (
                   <div className="panel panel-foco" role="alert" style={{ marginTop: 10 }}>
                     <strong style={{ display: "block", marginBottom: 6 }}>¿Es alguna de estas personas?</strong>
@@ -315,14 +352,65 @@ function Editor({ id, user }: { id: string; user: User }) {
               {grupos.map((g) => (
                 <div key={g.d}>
                   <h2 className="eyebrow" style={{ color: "var(--texto-3)", marginBottom: 6 }}>{g.d} · {g.items.length}</h2>
-                  {g.items.map((m) => (
-                    <div key={m.key} className="member">
+                  {g.items.map((m) => {
+                    const t = tramo(m, hayRelevos);
+                    const sub = [m.titulo && m.titulo !== m.dep ? m.titulo : "", t].filter(Boolean).join(" · ");
+                    return (
+                    <div key={m.key}>
+                    <div className="member" style={m.hasta ? { opacity: 0.72 } : undefined}>
                       <span style={{ width: 44, height: 66, borderRadius: 4, flex: "none", display: "inline-flex", alignItems: "center", justifyContent: "center", background: m.img ? `center/cover url(${JSON.stringify(m.img)})` : colorCartel(m.key), border: m.estado === "nuevo" ? "1px dashed var(--texto-4)" : 0 }} aria-hidden="true">{m.img ? "" : iniciales(m.nombre)}</span>
-                      <span className="who"><strong style={{ display: "block" }}>{m.nombre}</strong>{m.titulo ? <span className="hint">{m.titulo}</span> : null}</span>
+                      <span className="who"><strong style={{ display: "block" }}>{m.nombre}</strong>{sub ? <span className="hint">{sub}</span> : null}</span>
                       <span className={`chip ${m.estado === "tu" ? "chip-foco" : m.estado === "enlazado" ? "chip-ok" : ""}`}>{m.estado === "tu" ? "Eres tú" : m.estado === "enlazado" ? (m.creditoId ? "✓ Enlazado" : "✓ Enlazado · recibirá aviso") : "Ficha nueva · podrá reclamarla"}</span>
-                      <button type="button" className="btn btn-ghost" aria-label={`Quitar a ${m.nombre}`} onClick={() => quitar(m)}>✕</button>
+                      <span style={{ display: "inline-flex", gap: 4 }}>
+                        {!m.hasta ? <button type="button" className="btn" aria-expanded={relevo?.key === m.key} onClick={() => { setSalida(null); setRelevo(relevo?.key === m.key ? null : { key: m.key, q: "", desde: mesActual() }); }}>⇄ Sustituir</button> : null}
+                        <details className="menu-mini">
+                          <summary className="btn btn-ghost" aria-label={`Más opciones para ${m.nombre}`}>⋯</summary>
+                          <div className="menu-mini-caja">
+                            {m.hasta
+                              ? <button type="button" onClick={(e) => { fechas(m.key, { hasta: "" }); (e.currentTarget.closest("details") as HTMLDetailsElement).open = false; }}>Sigue en la obra</button>
+                              : <button type="button" onClick={(e) => { setRelevo(null); setSalida({ key: m.key, hasta: mesActual() }); (e.currentTarget.closest("details") as HTMLDetailsElement).open = false; }}>Ha dejado la obra</button>}
+                            <button type="button" onClick={(e) => { (e.currentTarget.closest("details") as HTMLDetailsElement).open = false; quitar(m); }}>Quitar de la ficha</button>
+                          </div>
+                        </details>
+                      </span>
                     </div>
-                  ))}
+                    {relevo?.key === m.key ? (
+                      <div className="panel panel-foco" style={{ margin: "0 0 12px" }}>
+                        <strong style={{ display: "block", marginBottom: 10 }}>¿Quién entra {m.dep === "Interpretación" && m.titulo ? `como ${m.titulo}` : `en ${m.dep.toLowerCase()}`} en lugar de {m.nombre}?</strong>
+                        <div style={{ display: "flex", flexWrap: "wrap", gap: 10 }}>
+                          <label className="sr-only" htmlFor={`rq-${m.key}`}>Persona que entra</label>
+                          <input id={`rq-${m.key}`} type="search" className="input" autoFocus style={{ flex: "2 1 220px", background: "var(--sala)" }} placeholder="Nombre de la persona…" value={relevo.q} maxLength={120} autoComplete="off" onChange={(e) => setRelevo({ ...relevo, q: e.target.value })} onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); const exacta = sugRelevo.find((p) => normalizar(p.n) === normalizar(relevo.q)); hacerRelevo(m, exacta); } }} />
+                          <label style={{ display: "inline-flex", alignItems: "center", gap: 8 }}><span className="hint">Desde</span><input type="month" className="input" style={{ width: "auto", background: "var(--sala)" }} value={relevo.desde} max={mesActual()} onChange={(e) => setRelevo({ ...relevo, desde: e.target.value })} /></label>
+                        </div>
+                        {relevo.q.trim() ? (
+                          <div className="suggest" style={{ position: "static", marginTop: 8 }}>
+                            {sugRelevo.slice(0, 5).map((p) => (
+                              <button key={p.id} type="button" className="suggest-item" onClick={() => hacerRelevo(m, p)}>
+                                {p.img ? <img src={p.img} alt="" className="thumb thumb-round" /> : <span className="thumb thumb-round" />}
+                                <span style={{ flex: 1 }}><strong style={{ display: "block" }}>{p.n}</strong><span className="hint">{p.s || "Ficha en Ziater"}</span></span>
+                                <span style={{ color: "var(--foco)", fontWeight: 600, fontSize: 14 }}>Hacer el relevo</span>
+                              </button>
+                            ))}
+                            <button type="button" className="suggest-item" onClick={() => hacerRelevo(m)}>
+                              <span className="thumb thumb-round" style={{ border: "1px dashed var(--linea-3)", background: "transparent" }} />
+                              <span><strong style={{ display: "block" }}>«{relevo.q.trim()}» sin ficha</strong><span className="hint">Le crearemos una ficha que podrá reclamar</span></span>
+                            </button>
+                          </div>
+                        ) : <p className="hint" style={{ margin: "8px 0 0" }}>{m.nombre} seguirá en la ficha como parte del elenco anterior.</p>}
+                        <div className="actions" style={{ marginTop: 10 }}><button type="button" className="btn btn-ghost" onClick={() => setRelevo(null)}>Cancelar</button></div>
+                      </div>
+                    ) : null}
+                    {salida?.key === m.key ? (
+                      <div className="panel panel-foco" style={{ margin: "0 0 12px", display: "flex", flexWrap: "wrap", alignItems: "center", gap: 10 }}>
+                        <span style={{ flex: "1 1 200px" }}><strong>¿Cuándo dejó la obra {m.nombre}?</strong><span className="hint" style={{ display: "block" }}>Seguirá en la ficha, dentro del elenco anterior.</span></span>
+                        <input type="month" className="input" aria-label="Mes en que dejó la obra" style={{ width: "auto", background: "var(--sala)" }} value={salida.hasta} max={mesActual()} onChange={(e) => setSalida({ ...salida, hasta: e.target.value })} />
+                        <button type="button" className="btn btn-ghost" onClick={() => setSalida(null)}>Cancelar</button>
+                        <button type="button" className="btn btn-primary" disabled={!salida.hasta} onClick={() => { fechas(m.key, { hasta: salida.hasta }); setSalida(null); }}>Guardar</button>
+                      </div>
+                    ) : null}
+                    </div>
+                    );
+                  })}
                 </div>
               ))}
             </div>

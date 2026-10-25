@@ -134,3 +134,21 @@ export function partirFunciones(fs: Funcion[] = []) {
   const orden = [...fs].filter((f) => f?.fecha).sort((a, b) => (a.fecha + (a.hora ?? "")).localeCompare(b.fecha + (b.hora ?? "")));
   return { proximas: orden.filter((f) => f.fecha >= hoy), pasadas: orden.filter((f) => f.fecha < hoy).reverse() };
 }
+
+// ---------- Relevos en elenco y equipo ----------
+const MESES = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
+/** "2026-10" → "oct 2026" */
+export function mesCorto(m?: string): string {
+  const [y, n] = String(m ?? "").split("-").map(Number);
+  return y && n ? `${MESES[n - 1]} ${y}` : "";
+}
+export function mesActual(): string {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+}
+/** Tramo de una persona en la obra: «desde el estreno», «desde oct 2026», «estreno – oct 2026»… ("" si no hay relevos). */
+export function tramo(c: { desde?: string; hasta?: string }, siempre = false): string {
+  if (!c.desde && !c.hasta) return siempre ? "desde el estreno" : "";
+  if (!c.hasta) return `desde ${mesCorto(c.desde)}`;
+  return `${c.desde ? mesCorto(c.desde) : "estreno"} – ${mesCorto(c.hasta)}`;
+}

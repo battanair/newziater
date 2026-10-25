@@ -68,6 +68,8 @@ export async function anadirCredito(c: Omit<Credito, "id" | "estado" | "creado_p
     titulo: (c.titulo ?? "").slice(0, 150),
     fecha_inicio: String(c.fecha_inicio ?? "").slice(0, 10),
     fecha_fin: String(c.fecha_fin ?? "").slice(0, 10),
+    ...(c.desde ? { desde: c.desde.slice(0, 7) } : {}),
+    ...(c.hasta ? { hasta: c.hasta.slice(0, 7) } : {}),
     estado: confirmado ? "confirmado" : "pendiente",
     creado_por: auth.currentUser!.uid,
   });
