@@ -99,7 +99,7 @@ export default async function SalaPage({ params }: Props) {
             {cartel.slice(0, 60).map((c, i) => (
               <li key={i} className="funcion">
                 <span className="funcion-fecha"><strong>{fechaCorta(c.fecha)}</strong>{c.hora ? <span className="hint">{c.hora} h</span> : null}</span>
-                <span style={{ minWidth: 0 }}><Link href={`/obra/${c.obra.id}`} style={{ fontWeight: 600 }}>{c.obra.titulo}</Link></span>
+                <span style={{ minWidth: 0 }}><Link href={`/obra/${c.obra.id}`} style={{ fontWeight: 600, display: "block" }}>{c.obra.titulo}</Link>{c.sala && c.sala !== s.nombre ? <span className="hint">{c.sala}</span> : null}</span>
                 {c.entradas ? <a href={c.entradas} className="btn btn-primary" target="_blank" rel="noopener noreferrer nofollow">Entradas</a> : <span />}
               </li>
             ))}
