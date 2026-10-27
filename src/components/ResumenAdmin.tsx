@@ -6,6 +6,7 @@ import { Timestamp, collection, documentId, getCountFromServer, getDocs, limit, 
 import { db } from "@/lib/firebase-client";
 import { porIds } from "@/lib/client-data";
 import type { Obra } from "@/lib/types";
+import { LimpiezaFotos } from "./LimpiezaFotos";
 
 // Panel privado de administración: cifras, visitas y actividad reciente.
 // Todo se lee con el permiso de administrador (las reglas no dejan a nadie más).
@@ -148,6 +149,8 @@ export function ResumenAdmin({ pendientes }: { pendientes: { fichas: number; obr
           </ul>
         ) : <p className="muted" style={{ margin: 0 }}>Todavía no hay actividad.</p>}
       </section>
+
+      <LimpiezaFotos />
 
       <p className="hint">
         Para el detalle de visitas (de dónde llega la gente, países, dispositivos, páginas concretas) abre{" "}
