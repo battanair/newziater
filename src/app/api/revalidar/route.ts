@@ -9,12 +9,14 @@ export async function POST(req: Request) {
   const user = await verifyRequest(req);
   if (!user) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
 
-  const body = (await req.json().catch(() => ({}))) as { obras?: unknown; personas?: unknown };
+  const body = (await req.json().catch(() => ({}))) as { obras?: unknown; personas?: unknown; salas?: unknown };
   const ids = (v: unknown) => (Array.isArray(v) ? v.filter((x): x is string => typeof x === "string" && validId(x)).slice(0, 50) : []);
 
   revalidateTag(CACHE_TAG);
   for (const id of ids(body.obras)) revalidatePath(`/obra/${id}`);
   for (const id of ids(body.personas)) revalidatePath(`/persona/${id}`);
+  for (const id of ids(body.salas)) revalidatePath(`/sala/${id}`);
+  if (ids(body.salas).length) revalidatePath("/salas");
   revalidatePath("/");
   return NextResponse.json({ ok: true });
 }

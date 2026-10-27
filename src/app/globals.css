@@ -427,3 +427,7 @@ button.chip[aria-pressed="true"] { background: var(--foco-suave); color: var(--p
 .con-vista[data-vista="actual"] .fuera-actual, .con-vista[data-vista="original"] .fuera-original { display: none; }
 .con-vista[data-vista="actual"] .credit-row:not(:has(.cred:not(.fuera-actual))),
 .con-vista[data-vista="original"] .credit-row:not(:has(.cred:not(.fuera-original))) { display: none; }
+.footer .btn-sala { border-color: var(--foco-borde); color: var(--foco); }
+.footer .btn-sala:hover { background: var(--foco-suave); color: var(--foco-hover); }
+.footer-in { align-items: center; }
+@media (max-width: 640px) { .footer .btn-sala { align-self: flex-start; } }

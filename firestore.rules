@@ -47,7 +47,7 @@ service cloud.firestore {
       return data().titulo is string && data().titulo.size() > 0 && data().titulo.size() <= 200
         && str('sinopsis', 3000) && img('cartel') && list('fotos_obra', 30) && list('categoria', 5)
         && str('instagram', 100) && str('trailer', 500) && str('idioma', 40) && str('edad', 20)
-        && list('claves', 200) && list('funciones', 40) && str('ultima', 10)
+        && list('claves', 200) && list('funciones', 40) && str('ultima', 10) && list('salas_ids', 40)
         && (!('duracion' in data()) || (data().duracion is number && data().duracion >= 0 && data().duracion <= 600));
     }
 
@@ -167,6 +167,25 @@ service cloud.firestore {
       allow delete: if isAdmin();
     }
 
+    // ---------- Salas y teatros ----------
+    // Cualquiera con cuenta puede dar de alta una sala; solo la edita quien la creó.
+    function salaValida() {
+      return data().nombre is string && data().nombre.size() > 0 && data().nombre.size() <= 150
+        && data().ciudad is string && data().ciudad.size() > 0 && data().ciudad.size() <= 80
+        && str('direccion', 200) && str('web', 300) && str('instagram', 100) && str('descripcion', 3000)
+        && img('foto') && list('claves', 200)
+        && (!('aforo' in data()) || (data().aforo is number && data().aforo >= 0 && data().aforo <= 100000))
+        && data().keys().hasOnly(['nombre', 'ciudad', 'direccion', 'web', 'instagram', 'descripcion', 'foto', 'aforo', 'claves', 'creacion', 'creado']);
+    }
+    match /salas/{salaId} {
+      allow read: if true;
+      allow create: if signedIn() && data().creacion == uid() && salaValida()
+        && (!('creado' in data()) || data().creado == request.time);
+      allow update: if salaValida() && (isAdmin()
+        || (signedIn() && resource.data.creacion == uid() && unchanged('creacion') && unchanged('creado')));
+      allow delete: if isAdmin();
+    }
+
     // ---------- Valoraciones (una por persona y obra) ----------
     match /valoraciones/{valId} {
       allow read: if isAdmin() || (signedIn() && resource.data.uid == uid());
@@ -216,7 +235,7 @@ service cloud.firestore {
     // Llegan al dueño de la ficha (o a administración si no tiene). El campo
     // "dueno" se comprueba aquí para que nadie pueda enviarlas a otra persona.
     function fichaDe(tipo, ref) {
-      return get(/databases/$(database)/documents/$(tipo == 'productora' ? 'productoras' : tipo)/$(ref)).data;
+      return get(/databases/$(database)/documents/$(tipo == 'productora' ? 'productoras' : tipo == 'sala' ? 'salas' : tipo)/$(ref)).data;
     }
     function duenoDe(tipo, ref) {
       let f = fichaDe(tipo, ref);
@@ -226,7 +245,7 @@ service cloud.firestore {
     }
     match /sugerencias/{sugId} {
       allow create: if signedIn() && data().autor == uid() && data().estado == 'pendiente'
-        && data().tipo in ['obra', 'persona', 'productora'] && data().ref is string
+        && data().tipo in ['obra', 'persona', 'productora', 'sala'] && data().ref is string
         && data().texto is string && data().texto.size() >= 3 && data().texto.size() <= 2000
         && str('campo', 40) && str('autor_nombre', 100) && str('titulo_ficha', 200)
         && data().dueno == duenoDe(data().tipo, data().ref);

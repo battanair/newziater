@@ -1,6 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
-import type { Obra, Persona, Productora } from "@/lib/types";
+import type { Obra, Persona, Productora, Sala } from "@/lib/types";
 import { T_CARTEL, T_LOGO, T_RETRATO, cld, colorCartel, iniciales, nombreCompleto, obraActiva, periodo } from "@/lib/format";
 
 export function Poster({ obra, sizes = "200px", priority = false }: { obra: Pick<Obra, "id" | "titulo" | "cartel">; sizes?: string; priority?: boolean }) {
@@ -68,6 +68,18 @@ export function ProductoraCard({ p }: { p: Productora }) {
         )}
       </span>
       <span className="card-title">{p.nombre_prod}</span>
+    </Link>
+  );
+}
+
+export function SalaCard({ sala }: { sala: Sala }) {
+  return (
+    <Link href={`/sala/${sala.id}`} className="card" style={{ display: "block" }}>
+      <span className="poster" style={{ background: colorCartel(sala.id) }}>
+        {cld(sala.foto, T_CARTEL) ? <Image src={cld(sala.foto, T_CARTEL)!} alt={`Foto de ${sala.nombre}`} fill sizes="(max-width: 640px) 50vw, 200px" /> : <span className="poster-title">{sala.nombre}</span>}
+      </span>
+      <span className="card-title">{sala.nombre}</span>
+      {sala.ciudad ? <span className="card-sub">{sala.ciudad}</span> : null}
     </Link>
   );
 }

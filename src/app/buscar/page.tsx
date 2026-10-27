@@ -5,8 +5,8 @@ import { SearchBox } from "@/components/SearchBox";
 
 export const metadata: Metadata = { title: "Buscar", robots: { index: false, follow: true } };
 
-const LABEL = { obra: "Obra", persona: "Artista", productora: "Compañía" } as const;
-const href = (t: keyof typeof LABEL, id: string) => (t === "obra" ? `/obra/${id}` : t === "persona" ? `/persona/${id}` : `/compania/${id}`);
+const LABEL = { obra: "Obra", persona: "Artista", productora: "Compañía", sala: "Sala" } as const;
+const href = (t: keyof typeof LABEL, id: string) => (t === "obra" ? `/obra/${id}` : t === "persona" ? `/persona/${id}` : t === "sala" ? `/sala/${id}` : `/compania/${id}`);
 
 export default async function BuscarPage({ searchParams }: { searchParams: Promise<{ q?: string }> }) {
   const { q = "" } = await searchParams;

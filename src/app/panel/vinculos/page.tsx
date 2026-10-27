@@ -141,7 +141,7 @@ function Vinculos({ user }: { user: User }) {
           <div className="stack">
             {!sugerencias.length ? <Vacio texto="Nadie ha sugerido cambios en tus fichas. Cuando alguien proponga una corrección, aparecerá aquí." /> : null}
             {sugerencias.map((sg) => {
-              const enlace = sg.tipo === "obra" ? `/obra/${sg.ref}` : sg.tipo === "persona" ? `/persona/${sg.ref}` : `/compania/${sg.ref}`;
+              const enlace = sg.tipo === "obra" ? `/obra/${sg.ref}` : sg.tipo === "persona" ? `/persona/${sg.ref}` : sg.tipo === "sala" ? `/sala/${sg.ref}` : `/compania/${sg.ref}`;
               const editar = sg.tipo === "obra" ? `/panel/obra/${sg.ref}` : sg.tipo === "persona" && yo?.id === sg.ref ? "/panel/ficha" : null;
               return (
                 <div key={sg.id} className="panel" style={{ display: "flex", flexWrap: "wrap", gap: 20, alignItems: "flex-start" }}>

@@ -12,6 +12,7 @@ export interface Obra {
   fotosObra?: string[]; // nombre que usaba la web antigua
   funciones?: Funcion[]; // «Dónde verla»
   ultima?: string; // fecha de la última función (AAAA-MM-DD): sirve para buscar las obras en cartel
+  salas_ids?: string[]; // salas enlazadas desde sus funciones
   categoria?: string[];
   instagram?: string;
   trailer?: string;
@@ -75,6 +76,20 @@ export interface Productora {
   creacion?: string;
 }
 
+/** Sala o teatro: la da de alta la propia sala (o cualquiera) y la gestiona quien la creó. */
+export interface Sala {
+  id: string;
+  nombre: string;
+  ciudad: string;
+  direccion?: string;
+  web?: string;
+  instagram?: string;
+  aforo?: number;
+  descripcion?: string;
+  foto?: string;
+  creacion?: string;
+}
+
 export interface PremioObra {
   id: string;
   id_obra: string;
@@ -92,7 +107,7 @@ export interface UserDoc {
 }
 
 export interface SearchItem {
-  t: "obra" | "persona" | "productora";
+  t: "obra" | "persona" | "productora" | "sala";
   id: string;
   n: string; // nombre visible
   s?: string; // subtítulo
@@ -104,6 +119,7 @@ export interface Funcion {
   fecha: string; // AAAA-MM-DD
   hora?: string; // HH:MM
   sala: string;
+  sala_id?: string; // ficha de la sala en Ziater, si existe
   ciudad?: string;
   entradas?: string; // enlace para comprar entradas
 }

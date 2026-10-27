@@ -4,7 +4,7 @@ import type { SearchItem } from "@/lib/types";
 
 // Búsqueda instantánea: una consulta por colección con el prefijo más largo,
 // máximo 8 resultados. Cacheada 5 minutos en el CDN por cada texto buscado.
-const TIPOS: SearchItem["t"][] = ["obra", "persona", "productora"];
+const TIPOS: SearchItem["t"][] = ["obra", "persona", "productora", "sala"];
 
 export async function GET(req: Request) {
   const url = new URL(req.url);

@@ -34,8 +34,8 @@ export function useBusqueda(q: string, tipos?: SearchItem["t"][]) {
   return { items, cargando };
 }
 
-export const hrefFor = (i: SearchItem) => (i.t === "obra" ? `/obra/${i.id}` : i.t === "persona" ? `/persona/${i.id}` : `/compania/${i.id}`);
-const GROUP: Record<SearchItem["t"], string> = { obra: "Obras", persona: "Artistas", productora: "Compañías" };
+export const hrefFor = (i: SearchItem) => (i.t === "obra" ? `/obra/${i.id}` : i.t === "persona" ? `/persona/${i.id}` : i.t === "sala" ? `/sala/${i.id}` : `/compania/${i.id}`);
+const GROUP: Record<SearchItem["t"], string> = { obra: "Obras", persona: "Artistas", productora: "Compañías", sala: "Salas" };
 
 export function SearchBox({ hero = false, autoFocus = false }: { hero?: boolean; autoFocus?: boolean }) {
   const router = useRouter();

@@ -6,7 +6,7 @@ import {
   startAfter, where, type QueryConstraint,
 } from "firebase/firestore";
 import { serverDb as db } from "./firebase-server";
-import type { Credito, Obra, Persona, PremioObra, Productora, SearchItem } from "./types";
+import type { Credito, Obra, Persona, PremioObra, Productora, Sala, SearchItem } from "./types";
 import { T_MINI, T_MINI_RETRATO, cld, nombreCompleto, periodo } from "./format";
 import { normalizar, partirBusqueda } from "./claves";
 
@@ -34,6 +34,25 @@ const VERSION = (process.env.VERCEL_GIT_COMMIT_SHA ?? "local").slice(0, 7);
 function memo<A extends unknown[], R>(name: string, fn: (...args: A) => Promise<R>, revalidate = 600) {
   return cache(unstable_cache(fn, [name, VERSION], { revalidate, tags: [CACHE_TAG] }));
 }
+
+// ---------- Salas (si las reglas aún no las permiten, todo sale vacío en vez de fallar) ----------
+export const getSala = memo("getSala", async (id: string): Promise<Sala | null> => {
+  if (!validId(id)) return null;
+  const s = await getDoc(doc(db, "salas", id)).catch(() => null);
+  return s?.exists() ? withId<Sala>(s) : null;
+});
+
+export const todasLasSalas = memo("todasLasSalas", async (): Promise<Sala[]> => {
+  const s = await getDocs(query(collection(db, "salas"), limit(1000))).catch(() => null);
+  return (s?.docs ?? []).map((d) => withId<Sala>(d)).sort((a, b) => a.nombre.localeCompare(b.nombre, "es"));
+});
+
+/** Obras que han pasado (o pasarán) por una sala: las que tienen alguna función enlazada a ella. */
+export const obrasEnSala = memo("obrasEnSala", async (idSala: string): Promise<Obra[]> => {
+  if (!validId(idSala)) return [];
+  const s = await getDocs(query(collection(db, "obra"), where("salas_ids", "array-contains", idSala), limit(200))).catch(() => null);
+  return (s?.docs ?? []).map((d) => withId<Obra>(d));
+});
 
 // ---------- Fichas sueltas ----------
 export const getObra = memo("getObra", async (id: string): Promise<Obra | null> => {
@@ -220,7 +239,7 @@ export async function trayectoriaDePersona(idPersona: string) {
 // ---------- Búsqueda por claves (una consulta por colección, máx. 8 resultados) ----------
 export const buscar = memo(
   "buscar",
-  async (q: string, tipos: SearchItem["t"][] = ["obra", "persona", "productora"]): Promise<SearchItem[]> => {
+  async (q: string, tipos: SearchItem["t"][] = ["obra", "persona", "productora", "sala"]): Promise<SearchItem[]> => {
     const partes = partirBusqueda(q);
     if (!partes) return [];
     const coincide = (texto: string) => [partes.clave, ...partes.resto].every((r) => normalizar(texto ?? "").includes(r));
@@ -241,15 +260,17 @@ export const buscar = memo(
       const docs = (await Promise.allSettled(consultas)).flatMap((r) => (r.status === "fulfilled" ? r.value.docs : [])).filter((d) => !vistos.has(d.id) && vistos.add(d.id));
       return { docs };
     };
-    const [obras, personas, prods] = await Promise.all([
+    const [obras, personas, prods, salas] = await Promise.all([
       tipos.includes("obra") ? consulta("obra", "titulo") : null,
       tipos.includes("persona") ? consulta("persona", "Nombre") : null,
       tipos.includes("productora") ? consulta("productoras", "nombre_prod") : null,
+      tipos.includes("sala") ? consulta("salas", "nombre") : null,
     ]);
     const out: SearchItem[] = [];
     obras?.docs.map((d) => withId<Obra>(d)).forEach((o) => { if (coincide(o.titulo)) out.push({ t: "obra", id: o.id, n: o.titulo, s: periodo(o.anoinicio, o.anofin), img: cld(o.cartel, T_MINI) }); });
     personas?.docs.map((d) => withId<Persona>(d)).forEach((p) => { if (coincide(nombreCompleto(p))) out.push({ t: "persona", id: p.id, n: nombreCompleto(p), s: (p.roles ?? []).join(" · "), img: cld(p.foto, T_MINI_RETRATO) }); });
     prods?.docs.map((d) => withId<Productora>(d)).forEach((p) => { if (coincide(p.nombre_prod)) out.push({ t: "productora", id: p.id, n: p.nombre_prod, img: cld(p.foto_prod, T_MINI) }); });
+    salas?.docs.map((d) => withId<Sala>(d)).forEach((x) => { if (coincide(x.nombre)) out.push({ t: "sala", id: x.id, n: x.nombre, s: x.ciudad, img: cld(x.foto, T_MINI) }); });
     return out.slice(0, 24);
   },
   300,
@@ -257,15 +278,16 @@ export const buscar = memo(
 
 // ---------- Sitemap troceado (Google admite 50.000 URLs por archivo) ----------
 export const URLS_POR_SITEMAP = 5000;
-export const contar = memo("contar", async (col: "obra" | "persona" | "productoras") => (await getCountFromServer(collection(db, col))).data().count);
+export const contar = memo("contar", async (col: "obra" | "persona" | "productoras" | "salas") => (await getCountFromServer(collection(db, col)).then((r) => r.data().count).catch(() => 0)));
 
-export const idsPagina = memo("idsPagina", async (col: "obra" | "persona" | "productoras", pagina: number): Promise<string[]> => {
+export const idsPagina = memo("idsPagina", async (col: "obra" | "persona" | "productoras" | "salas", pagina: number): Promise<string[]> => {
   let ultimo: string | undefined;
   for (let p = 0; p <= pagina; p++) {
     const c: QueryConstraint[] = [orderBy(documentId())];
     if (ultimo) c.push(startAfter(ultimo));
     c.push(limit(URLS_POR_SITEMAP));
-    const s = await getDocs(query(collection(db, col), ...c));
+    const s = await getDocs(query(collection(db, col), ...c)).catch(() => null);
+    if (!s) return [];
     if (p === pagina) return s.docs.map((d) => d.id);
     if (s.docs.length < URLS_POR_SITEMAP) return [];
     ultimo = s.docs[s.docs.length - 1].id;

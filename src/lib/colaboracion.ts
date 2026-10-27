@@ -6,10 +6,10 @@
 
 import { addDoc, collection, doc, getDoc, getDocs, limit, query, serverTimestamp, setDoc, updateDoc, where, writeBatch } from "firebase/firestore";
 import { auth, db } from "./firebase-client";
-import type { Obra, Persona, Productora } from "./types";
+import type { Obra, Persona, Productora, Sala } from "./types";
 
-export type TipoFicha = "obra" | "persona" | "productora";
-const COL: Record<TipoFicha, string> = { obra: "obra", persona: "persona", productora: "productoras" };
+export type TipoFicha = "obra" | "persona" | "productora" | "sala";
+const COL: Record<TipoFicha, string> = { obra: "obra", persona: "persona", productora: "productoras", sala: "salas" };
 const withId = <T,>(s: { id: string; data: () => unknown }) => ({ id: s.id, ...(s.data() as object) }) as T;
 
 /** Dueño de una ficha: quien creó la obra/compañía, o el artista que reclamó su ficha ("" = sin dueño). */
@@ -39,8 +39,8 @@ export async function enviarSugerencia(tipo: TipoFicha, ref: string, campo: stri
   const user = auth.currentUser!;
   const s = await getDoc(doc(db, COL[tipo], ref));
   if (!s.exists()) throw new Error("La ficha ya no existe");
-  const d = s.data() as Partial<Obra & Persona & Productora>;
-  const titulo = d.titulo ?? d.nombre_prod ?? [d.Nombre, d.Apellidos].filter(Boolean).join(" ");
+  const d = s.data() as Partial<Obra & Persona & Productora> & Partial<Pick<Sala, "nombre">>;
+  const titulo = d.titulo ?? d.nombre_prod ?? d.nombre ?? [d.Nombre, d.Apellidos].filter(Boolean).join(" ");
   await addDoc(collection(db, "sugerencias"), {
     tipo, ref,
     titulo_ficha: String(titulo ?? "").slice(0, 200),

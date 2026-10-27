@@ -497,10 +497,11 @@ function PedirGestion({ obra, user, personaId }: { obra: Obra; user: User; perso
 function limpiarFunciones(fs: Funcion[]) {
   const ok = fs
     .filter((x) => /^\d{4}-\d{2}-\d{2}$/.test(x.fecha) && x.sala.trim())
-    .map((x) => ({ fecha: x.fecha, hora: (x.hora ?? "").slice(0, 5), sala: x.sala.trim().slice(0, 120), ciudad: (x.ciudad ?? "").trim().slice(0, 80), entradas: /^https?:\/\//.test(x.entradas ?? "") ? x.entradas!.trim().slice(0, 500) : "" }))
+    .map((x) => ({ fecha: x.fecha, hora: (x.hora ?? "").slice(0, 5), sala: x.sala.trim().slice(0, 120), ...(x.sala_id && /^[A-Za-z0-9_-]{1,128}$/.test(x.sala_id) ? { sala_id: x.sala_id } : {}), ciudad: (x.ciudad ?? "").trim().slice(0, 80), entradas: /^https?:\/\//.test(x.entradas ?? "") ? x.entradas!.trim().slice(0, 500) : "" }))
     .sort((a, b) => (a.fecha + a.hora).localeCompare(b.fecha + b.hora))
     .slice(0, 40);
-  return { funciones: ok, ultima: ok.length ? ok[ok.length - 1].fecha : "" };
+  // salas_ids: para que cada sala encuentre las obras que han pasado por ella
+  return { funciones: ok, ultima: ok.length ? ok[ok.length - 1].fecha : "", salas_ids: [...new Set(ok.map((x) => x.sala_id).filter((x): x is string => Boolean(x)))].slice(0, 40) };
 }
 
 /** Funciones de la obra: fecha, hora, sala, ciudad y enlace a entradas. */
@@ -513,7 +514,7 @@ function FuncionesEditor({ value, onChange }: { value: Funcion[]; onChange: (v: 
         <div key={i} className="funcion-fila">
           <input className="input" type="date" aria-label="Fecha" value={x.fecha} onChange={(e) => cambiar(i, "fecha", e.target.value)} />
           <input className="input" type="time" aria-label="Hora" value={x.hora ?? ""} onChange={(e) => cambiar(i, "hora", e.target.value)} />
-          <input className="input" aria-label="Sala o teatro" placeholder="Sala o teatro" maxLength={120} value={x.sala} onChange={(e) => cambiar(i, "sala", e.target.value)} />
+          <SalaInput f={x} onChange={(c) => onChange(value.map((y, j) => (j === i ? { ...y, ...c } : y)))} />
           <input className="input" aria-label="Ciudad" placeholder="Ciudad" maxLength={80} value={x.ciudad ?? ""} onChange={(e) => cambiar(i, "ciudad", e.target.value)} />
           <input className="input" type="url" aria-label="Enlace a entradas" placeholder="Enlace a entradas (opcional)" maxLength={500} value={x.entradas ?? ""} onChange={(e) => cambiar(i, "entradas", e.target.value)} />
           <button type="button" className="btn btn-ghost" aria-label={`Quitar función ${i + 1}`} onClick={() => onChange(value.filter((_, j) => j !== i))}>×</button>
@@ -521,11 +522,46 @@ function FuncionesEditor({ value, onChange }: { value: Funcion[]; onChange: (v: 
       ))}
       {value.length < 40 ? (
         <div className="actions">
-          <button type="button" className="btn" onClick={() => onChange([...value, { fecha: "", hora: ultima?.hora ?? "20:00", sala: ultima?.sala ?? "", ciudad: ultima?.ciudad ?? "", entradas: ultima?.entradas ?? "" }])}>+ Añadir función</button>
+          <button type="button" className="btn" onClick={() => onChange([...value, { fecha: "", hora: ultima?.hora ?? "20:00", sala: ultima?.sala ?? "", ...(ultima?.sala_id ? { sala_id: ultima.sala_id } : {}), ciudad: ultima?.ciudad ?? "", entradas: ultima?.entradas ?? "" }])}>+ Añadir función</button>
         </div>
       ) : null}
       <span className="hint">Fecha, sala y ciudad de cada pase. Al añadir otra, se copian la sala y el enlace de la anterior. Las funciones pasadas se guardan como historial de la obra.</span>
     </div>
+  );
+}
+
+/** Campo «Sala o teatro» que sugiere las salas dadas de alta en Ziater y las enlaza. */
+function SalaInput({ f, onChange }: { f: Funcion; onChange: (c: Partial<Funcion>) => void }) {
+  const [abierto, setAbierto] = useState(false);
+  const { items } = useBusqueda(abierto && !f.sala_id ? f.sala : "", ["sala"]);
+  return (
+    <span style={{ position: "relative", display: "block", minWidth: 0 }}>
+      <input
+        className="input"
+        aria-label="Sala o teatro"
+        placeholder="Sala o teatro"
+        maxLength={120}
+        value={f.sala}
+        style={f.sala_id ? { borderColor: "var(--foco-borde)", paddingRight: 34 } : undefined}
+        onFocus={() => setAbierto(true)}
+        onBlur={() => setTimeout(() => setAbierto(false), 200)}
+        onChange={(e) => onChange({ sala: e.target.value, sala_id: undefined })}
+      />
+      {f.sala_id ? <span title="Enlazada a la ficha de la sala" style={{ position: "absolute", right: 12, top: "50%", transform: "translateY(-50%)", color: "var(--foco)" }}>✓</span> : null}
+      {abierto && !f.sala_id && f.sala.trim().length >= 2 ? (
+        <span className="suggest" style={{ position: "absolute", left: 0, right: 0, top: "100%", zIndex: 30, display: "block", minWidth: 240 }}>
+          {items.map((it) => (
+            <button key={it.id} type="button" className="suggest-item" onMouseDown={(e) => e.preventDefault()} onClick={() => { onChange({ sala: it.n, sala_id: it.id, ciudad: it.s || f.ciudad }); setAbierto(false); }}>
+              <span style={{ flex: 1 }}><strong style={{ display: "block" }}>{it.n}</strong><span className="hint">{it.s}</span></span>
+              <span style={{ color: "var(--foco)", fontWeight: 600, fontSize: 13 }}>Enlazar</span>
+            </button>
+          ))}
+          <a href="/panel/sala/nueva" target="_blank" rel="noopener" className="suggest-item" style={{ textDecoration: "none" }}>
+            <span><strong style={{ display: "block" }}>{items.length ? "¿No está?" : "Esta sala aún no está en Ziater"}</strong><span className="hint">Puedes escribirla tal cual o darla de alta (se abre aparte)</span></span>
+          </a>
+        </span>
+      ) : null}
+    </span>
   );
 }
 

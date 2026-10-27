@@ -212,7 +212,7 @@ export default async function ObraPage({ params }: Props) {
                   {proximas.map((fn, i) => (
                     <li key={i} className="funcion">
                       <span className="funcion-fecha"><strong>{fechaCorta(fn.fecha)}</strong>{fn.hora ? <span className="hint">{fn.hora} h</span> : null}</span>
-                      <span style={{ minWidth: 0 }}><strong style={{ display: "block" }}>{fn.sala}</strong>{fn.ciudad ? <span className="hint">{fn.ciudad}</span> : null}</span>
+                      <span style={{ minWidth: 0 }}><strong style={{ display: "block" }}>{fn.sala_id ? <Link href={`/sala/${fn.sala_id}`}>{fn.sala}</Link> : fn.sala}</strong>{fn.ciudad ? <span className="hint">{fn.ciudad}</span> : null}</span>
                       {fn.entradas ? <a href={fn.entradas} className="btn btn-primary" target="_blank" rel="noopener noreferrer nofollow">Entradas</a> : <span />}
                     </li>
                   ))}
