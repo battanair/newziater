@@ -63,6 +63,41 @@ export default async function Home() {
 
       <ParaTi />
 
+      <section className="wrap section que-es" aria-labelledby="que-es-ziater">
+        <div className="que-es-intro">
+          <p className="eyebrow" style={{ marginBottom: 12 }}>Qué es Ziater</p>
+          <h2 id="que-es-ziater" className="h2" style={{ margin: "0 0 12px" }}>La memoria viva de las artes escénicas.</h2>
+          <p className="soft" style={{ margin: 0, maxWidth: 720 }}>
+            Ziater es una base de datos abierta de teatro, danza, circo, impro y musical. Cada obra aparece con su elenco, su equipo, sus fechas y dónde verla. Cada artista, con su trayectoria completa. Gratis, siempre.
+          </p>
+        </div>
+        <div className="que-es-cols">
+          <div className="panel que-es-col">
+            <h3 className="que-es-tit">Si eres artista</h3>
+            <ul className="que-es-lista">
+              <li>Tu trayectoria completa en una ficha pública, para compartirla como si fuera tu CV.</li>
+              <li>Si ya tienes ficha, la reclamas. Si no, la creas en un minuto.</li>
+              <li>Sube tus obras con elenco, equipo y fotos: tus compañeros quedan enlazados.</li>
+              <li>Anuncia tus funciones con la sala, la fecha y el enlace a las entradas.</li>
+              <li>Registra los relevos: elenco original, el actual y quienes han pasado por la obra.</li>
+            </ul>
+            <Link href="/signup?profesional=1" className="btn btn-primary">Crear o reclamar mi ficha</Link>
+          </div>
+          <div className="panel que-es-col">
+            <h3 className="que-es-tit">Si eres público</h3>
+            <ul className="que-es-lista">
+              <li>Descubre qué hay en cartel, en qué sala y con enlace a las entradas.</li>
+              <li>Busca cualquier obra, artista, compañía o sala y mira quién hizo qué.</li>
+              <li>Puntúa lo que has visto y apunta lo que quieres ver.</li>
+              <li>Sigue a tus artistas favoritos y verás sus obras en tu portada.</li>
+              <li>¿Falta algo o hay un error? Sugiere el cambio y ayuda a completar las fichas.</li>
+            </ul>
+            <Link href="/signup" className="btn">Crear mi cuenta gratis</Link>
+          </div>
+        </div>
+        <p className="hint" style={{ margin: "16px 0 0" }}>¿Programas una sala o un teatro? <Link href="/panel/sala/nueva" style={{ color: "var(--foco)", fontWeight: 600 }}>Dala de alta</Link> y tendrás tu cartelera en Ziater.</p>
+      </section>
+
       {enCartel.length ? (
         <section className="wrap section">
           <div className="section-head">
@@ -121,21 +156,6 @@ export default async function Home() {
         </section>
       ) : null}
 
-      <section style={{ borderTop: "1px solid var(--linea)", marginTop: 48 }}>
-        <div className="wrap form-grid" style={{ paddingTop: 64, paddingBottom: 32, gap: 32 }}>
-          <div>
-            <p className="eyebrow" style={{ marginBottom: 12 }}>Qué es Ziater</p>
-            <p className="serif" style={{ margin: 0, fontSize: 30, lineHeight: 1.2 }}>La cultura como bien público.</p>
-          </div>
-          <div><p style={{ margin: "0 0 6px", fontWeight: 600 }}>Espectadores</p><p className="muted" style={{ margin: 0 }}>Busca obras, puntúa lo que has visto y sigue a tus artistas. Gratis siempre.</p></div>
-          <div><p style={{ margin: "0 0 6px", fontWeight: 600 }}>Profesionales</p><p className="muted" style={{ margin: 0 }}>Tu trayectoria completa en una ficha pública que puedes compartir. Gratis siempre.</p></div>
-          <div>
-            <p style={{ margin: "0 0 6px", fontWeight: 600 }}>¿Trabajas en las artes escénicas?</p>
-            <p className="muted" style={{ margin: "0 0 14px" }}>Quizá ya tienes ficha. Reclámala o crea la tuya en un minuto.</p>
-            <Link href="/signup?profesional=1" className="btn btn-primary">Crear o reclamar mi ficha</Link>
-          </div>
-        </div>
-      </section>
     </main>
   );
 }

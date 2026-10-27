@@ -431,3 +431,13 @@ button.chip[aria-pressed="true"] { background: var(--foco-suave); color: var(--p
 .footer .btn-sala:hover { background: var(--foco-suave); color: var(--foco-hover); }
 .footer-in { align-items: center; }
 @media (max-width: 640px) { .footer .btn-sala { align-self: flex-start; } }
+
+/* Portada: «Qué es Ziater» (artista / público) */
+.que-es { padding-top: 8px; }
+.que-es-intro { margin-bottom: 24px; }
+.que-es-cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr)); gap: 16px; }
+.que-es-col { display: flex; flex-direction: column; align-items: flex-start; gap: 16px; }
+.que-es-tit { margin: 0; font-family: var(--font-serif), Georgia, serif; font-weight: 600; font-size: 24px; color: var(--papel); }
+.que-es-lista { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; flex: 1; }
+.que-es-lista li { position: relative; padding-left: 26px; color: var(--texto-2); line-height: 1.5; }
+.que-es-lista li::before { content: ""; position: absolute; left: 4px; top: .55em; width: 8px; height: 8px; border-radius: 50%; background: var(--foco); }
