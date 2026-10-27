@@ -63,7 +63,7 @@ export default async function Home() {
 
       <ParaTi />
 
-      <section className="wrap section que-es" aria-labelledby="que-es-ziater">
+      <section className="wrap section que-es solo-sin-sesion" aria-labelledby="que-es-ziater">
         <div className="que-es-intro">
           <p className="eyebrow" style={{ marginBottom: 12 }}>Qué es Ziater</p>
           <h2 id="que-es-ziater" className="h2" style={{ margin: "0 0 12px" }}>La memoria viva de las artes escénicas.</h2>

@@ -441,3 +441,5 @@ button.chip[aria-pressed="true"] { background: var(--foco-suave); color: var(--p
 .que-es-lista { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; flex: 1; }
 .que-es-lista li { position: relative; padding-left: 26px; color: var(--texto-2); line-height: 1.5; }
 .que-es-lista li::before { content: ""; position: absolute; left: 4px; top: .55em; width: 8px; height: 8px; border-radius: 50%; background: var(--foco); }
+/* Solo para visitantes sin sesión (data-sesion lo pone AuthProvider / SCRIPT_SESION) */
+html[data-sesion] .solo-sin-sesion { display: none; }

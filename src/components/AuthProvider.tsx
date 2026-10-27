@@ -15,7 +15,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [state, setState] = useState<AuthState>({ user: null, loading: true });
   useEffect(() => {
     if (!authDisponible) { setState({ user: null, loading: false }); return; }
-    return onAuthStateChanged(auth, (user) => setState({ user, loading: false }));
+    return onAuthStateChanged(auth, (user) => {
+      setState({ user, loading: false });
+      // Marca para ocultar, antes de pintar la página, lo que solo es para quien no ha entrado (ver SCRIPT_SESION)
+      try { if (user) localStorage.setItem("ziater-sesion", "1"); else localStorage.removeItem("ziater-sesion"); } catch {}
+      if (user) document.documentElement.dataset.sesion = "1"; else delete document.documentElement.dataset.sesion;
+    });
   }, []);
   return <AuthContext.Provider value={state}>{children}</AuthContext.Provider>;
 }
@@ -35,3 +40,4 @@ export async function authFetch(path: string, body: unknown) {
   if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error ?? "Error de servidor");
   return res.json();
 }
+

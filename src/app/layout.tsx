@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Fraunces, Source_Sans_3 } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/components/AuthProvider";
+import { SCRIPT_SESION } from "@/lib/sesion";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { TabBar } from "@/components/TabBar";
@@ -38,6 +39,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <head>
         {/* Aplica el modo claro guardado antes de pintar, sin destello */}
         <script dangerouslySetInnerHTML={{ __html: SCRIPT_MODO }} />
+        <script dangerouslySetInnerHTML={{ __html: SCRIPT_SESION }} />
       </head>
       <body>
         <a href="#contenido" className="sr-only">Saltar al contenido</a>
