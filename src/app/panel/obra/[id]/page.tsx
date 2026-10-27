@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { Suspense, use, useEffect, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { addDoc, collection, deleteDoc, deleteField, doc, serverTimestamp, updateDoc } from "firebase/firestore";
 import type { User } from "firebase/auth";
 import { db } from "@/lib/firebase-client";
@@ -45,7 +45,6 @@ const PASOS = [
 ];
 
 function Editor({ id, user }: { id: string; user: User }) {
-  const router = useRouter();
   const sp = useSearchParams();
   const nueva = id === "nueva";
   const [cargando, setCargando] = useState(!nueva);
@@ -200,7 +199,8 @@ function Editor({ id, user }: { id: string; user: User }) {
         await anadirCredito({ id_obra: obraId, id_persona: personaId, puesto: m.dep, titulo: m.titulo || m.dep, fecha_inicio: f.anoinicio, fecha_fin: f.activa ? "" : f.anofin, desde: m.desde, hasta: m.hasta }, m.estado === "tu");
       }
       await authFetch("/api/revalidar", { obras: [obraId], personas: personasTocadas }).catch(() => {});
-      router.push(`/obra/${obraId}`);
+      // Carga completa (no navegación interna): así se ve la ficha recién guardada y no la que el navegador tenía en caché
+      window.location.assign(`/obra/${obraId}`);
     } catch {
       setEstado("error");
       setError("No se pudo publicar. Revisa los datos e inténtalo de nuevo.");
@@ -305,6 +305,7 @@ function Editor({ id, user }: { id: string; user: User }) {
                   <label className="sr-only" htmlFor="who">Nombre</label>
                   <input id="who" type="search" className="input" style={{ flex: "2 1 240px", background: "var(--sala)" }} placeholder="Nombre de la persona…" value={q} onChange={(e) => setQ(e.target.value)} maxLength={120} autoComplete="off" />
                   {dep === "Interpretación" ? <><label className="sr-only" htmlFor="pj">Personaje</label><input id="pj" className="input" style={{ flex: "1 1 160px", background: "var(--sala)" }} placeholder="Personaje" value={personaje} onChange={(e) => setPersonaje(e.target.value)} maxLength={150} /></> : null}
+                  <button type="submit" hidden aria-hidden="true" tabIndex={-1} />{/* Enter añade a la persona */}
                 </form>
                 {!nueva ? (
                   <div role="group" aria-label="Desde cuándo" style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 6, marginTop: 10 }}>

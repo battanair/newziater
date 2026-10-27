@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { use, useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
 import { addDoc, collection, doc, serverTimestamp, updateDoc } from "firebase/firestore";
 import type { User } from "firebase/auth";
 import { db } from "@/lib/firebase-client";
@@ -23,7 +22,6 @@ export default function SalaEditorPage({ params }: { params: Promise<{ id: strin
 const VACIA = { nombre: "", ciudad: "", direccion: "", web: "", instagram: "", aforo: "", descripcion: "", foto: "" };
 
 function Editor({ id, user }: { id: string; user: User }) {
-  const router = useRouter();
   const nueva = id === "nueva";
   const esAdmin = useEsAdmin();
   const [sala, setSala] = useState<Sala | null>(null);
@@ -78,7 +76,7 @@ function Editor({ id, user }: { id: string; user: User }) {
       if (nueva) salaId = (await addDoc(collection(db, "salas"), { ...datos, creacion: user.uid, creado: serverTimestamp() })).id;
       else await updateDoc(doc(db, "salas", id), datos);
       await authFetch("/api/revalidar", { salas: [salaId] }).catch(() => {});
-      router.push(`/sala/${salaId}`);
+      window.location.assign(`/sala/${salaId}`);
     } catch {
       setEstado("error");
       setError("No se pudo guardar. Revisa los datos e inténtalo de nuevo.");
