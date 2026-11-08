@@ -6,6 +6,8 @@ import { versiones, type Version } from "@/lib/colaboracion";
 const NOMBRES: Record<string, string> = {
   titulo: "título", sinopsis: "sinopsis", anoinicio: "año de estreno", anofin: "año de fin", cartel: "cartel", instagram: "Instagram",
   trailer: "tráiler", funciones: "funciones", categoria: "géneros", idioma: "idioma", duracion: "duración", fotos_obra: "galería", fotosObra: "galería",
+  edad: "edad recomendada", basada_en: "basada en", basada_autor: "autor original", estreno_fecha: "fecha de estreno", estreno_lugar: "lugar de estreno",
+  accesibilidad: "accesibilidad", avisos: "avisos", id_productora: "compañía", compania: "compañía", apoyos: "apoyos", gira: "gira", distribucion: "contacto de distribución",
   Nombre: "nombre", Apellidos: "apellidos", biografia: "biografía", foto: "retrato", ciudad: "ciudad", roles: "roles", destacadas: "obras destacadas",
 };
 

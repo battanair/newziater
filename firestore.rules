@@ -56,8 +56,13 @@ service cloud.firestore {
         && (!('duracion' in data()) || (data().duracion is number && data().duracion >= 0 && data().duracion <= 600))
         && url('trailer')
         // Solo estos campos: nadie puede colar otros (p. ej. «verificado» o «destacada»)
+        // Ficha técnica ampliada
+        && str('basada_en', 200) && str('basada_autor', 150) && str('estreno_fecha', 10) && str('estreno_lugar', 150)
+        && list('accesibilidad', 10) && list('avisos', 10) && str('compania', 150) && str('apoyos', 300) && str('distribucion', 200)
+        && (!('gira' in data()) || data().gira is bool)
         && data().keys().hasOnly(['titulo', 'sinopsis', 'anoinicio', 'anofin', 'cartel', 'fotos_obra', 'fotosObra', 'categoria',
              'instagram', 'trailer', 'idioma', 'edad', 'duracion', 'claves', 'funciones', 'ultima', 'salas_ids', 'id_productora',
+             'basada_en', 'basada_autor', 'estreno_fecha', 'estreno_lugar', 'accesibilidad', 'avisos', 'compania', 'apoyos', 'gira', 'distribucion',
              'creacion', 'creado', 'votos', 'suma_notas', 'nota', 'puntuacion'])
         && str('id_productora', 64);
     }
@@ -162,7 +167,9 @@ service cloud.firestore {
     // ---------- Premios de obras ----------
     match /premios_obras/{premioId} {
       allow read: if true;
-      allow create: if esDuenaObra(data().id_obra) && str('galardon_obra', 200);
+      allow create: if esDuenaObra(data().id_obra) && data().galardon_obra is string && data().galardon_obra.size() > 0
+        && str('galardon_obra', 200) && str('anio_premobr', 4)
+        && data().keys().hasOnly(['id_obra', 'galardon_obra', 'anio_premobr', 'id_premio']);
       allow update: if isAdmin() || (esDuenaObra(resource.data.id_obra) && unchanged('id_obra'));
       allow delete: if isAdmin() || esDuenaObra(resource.data.id_obra);
     }

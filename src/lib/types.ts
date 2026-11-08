@@ -22,6 +22,17 @@ export interface Obra {
   edad?: string;
   idioma?: string;
   id_productora?: string;
+  // Ficha técnica ampliada (ver lib/ficha-tecnica.ts)
+  basada_en?: string;
+  basada_autor?: string;
+  estreno_fecha?: string;
+  estreno_lugar?: string;
+  accesibilidad?: string[];
+  avisos?: string[];
+  compania?: string;
+  apoyos?: string;
+  gira?: boolean;
+  distribucion?: string;
   // Valoraciones (las mantiene el componente de nota, validadas por las reglas)
   votos?: number;
   suma_notas?: number;

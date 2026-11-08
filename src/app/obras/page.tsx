@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { paginaObras, type OrdenObras } from "@/lib/data";
+import { obrasEnGira, paginaObras, type OrdenObras } from "@/lib/data";
 import { ObraCard } from "@/components/Cards";
 import { Paginacion } from "@/components/Paginacion";
 import { GENEROS } from "@/lib/format";
@@ -13,10 +13,11 @@ const ORDENES: { k: OrdenObras; l: string }[] = [
   { k: "titulo", l: "A–Z" },
 ];
 
-type SP = Promise<{ genero?: string; orden?: string; despues?: string }>;
+type SP = Promise<{ genero?: string; orden?: string; despues?: string; gira?: string }>;
 
 export async function generateMetadata({ searchParams }: { searchParams: SP }): Promise<Metadata> {
-  const { genero, despues } = await searchParams;
+  const { genero, despues, gira } = await searchParams;
+  if (gira === "1") return { title: "Obras disponibles para gira", description: "Obras de teatro, danza y artes escénicas disponibles para programar, con su contacto de distribución.", alternates: { canonical: "/obras?gira=1" } };
   return {
     title: genero ? `Obras de ${genero.toLowerCase()}` : "Obras de teatro, danza y artes escénicas",
     description: "Catálogo de obras de teatro, danza, circo e improvisación: fichas con elenco, equipo artístico, valoraciones y compañías.",
@@ -30,7 +31,8 @@ export default async function ObrasPage({ searchParams }: { searchParams: SP }) 
   const sp = await searchParams;
   const orden: OrdenObras = ORDENES.some((o) => o.k === sp.orden) ? (sp.orden as OrdenObras) : "valoradas";
   const genero = sp.genero && GENEROS.includes(sp.genero) ? sp.genero : undefined;
-  const { items, siguiente } = await paginaObras({ orden, genero, despues: sp.despues });
+  const enGira = sp.gira === "1";
+  const { items, siguiente } = enGira ? { items: await obrasEnGira(), siguiente: undefined } : await paginaObras({ orden, genero, despues: sp.despues });
 
   const link = (p: { orden?: string; genero?: string }) => {
     const q = new URLSearchParams(Object.entries({ orden, genero, ...p }).filter(([, v]) => v) as [string, string][]);
@@ -39,13 +41,22 @@ export default async function ObrasPage({ searchParams }: { searchParams: SP }) 
 
   return (
     <main className="wrap section">
-      <h1 className="h1" style={{ marginBottom: 20 }}>{genero ? `Obras · ${genero}` : "Obras"}</h1>
+      <h1 className="h1" style={{ marginBottom: 20 }}>{enGira ? "Obras disponibles para gira" : genero ? `Obras · ${genero}` : "Obras"}</h1>
+      {enGira ? (
+        <>
+          <p className="lead soft" style={{ maxWidth: 680, marginTop: 0 }}>Para salas, festivales y programadores: obras cuyas compañías buscan bolos. En cada ficha encontrarás el contacto de distribución.</p>
+          <p style={{ margin: "0 0 28px" }}><Link href="/obras" style={{ color: "var(--foco)" }}>← Todas las obras</Link></p>
+          {items.length ? <div className="grid-posters">{items.map((o) => <ObraCard key={o.id} obra={o} />)}</div> : <p className="soft">Todavía ninguna compañía ha marcado su obra como disponible para gira. Si es tu caso, márcalo en «Ficha técnica» al editar la obra.</p>}
+        </>
+      ) : null}
+      {!enGira ? (<>
       <nav aria-label="Ordenar" className="tabs" style={{ marginBottom: 12 }}>
         {ORDENES.map((o) => <Link key={o.k} href={link({ orden: o.k })} className="tab" aria-selected={o.k === orden} style={{ display: "inline-flex", alignItems: "center" }}>{o.l}</Link>)}
       </nav>
       <nav aria-label="Géneros" style={{ display: "flex", flexWrap: "wrap", gap: 8, margin: "0 0 32px" }}>
         <Link href={link({ genero: "" })} className={`chip ${!genero ? "chip-foco" : ""}`} style={{ minHeight: 40, padding: "0 14px", fontSize: 14 }}>Todos los géneros</Link>
         {GENEROS.map((g) => <Link key={g} href={link({ genero: g === genero ? "" : g })} className={`chip ${g === genero ? "chip-foco" : ""}`} style={{ minHeight: 40, padding: "0 14px", fontSize: 14 }}>{g}</Link>)}
+        <Link href="/obras?gira=1" className="chip chip-ok" style={{ minHeight: 40, padding: "0 14px", fontSize: 14 }}>Disponibles para gira</Link>
       </nav>
       {items.length ? (
         <div className="grid-posters">{items.map((o) => <ObraCard key={o.id} obra={o} />)}</div>
@@ -53,6 +64,7 @@ export default async function ObrasPage({ searchParams }: { searchParams: SP }) 
         <p className="soft">{orden === "valoradas" ? "Todavía no hay obras valoradas aquí. Prueba con «Recién añadidas»." : "No hay obras con esos filtros."}</p>
       )}
       <Paginacion base="/obras" params={{ orden, genero }} siguiente={siguiente} primera={!sp.despues} />
+      </>) : null}
     </main>
   );
 }

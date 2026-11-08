@@ -35,6 +35,12 @@ function memo<A extends unknown[], R>(name: string, fn: (...args: A) => Promise<
   return cache(unstable_cache(fn, [name, VERSION], { revalidate, tags: [CACHE_TAG] }));
 }
 
+// ---------- Obras disponibles para gira (para programadores) ----------
+export const obrasEnGira = memo("obrasEnGira", async (): Promise<Obra[]> => {
+  const s = await getDocs(query(collection(db, "obra"), where("gira", "==", true), limit(300))).catch(() => null);
+  return (s?.docs ?? []).map((d) => withId<Obra>(d)).sort((a, b) => a.titulo.localeCompare(b.titulo, "es"));
+});
+
 // ---------- Salas (si las reglas aún no las permiten, todo sale vacío en vez de fallar) ----------
 export const getSala = memo("getSala", async (id: string): Promise<Sala | null> => {
   if (!validId(id)) return null;

@@ -3,7 +3,9 @@
 import Link from "next/link";
 import { Suspense, use, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { addDoc, collection, deleteDoc, deleteField, doc, serverTimestamp, updateDoc } from "firebase/firestore";
+import { FichaTecnicaEditor, type PremioEditable } from "@/components/FichaTecnicaEditor";
+import { FICHA_VACIA, contactoDistribucion, fichaADatos, fichaDesde, type FichaTecnica } from "@/lib/ficha-tecnica";
+import { addDoc, collection, deleteDoc, deleteField, doc, getDocs, query, serverTimestamp, updateDoc, where } from "firebase/firestore";
 import type { User } from "firebase/auth";
 import { db } from "@/lib/firebase-client";
 import { RequireAuth } from "@/components/RequireAuth";
@@ -14,7 +16,7 @@ import { useBusqueda } from "@/components/SearchBox";
 import { clavesDe, normalizar } from "@/lib/claves";
 import { anadirCredito, creditosDe, crearPersonaSinCuenta, leer, miPersona } from "@/lib/client-data";
 import { DEPARTAMENTOS, GENEROS, aHttps, colorCartel, fotosDe, iniciales, mesActual, tramo } from "@/lib/format";
-import type { Funcion, Obra, Persona, SearchItem } from "@/lib/types";
+import type { Funcion, Obra, Persona, Productora, SearchItem } from "@/lib/types";
 import { SugerirCambio } from "@/components/SugerirCambio";
 import { Historial } from "@/components/Historial";
 import { guardarVersion, pedirGestionarObra, vinculoConObra } from "@/lib/colaboracion";
@@ -63,6 +65,8 @@ function Editor({ id, user }: { id: string; user: User }) {
   const [relevo, setRelevo] = useState<{ key: string; q: string; desde: string } | null>(null);
   const [salida, setSalida] = useState<{ key: string; hasta: string } | null>(null);
   const [enfocar, setEnfocar] = useState<string | null>(null);
+  const [ft, setFt] = useState<FichaTecnica>(FICHA_VACIA);
+  const [premios, setPremios] = useState<PremioEditable[]>([]);
   const [estado, setEstado] = useState<"idle" | "saving" | "error">("idle");
   const [error, setError] = useState("");
 
@@ -75,6 +79,11 @@ function Editor({ id, user }: { id: string; user: User }) {
       if (o) {
         const fin = String(o.anofin ?? "");
         setF({ titulo: o.titulo, sinopsis: o.sinopsis ?? "", anoinicio: String(o.anoinicio ?? ""), anofin: fin === "0" ? "" : fin, activa: !fin || fin === "0", cartel: o.cartel ?? "", instagram: o.instagram ?? "", trailer: o.trailer ?? "", categoria: (o.categoria ?? []).filter(Boolean), duracion: o.duracion ? String(o.duracion) : "", idioma: o.idioma ?? "Castellano", fotos: fotosDe(o), funciones: o.funciones ?? [] });
+        const ficha = fichaDesde(o);
+        if (ficha.id_productora) ficha.productora_nombre = (await leer<Productora>("productoras", ficha.id_productora).catch(() => null))?.nombre_prod ?? "";
+        setFt(ficha);
+        const pr = await getDocs(query(collection(db, "premios_obras"), where("id_obra", "==", id))).catch(() => null);
+        setPremios((pr?.docs ?? []).map((d) => ({ id: d.id, galardon: String(d.data().galardon_obra ?? ""), anio: String(d.data().anio_premobr ?? "").replace("NaN", "") })).filter((p) => p.galardon));
         const cs = await creditosDe("id_obra", id);
         const ps = await Promise.all(cs.map((c) => leer<Persona>("persona", c.id_persona)));
         setEquipo(cs.map((c, i) => ({ key: c.id, creditoId: c.id, personaId: c.id_persona, nombre: ps[i] ? `${ps[i]!.Nombre} ${ps[i]!.Apellidos ?? ""}`.trim() : "Ficha eliminada", img: ps[i]?.foto, dep: c.puesto || "Equipo", titulo: c.titulo ?? "", estado: c.id_persona === user.uid || ps[i]?.coincide === user.uid ? "tu" : "enlazado", desde: c.desde ?? "", hasta: c.hasta ?? "" })));
@@ -179,7 +188,9 @@ function Editor({ id, user }: { id: string; user: User }) {
         fotos_obra: f.fotos.slice(0, 5),
         ...limpiarFunciones(f.funciones),
         ...(f.duracion ? { duracion: Math.min(600, Number(f.duracion) || 0) } : {}),
+        ...fichaADatos(ft),
       };
+      if (ft.gira && !contactoDistribucion(ft.distribucion)) { setPaso(0); setEstado("idle"); return setError("Para marcarla como disponible para gira, añade un email o una web de contacto."); }
       let obraId = id;
       if (nueva) obraId = (await addDoc(collection(db, "obra"), { ...datos, creacion: user.uid, creado: serverTimestamp() })).id;
       // Las fotos de la web antigua (fotosObra) pasan al campo nuevo
@@ -190,6 +201,11 @@ function Editor({ id, user }: { id: string; user: User }) {
       }
 
       for (const cid of borrados) await deleteDoc(doc(db, "persona_obra", cid));
+      // Premios (colección premios_obras)
+      for (const p of premios) {
+        if (p.id && p.borrar) await deleteDoc(doc(db, "premios_obras", p.id));
+        else if (!p.id) await addDoc(collection(db, "premios_obras"), { id_obra: obraId, galardon_obra: p.galardon.slice(0, 200), anio_premobr: p.anio.slice(0, 4) });
+      }
       const personasTocadas: string[] = [];
       // Una misma persona nueva puede tener varios puestos (dirige, escribe y actúa):
       // se crea una sola ficha por nombre y todos sus créditos apuntan a ella.
@@ -279,6 +295,7 @@ function Editor({ id, user }: { id: string; user: User }) {
                 <span className="label">Galería de imágenes</span>
                 <GaleriaUpload value={f.fotos} onChange={(urls) => set("fotos", urls)} />
               </div>
+              <FichaTecnicaEditor ft={ft} onChange={setFt} premios={premios} onPremios={setPremios} />
               <div className="field">
                 <span className="label">Dónde verla</span>
                 <FuncionesEditor value={f.funciones} onChange={(v) => set("funciones", v)} />
@@ -286,6 +303,7 @@ function Editor({ id, user }: { id: string; user: User }) {
               {!nueva ? (
                 <Historial tipo="obra" refId={id} onRecuperar={(a) => {
                   const fin = String(a.anofin ?? "");
+                  setFt({ ...fichaDesde(a), productora_nombre: a.id_productora === ft.id_productora ? ft.productora_nombre : "" });
                   setF((x) => ({
                     ...x,
                     titulo: String(a.titulo ?? x.titulo), sinopsis: String(a.sinopsis ?? ""), anoinicio: String(a.anoinicio ?? ""),

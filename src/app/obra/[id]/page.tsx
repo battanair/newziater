@@ -10,6 +10,7 @@ import { EditarFicha } from "@/components/EditarFicha";
 import { Anadirme } from "@/components/Anadirme";
 import { Galeria } from "@/components/Galeria";
 import { VistaElenco } from "@/components/VistaElenco";
+import { contactoDistribucion } from "@/lib/ficha-tecnica";
 import { Trailer } from "@/components/Trailer";
 import { Valoracion } from "@/components/Valoracion";
 import { fechaCorta, partirFunciones, OG_POR_DEFECTO, fotosDe, T_OG, agruparPorDepartamento, cld, departamento, instagramHandle, enlaceSeguro, instagramUrl, nombreCompleto, obraActiva, periodo, recortar, tramo } from "@/lib/format";
@@ -46,6 +47,15 @@ function youtubeId(url?: string) {
   return m?.[1];
 }
 
+const duracionTexto = (min: number) => (min >= 60 ? `${Math.floor(min / 60)} h${min % 60 ? ` ${min % 60} min` : ""}` : `${min} min`);
+/** Edad recomendada en el formato de schema.org («12-», «3-6»…). */
+function edadSchema(e: string): string | undefined {
+  const rango = e.match(/(\d+)-(\d+)/);
+  if (rango) return `${rango[1]}-${rango[2]}`;
+  const desde = e.match(/\+(\d+)/);
+  return desde ? `${desde[1]}-` : undefined;
+}
+
 export default async function ObraPage({ params }: Props) {
   const { id } = await params;
   const obra = await getObra(id);
@@ -61,6 +71,8 @@ export default async function ObraPage({ params }: Props) {
   const elenco = equipo.filter((c) => departamento(c) === "Interpretación");
   const tecnico = agruparPorDepartamento(equipo.filter((c) => departamento(c) !== "Interpretación"));
   const cuando = periodo(obra.anoinicio, obra.anofin);
+  const estreno = [obra.estreno_fecha ? new Date(obra.estreno_fecha + "T12:00:00").toLocaleDateString("es-ES", { day: "numeric", month: "long", year: "numeric" }) : "", obra.estreno_lugar ?? ""].filter(Boolean).join(" · ");
+  const contacto = contactoDistribucion(obra.distribucion);
   // Relevos: si alguien entró más tarde o dejó la obra, se ofrecen los botones Actual / Original / Todos
   const hayRelevos = equipo.some((c) => c.desde || c.hasta);
   const fuera = (c: { desde?: string; hasta?: string }) => [c.hasta ? "fuera-actual" : "", c.desde ? "fuera-original" : ""].filter(Boolean).join(" ");
@@ -135,6 +147,12 @@ export default async function ObraPage({ params }: Props) {
             actor: elenco.map((c) => ({ "@type": "Person", name: nombreCompleto(c.persona), url: `${SITE_URL}/persona/${c.persona.id}` })),
             contributor: equipo.filter((c) => departamento(c) !== "Interpretación" && !/direcci/i.test(c.puesto ?? "")).map((c) => ({ "@type": "Person", name: nombreCompleto(c.persona), url: `${SITE_URL}/persona/${c.persona.id}` })),
             award: premios.map((p) => p.galardon_obra),
+            typicalAgeRange: obra.edad ? edadSchema(obra.edad) : undefined,
+            accessibilityFeature: obra.accesibilidad?.length ? obra.accesibilidad : undefined,
+            contentWarning: obra.avisos?.length ? obra.avisos : undefined,
+            isBasedOn: obra.basada_en ? { "@type": "CreativeWork", name: obra.basada_en, author: obra.basada_autor ? { "@type": "Person", name: obra.basada_autor } : undefined } : undefined,
+            datePublished: obra.estreno_fecha || undefined,
+            locationCreated: obra.estreno_lugar ? { "@type": "Place", name: obra.estreno_lugar } : undefined,
             sameAs: ig ? [ig] : undefined,
             aggregateRating: obra.votos && obra.votos > 0 ? { "@type": "AggregateRating", ratingValue: obra.nota, bestRating: 10, worstRating: 1, ratingCount: obra.votos } : undefined,
           },
@@ -179,12 +197,13 @@ export default async function ObraPage({ params }: Props) {
             <div className="chips" style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 16 }}>
               {proximas.length ? <span className="chip chip-foco chip-dot">En cartel · {fechaCorta(proximas[0].fecha)}</span> : obraActiva(obra) ? <span className="chip chip-foco chip-dot">En activo</span> : <span className="chip">Finalizada</span>}
               {generos.map((g) => <span key={g} className="chip">{g}</span>)}
+              {obra.gira ? <a href="#gira" className="chip chip-ok">Disponible para gira</a> : null}
             </div>
             <h1 className="h1">{obra.titulo}</h1>
-            {cuando || productora ? (
+            {cuando || productora || obra.compania ? (
               <p style={{ margin: "12px 0 0", fontSize: 18 }} className="soft">
                 {cuando}
-                {productora ? <> · <Link href={`/compania/${productora.id}`} style={{ color: "var(--foco)" }}>{productora.nombre_prod}</Link></> : null}
+                {productora ? <> · <Link href={`/compania/${productora.id}`} style={{ color: "var(--foco)" }}>{productora.nombre_prod}</Link></> : obra.compania ? <> · {obra.compania}</> : null}
               </p>
             ) : null}
             </div>
@@ -247,13 +266,32 @@ export default async function ObraPage({ params }: Props) {
             <h2 className="eyebrow">Ficha técnica</h2>
             <dl className="dl">
               {cuando ? <><dt>Años</dt><dd>{cuando}</dd></> : null}
-              {productora ? <><dt>Compañía</dt><dd><Link href={`/compania/${productora.id}`}>{productora.nombre_prod}</Link></dd></> : null}
-              {obra.duracion ? <><dt>Duración</dt><dd>{obra.duracion} min</dd></> : null}
+              {estreno ? <><dt>Estreno</dt><dd>{estreno}</dd></> : null}
+              {productora ? <><dt>Compañía</dt><dd><Link href={`/compania/${productora.id}`}>{productora.nombre_prod}</Link></dd></> : obra.compania ? <><dt>Compañía</dt><dd>{obra.compania}</dd></> : null}
+              {obra.apoyos ? <><dt>Apoyos</dt><dd>{obra.apoyos}</dd></> : null}
+              {obra.basada_en ? <><dt>Basada en</dt><dd><em>{obra.basada_en}</em>{obra.basada_autor ? `, de ${obra.basada_autor}` : ""}</dd></> : null}
+              {obra.duracion ? <><dt>Duración</dt><dd>{duracionTexto(obra.duracion)}</dd></> : null}
               {obra.edad ? <><dt>Edad</dt><dd>{obra.edad}</dd></> : null}
               {obra.idioma ? <><dt>Idioma</dt><dd>{obra.idioma}</dd></> : null}
+              {obra.accesibilidad?.length ? <><dt>Accesibilidad</dt><dd>{obra.accesibilidad.join(" · ")}</dd></> : null}
               {ig ? <><dt>Redes</dt><dd><a href={ig} target="_blank" rel="noopener noreferrer nofollow" style={{ color: "var(--foco)" }}>{instagramHandle(obra.instagram)}</a></dd></> : null}
             </dl>
           </div>
+          {obra.avisos?.length ? (
+            <div className="panel">
+              <h2 className="eyebrow">Antes de ir</h2>
+              <p className="hint" style={{ margin: "0 0 8px" }}>La obra incluye:</p>
+              <ul style={{ margin: 0, paddingLeft: 18 }} className="soft">{obra.avisos.map((a) => <li key={a}>{a}</li>)}</ul>
+            </div>
+          ) : null}
+          {obra.gira && contacto ? (
+            <div className="panel panel-foco" id="gira">
+              <h2 className="eyebrow">Disponible para gira</h2>
+              <p className="hint" style={{ margin: "0 0 10px" }}>¿Programas una sala o un festival? Contacta con la distribución:</p>
+              <a href={contacto.href} className="btn btn-primary" style={{ width: "100%" }} {...(contacto.tipo === "web" ? { target: "_blank", rel: "noopener noreferrer nofollow" } : {})}>{contacto.tipo === "email" ? "Escribir a distribución" : "Web de distribución"}</a>
+              <p className="hint" style={{ margin: "8px 0 0", textAlign: "center", overflowWrap: "anywhere" }}>{contacto.texto}</p>
+            </div>
+          ) : null}
           {premios.length ? (
             <div className="panel">
               <h2 className="eyebrow">Premios</h2>
