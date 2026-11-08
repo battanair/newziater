@@ -24,7 +24,8 @@ jobs:
       # exactamente las mismas versiones (evita que se cuele una versión nueva comprometida).
       - name: Fijar versiones (package-lock.json) y aplicar parches de seguridad compatibles
         run: |
-          [ -f package-lock.json ] || npm install --package-lock-only --ignore-scripts --no-fund
+          # Recalcula el lockfile (respeta los «overrides» de package.json, que fuerzan versiones parcheadas)
+          npm install --package-lock-only --ignore-scripts --no-fund
           # Actualiza dentro de los rangos permitidos lo que tenga vulnerabilidades conocidas (sin cambios incompatibles)
           npm audit fix --package-lock-only --ignore-scripts --no-fund || true
           if [ -n "$(git status --porcelain package-lock.json package.json)" ]; then
