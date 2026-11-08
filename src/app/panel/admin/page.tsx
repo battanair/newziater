@@ -11,6 +11,7 @@ import { leer } from "@/lib/client-data";
 import { nombreCompleto } from "@/lib/format";
 import type { Obra, Persona } from "@/lib/types";
 import { ResumenAdmin } from "@/components/ResumenAdmin";
+import { MensajesAdmin, type Mensaje } from "@/components/MensajesAdmin";
 import { EMAIL_ADMIN } from "@/components/EsAdmin";
 import { aprobarSolicitudObra, rechazarSolicitudObra, resolverSugerencia, solicitudesObra, sugerenciasPendientes, type SolicitudObra, type Sugerencia } from "@/lib/colaboracion";
 
@@ -27,7 +28,8 @@ function Admin({ user }: { user: User }) {
   const [lista, setLista] = useState<Reclamacion[]>([]);
   const [obras, setObras] = useState<(SolicitudObra & { obraDoc?: Obra | null })[]>([]);
   const [sugs, setSugs] = useState<Sugerencia[]>([]);
-  const [tab, setTab] = useState<"resumen" | "fichas" | "obras" | "sugerencias">("resumen");
+  const [mensajes, setMensajes] = useState<Mensaje[]>([]);
+  const [tab, setTab] = useState<"resumen" | "mensajes" | "fichas" | "obras" | "sugerencias">("resumen");
 
   const cargar = useCallback(async () => {
     const t = await user.getIdTokenResult(true);
@@ -39,6 +41,8 @@ function Admin({ user }: { user: User }) {
     const so = await solicitudesObra();
     setObras(await Promise.all(so.map(async (x) => ({ ...x, obraDoc: await leer<Obra>("obra", x.obra) }))));
     setSugs(await sugerenciasPendientes(null));
+    const ms = await getDocs(collection(db, "fallos")).catch(() => null);
+    setMensajes((ms?.docs ?? []).map((d) => ({ id: d.id, ...(d.data() as Omit<Mensaje, "id">) })).sort((a, b) => String(b.fecha ?? "").localeCompare(String(a.fecha ?? ""))));
   }, [user]);
 
   useEffect(() => { cargar(); }, [cargar]);
@@ -66,6 +70,7 @@ function Admin({ user }: { user: User }) {
   }
   const tabs = [
     { k: "resumen" as const, l: "Resumen", n: null },
+    { k: "mensajes" as const, l: "Mensajes", n: mensajes.filter((m) => !m.atendido).length },
     { k: "fichas" as const, l: "Fichas de artista", n: lista.length },
     { k: "obras" as const, l: "Gestionar obras", n: obras.length },
     { k: "sugerencias" as const, l: "Sugerencias", n: sugs.length },
@@ -78,7 +83,8 @@ function Admin({ user }: { user: User }) {
         {tabs.map((t) => <button key={t.k} type="button" role="tab" className="tab" aria-selected={tab === t.k} onClick={() => setTab(t.k)}>{t.l} {t.n !== null ? <span style={{ opacity: .7 }}>{t.n}</span> : null}</button>)}
       </div>
 
-      {tab === "resumen" ? <ResumenAdmin pendientes={{ fichas: lista.length, obras: obras.length, sugerencias: sugs.length }} /> : null}
+      {tab === "resumen" ? <ResumenAdmin pendientes={{ mensajes: mensajes.filter((m) => !m.atendido).length, fichas: lista.length, obras: obras.length, sugerencias: sugs.length }} /> : null}
+      {tab === "mensajes" ? <MensajesAdmin mensajes={mensajes} recargar={cargar} /> : null}
 
       {tab === "obras" ? (
         <div className="stack">

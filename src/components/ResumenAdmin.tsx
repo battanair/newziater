@@ -32,7 +32,7 @@ function diaISO(d: Date) {
   return new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Madrid", year: "numeric", month: "2-digit", day: "2-digit" }).format(d);
 }
 
-export function ResumenAdmin({ pendientes }: { pendientes: { fichas: number; obras: number; sugerencias: number }; }) {
+export function ResumenAdmin({ pendientes }: { pendientes: { mensajes: number; fichas: number; obras: number; sugerencias: number }; }) {
   const [datos, setDatos] = useState<{ totales: Record<string, number>; semana: Record<string, number>; dias: Dia[]; eventos: Evento[] } | null>(null);
   const [error, setError] = useState("");
 
@@ -113,6 +113,7 @@ export function ResumenAdmin({ pendientes }: { pendientes: { fichas: number; obr
         <section className="panel" style={{ flex: "1 1 320px" }}>
           <h2 className="h3" style={{ marginBottom: 12 }}>Te esperan</h2>
           <ul className="list">
+            <Pend n={pendientes.mensajes} l="Mensajes de contacto sin atender" />
             <Pend n={pendientes.fichas} l="Reclamaciones de fichas" />
             <Pend n={pendientes.obras} l="Solicitudes para gestionar obras" />
             <Pend n={pendientes.sugerencias} l="Sugerencias pendientes" />

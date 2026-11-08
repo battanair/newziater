@@ -7,7 +7,7 @@ import { useAuth } from "./AuthProvider";
 import { SearchBox } from "./SearchBox";
 import { ModoToggle } from "./ModoToggle";
 import { Insignia, usePendientes } from "./Pendientes";
-import { useEsAdmin } from "./EsAdmin";
+import { useEsAdmin, useMensajesPendientes } from "./EsAdmin";
 
 const LINKS = [
   { href: "/obras", label: "Obras" },
@@ -29,6 +29,7 @@ export function Header() {
   const { user, loading } = useAuth();
   const { total } = usePendientes();
   const esAdmin = useEsAdmin();
+  const mensajesNuevos = useMensajesPendientes(esAdmin);
   return (
     <header className="header">
       <div className="wrap header-in">
@@ -46,9 +47,10 @@ export function Header() {
         <div className="actions">
           <ModoToggle />
           {esAdmin ? (
-            <Link href="/panel/admin" className="btn btn-admin" aria-label="Administración" title="Administración">
+            <Link href="/panel/admin" className="btn btn-admin" aria-label={mensajesNuevos ? `Administración: ${mensajesNuevos} mensajes sin atender` : "Administración"} title="Administración" style={{ position: "relative" }}>
               <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 3v18h18" /><path d="M7 15l4-4 3 3 5-6" /></svg>
               <span className="solo-escritorio">Admin</span>
+              <Insignia n={mensajesNuevos} />
             </Link>
           ) : null}
           {loading ? null : user ? (

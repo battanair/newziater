@@ -470,3 +470,4 @@ html[data-sesion] .solo-sin-sesion { display: none; }
 .trailer-play { width: 64px; height: 64px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; background: var(--foco); color: var(--foco-tinta); font-size: 24px; padding-left: 4px; }
 .trailer-portada:hover .trailer-play { background: var(--foco-hover); }
 .velo-caja .btn:not(.btn-primary), .banner-cookies .btn { border: 1px solid var(--linea-3); }
+.chip-peligro { background: rgba(226, 75, 74, .14); color: var(--error); border-color: transparent; }

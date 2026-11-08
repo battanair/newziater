@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { collection, getDocs } from "firebase/firestore";
+import { db } from "@/lib/firebase-client";
 import { useAuth } from "./AuthProvider";
 
 /** Cuenta del administrador de Ziater. */
@@ -20,4 +22,14 @@ export function useEsAdmin() {
     user.getIdTokenResult().then((t) => setEs(t.claims.admin === true)).catch(() => setEs(false));
   }, [user]);
   return es;
+}
+
+/** Mensajes de contacto sin atender (solo se consulta si es la sesión del administrador). */
+export function useMensajesPendientes(esAdmin: boolean) {
+  const [n, setN] = useState(0);
+  useEffect(() => {
+    if (!esAdmin) return setN(0);
+    getDocs(collection(db, "fallos")).then((s) => setN(s.docs.filter((d) => !d.data().atendido).length)).catch(() => setN(0));
+  }, [esAdmin]);
+  return n;
 }
