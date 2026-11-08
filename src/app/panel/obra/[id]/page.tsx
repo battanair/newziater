@@ -62,6 +62,7 @@ function Editor({ id, user }: { id: string; user: User }) {
   const [incorpora, setIncorpora] = useState(""); // "" = desde el estreno
   const [relevo, setRelevo] = useState<{ key: string; q: string; desde: string } | null>(null);
   const [salida, setSalida] = useState<{ key: string; hasta: string } | null>(null);
+  const [enfocar, setEnfocar] = useState<string | null>(null);
   const [estado, setEstado] = useState<"idle" | "saving" | "error">("idle");
   const [error, setError] = useState("");
 
@@ -122,12 +123,19 @@ function Editor({ id, user }: { id: string; user: User }) {
     setDudosas(null);
     if (p && equipo.some((m) => m.personaId === p.id && m.dep === dep)) { setQ(""); return; } // ya estaba en ese departamento
     const esYo = Boolean(p && yo && p.id === yo.id);
-    setEquipo((e) => [...e, { key: crypto.randomUUID(), personaId: p?.id, nombre, img: p?.img, dep, titulo: dep === "Interpretación" ? personaje.trim() : "", estado: esYo ? "tu" : p ? "enlazado" : "nuevo", desde: nueva ? "" : incorpora }]);
+    const key = crypto.randomUUID();
+    setEquipo((e) => [...e, { key, personaId: p?.id, nombre, img: p?.img, dep, titulo: dep === "Interpretación" ? personaje.trim() : "", estado: esYo ? "tu" : p ? "enlazado" : "nuevo", desde: nueva ? "" : incorpora }]);
+    if (dep === "Interpretación" && !personaje.trim()) setEnfocar(key);
     setQ("");
     setPersonaje("");
   }
 
   /** Cambia las fechas de un miembro (si ya estaba guardado, se actualizará al publicar). */
+  /** Cambia el personaje (o el detalle del puesto) de un miembro ya añadido. */
+  function cambiarTitulo(key: string, titulo: string) {
+    setEquipo((e) => e.map((x) => (x.key === key ? { ...x, titulo: titulo.slice(0, 150), cambiado: Boolean(x.creditoId) } : x)));
+  }
+
   function fechas(key: string, cambios: Partial<Pick<Miembro, "desde" | "hasta">>) {
     setEquipo((e) => e.map((x) => (x.key === key ? { ...x, ...cambios, cambiado: Boolean(x.creditoId) } : x)));
   }
@@ -188,7 +196,7 @@ function Editor({ id, user }: { id: string; user: User }) {
       const nuevas = new Map<string, string>();
       const normal = (n: string) => n.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/\s+/g, " ").trim();
       for (const m of equipo.filter((x) => x.creditoId && x.cambiado)) {
-        await updateDoc(doc(db, "persona_obra", m.creditoId!), { desde: (m.desde ?? "").slice(0, 7), hasta: (m.hasta ?? "").slice(0, 7) });
+        await updateDoc(doc(db, "persona_obra", m.creditoId!), { titulo: (m.titulo.trim() || m.dep).slice(0, 150), desde: (m.desde ?? "").slice(0, 7), hasta: (m.hasta ?? "").slice(0, 7) });
         if (m.personaId) personasTocadas.push(m.personaId);
       }
       for (const m of equipo.filter((x) => !x.creditoId)) {
@@ -355,12 +363,26 @@ function Editor({ id, user }: { id: string; user: User }) {
                   <h2 className="eyebrow" style={{ color: "var(--texto-3)", marginBottom: 6 }}>{g.d} · {g.items.length}</h2>
                   {g.items.map((m) => {
                     const t = tramo(m, hayRelevos);
-                    const sub = [m.titulo && m.titulo !== m.dep ? m.titulo : "", t].filter(Boolean).join(" · ");
+                    const esReparto = m.dep === "Interpretación";
                     return (
                     <div key={m.key}>
                     <div className="member" style={m.hasta ? { opacity: 0.72 } : undefined}>
                       <span style={{ width: 44, height: 66, borderRadius: 4, flex: "none", display: "inline-flex", alignItems: "center", justifyContent: "center", background: m.img ? `center/cover url(${JSON.stringify(m.img)})` : colorCartel(m.key), border: m.estado === "nuevo" ? "1px dashed var(--texto-4)" : 0 }} aria-hidden="true">{m.img ? "" : iniciales(m.nombre)}</span>
-                      <span className="who"><strong style={{ display: "block" }}>{m.nombre}</strong>{sub ? <span className="hint">{sub}</span> : null}</span>
+                      <span className="who">
+                        <strong style={{ display: "block" }}>{m.nombre}</strong>
+                        <label className="sr-only" htmlFor={`tit-${m.key}`}>{esReparto ? `Personaje de ${m.nombre}` : `Detalle del puesto de ${m.nombre}`}</label>
+                        <input
+                          id={`tit-${m.key}`}
+                          className="input-mini"
+                          placeholder={esReparto ? "Personaje (opcional)" : `Detalle (opcional), p. ej. «${m.dep === "Dirección" ? "Dirección adjunta" : "Diseño"}»`}
+                          value={m.titulo === m.dep ? "" : m.titulo}
+                          maxLength={150}
+                          autoFocus={enfocar === m.key}
+                          onFocus={() => enfocar === m.key && setEnfocar(null)}
+                          onChange={(e) => cambiarTitulo(m.key, e.target.value)}
+                        />
+                        {t ? <span className="hint" style={{ display: "block" }}>{t}</span> : null}
+                      </span>
                       <span className={`chip ${m.estado === "tu" ? "chip-foco" : m.estado === "enlazado" ? "chip-ok" : ""}`}>{m.estado === "tu" ? "Eres tú" : m.estado === "enlazado" ? (m.creditoId ? "✓ Enlazado" : "✓ Enlazado · lo verá en su espacio") : "Ficha nueva · podrá reclamarla"}</span>
                       <span style={{ display: "inline-flex", gap: 4 }}>
                         {!m.hasta ? <button type="button" className="btn" aria-expanded={relevo?.key === m.key} onClick={() => { setSalida(null); setRelevo(relevo?.key === m.key ? null : { key: m.key, q: "", desde: mesActual() }); }}>⇄ Sustituir</button> : null}
