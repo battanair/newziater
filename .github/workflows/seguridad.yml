@@ -1,0 +1,36 @@
+name: Seguridad
+
+on:
+  push:
+    branches: [main]
+    paths: [package.json, package-lock.json, .github/workflows/seguridad.yml]
+  schedule:
+    - cron: "23 6 * * 1" # lunes por la mañana
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+jobs:
+  dependencias:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      # Si aún no hay package-lock.json, se genera y se guarda: así Vercel instala siempre
+      # exactamente las mismas versiones (evita que se cuele una versión nueva comprometida).
+      - name: Fijar versiones (package-lock.json)
+        run: |
+          if [ ! -f package-lock.json ]; then
+            npm install --package-lock-only --ignore-scripts --no-fund
+            git config user.name "Revisión de seguridad"
+            git config user.email "actions@users.noreply.github.com"
+            git add package-lock.json
+            git commit -m "Fijar versiones de dependencias (package-lock.json)"
+            git push
+          fi
+      - name: Buscar vulnerabilidades conocidas (npm audit)
+        run: npm audit --omit=dev --audit-level=high

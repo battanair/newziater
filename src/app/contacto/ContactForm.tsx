@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { addDoc, collection } from "firebase/firestore";
 import { db } from "@/lib/firebase-client";
 
@@ -10,12 +10,14 @@ const TIPOS = ["consulta", "ficha", "borrado"];
 
 export function ContactForm({ tipoInicial = "consulta" }: { tipoInicial?: string }) {
   const [status, setStatus] = useState<"idle" | "sending" | "ok" | "error">("idle");
+  const inicio = useRef(Date.now());
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const form = e.currentTarget;
     const f = new FormData(form);
     if (f.get("web")) return; // trampa anti-bots: los humanos no ven este campo
+    if (Date.now() - inicio.current < 3000) return; // nadie escribe un mensaje en menos de 3 segundos
     setStatus("sending");
     try {
       await addDoc(collection(db, "fallos"), {

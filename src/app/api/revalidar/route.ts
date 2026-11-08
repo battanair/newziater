@@ -2,12 +2,14 @@ import { NextResponse } from "next/server";
 import { revalidatePath, revalidateTag } from "next/cache";
 import { verifyRequest } from "@/lib/firebase-admin";
 import { CACHE_TAG, validId } from "@/lib/data";
+import { limitar } from "@/lib/limite";
 
 // Tras guardar cambios, el panel llama aquí para que la ficha pública se
 // actualice al momento (y Google vea la versión nueva) sin esperar a la caché.
 export async function POST(req: Request) {
   const user = await verifyRequest(req);
   if (!user) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
+  if (!limitar(`revalidar:${user.uid}`, 30)) return NextResponse.json({ error: "Demasiadas peticiones" }, { status: 429 });
 
   const body = (await req.json().catch(() => ({}))) as { obras?: unknown; personas?: unknown; salas?: unknown };
   const ids = (v: unknown) => (Array.isArray(v) ? v.filter((x): x is string => typeof x === "string" && validId(x)).slice(0, 50) : []);

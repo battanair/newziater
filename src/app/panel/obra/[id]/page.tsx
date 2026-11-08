@@ -13,7 +13,7 @@ import { authFetch } from "@/components/AuthProvider";
 import { useBusqueda } from "@/components/SearchBox";
 import { clavesDe, normalizar } from "@/lib/claves";
 import { anadirCredito, creditosDe, crearPersonaSinCuenta, leer, miPersona } from "@/lib/client-data";
-import { DEPARTAMENTOS, GENEROS, colorCartel, fotosDe, iniciales, mesActual, tramo } from "@/lib/format";
+import { DEPARTAMENTOS, GENEROS, aHttps, colorCartel, fotosDe, iniciales, mesActual, tramo } from "@/lib/format";
 import type { Funcion, Obra, Persona, SearchItem } from "@/lib/types";
 import { SugerirCambio } from "@/components/SugerirCambio";
 import { Historial } from "@/components/Historial";
@@ -164,7 +164,7 @@ function Editor({ id, user }: { id: string; user: User }) {
         anofin: f.activa ? 0 : f.anofin.trim().slice(0, 4),
         cartel: f.cartel,
         instagram: f.instagram.trim().slice(0, 100),
-        trailer: f.trailer.trim().slice(0, 500),
+        trailer: aHttps(f.trailer).slice(0, 500),
         categoria: f.categoria.slice(0, 5),
         idioma: f.idioma.slice(0, 40),
         claves: clavesDe(f.titulo),

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createHash } from "node:crypto";
 import { verifyRequest } from "@/lib/firebase-admin";
+import { ipDe, limitar } from "@/lib/limite";
 
 // Firma subidas a Cloudinary solo para usuarios con sesión iniciada.
 // El secreto de Cloudinary nunca sale del servidor, y cada usuario solo puede
@@ -10,6 +11,7 @@ const TIPOS = new Set(["cartel", "foto", "galeria", "logo"]);
 const intentos = new Map<string, number[]>(); // límite sencillo por usuario e instancia
 
 export async function POST(req: Request) {
+  if (!limitar(`firma:${ipDe(req)}`, 40)) return NextResponse.json({ error: "Demasiadas peticiones" }, { status: 429 });
   const user = await verifyRequest(req);
   if (!user) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
 

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { verifyRequest } from "@/lib/firebase-admin";
+import { ipDe, limitar } from "@/lib/limite";
 
 // Limpieza de fotos de Cloudinary (solo administración).
 //  - «listar»: fotos subidas desde la web nueva (carpeta ziater/), con fecha y peso.
@@ -19,6 +20,7 @@ function cloudinary() {
 type Recurso = { public_id: string; created_at: string; bytes: number };
 
 export async function POST(req: Request) {
+  if (!limitar(`admin:${ipDe(req)}`, 20)) return NextResponse.json({ error: "Demasiadas peticiones" }, { status: 429 });
   const user = await verifyRequest(req);
   if (!user?.admin) return NextResponse.json({ error: "No autorizado" }, { status: 403 });
   const c = cloudinary();

@@ -12,6 +12,7 @@ import { useBusqueda } from "@/components/SearchBox";
 import { useEsAdmin } from "@/components/EsAdmin";
 import { clavesDe, normalizar } from "@/lib/claves";
 import { leer } from "@/lib/client-data";
+import { aHttps } from "@/lib/format";
 import type { Sala } from "@/lib/types";
 
 export default function SalaEditorPage({ params }: { params: Promise<{ id: string }> }) {
@@ -64,7 +65,7 @@ function Editor({ id, user }: { id: string; user: User }) {
       nombre: f.nombre.trim().slice(0, 150),
       ciudad: f.ciudad.trim().slice(0, 80),
       direccion: f.direccion.trim().slice(0, 200),
-      web: f.web.trim().slice(0, 300),
+      web: aHttps(f.web).slice(0, 300),
       instagram: f.instagram.trim().replace(/^@/, "").slice(0, 100),
       descripcion: f.descripcion.trim().slice(0, 3000),
       foto: f.foto,
@@ -121,7 +122,7 @@ function Editor({ id, user }: { id: string; user: User }) {
             <div style={{ display: "flex", flexWrap: "wrap", gap: 12 }}>
               <div className="field" style={{ flex: "1 1 220px" }}>
                 <label className="label" htmlFor="web">Web</label>
-                <input id="web" className="input" type="url" maxLength={300} value={f.web} onChange={(e) => set("web", e.target.value)} placeholder="https://…" />
+                <input id="web" className="input" type="text" inputMode="url" maxLength={300} value={f.web} onChange={(e) => set("web", e.target.value)} placeholder="https://…" />
               </div>
               <div className="field" style={{ flex: "1 1 180px" }}>
                 <label className="label" htmlFor="ig">Instagram</label>

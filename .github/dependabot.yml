@@ -1,0 +1,17 @@
+# Revisión automática de dependencias: cada semana se proponen actualizaciones,
+# y las de seguridad en cuanto se publican (alertas de Dependabot).
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: "/"
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 5
+    groups:
+      menores:
+        update-types: [minor, patch]
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: monthly

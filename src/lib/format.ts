@@ -152,3 +152,19 @@ export function tramo(c: { desde?: string; hasta?: string }, siempre = false): s
   if (!c.hasta) return `desde ${mesCorto(c.desde)}`;
   return `${c.desde ? mesCorto(c.desde) : "estreno"} – ${mesCorto(c.hasta)}`;
 }
+
+// ---------- Enlaces escritos por usuarios ----------
+/** Devuelve el enlace solo si es http(s) y sin espacios; nunca javascript:, data:… (para pintarlo en un href). */
+export function enlaceSeguro(u?: string): string | undefined {
+  const v = String(u ?? "").trim();
+  return /^https?:\/\/[^\s<>"']+$/i.test(v) ? v : undefined;
+}
+/** Normaliza un enlace antes de guardarlo: añade https:// si falta y cambia http:// por https://. */
+export function aHttps(u?: string): string {
+  const v = String(u ?? "").trim();
+  if (!v) return "";
+  if (/^https:\/\//i.test(v)) return v;
+  if (/^http:\/\//i.test(v)) return "https://" + v.slice(7);
+  if (/^[a-z][a-z0-9+.-]*:/i.test(v)) return ""; // otros esquemas (javascript:, data:…) se descartan
+  return "https://" + v.replace(/^\/+/, "");
+}

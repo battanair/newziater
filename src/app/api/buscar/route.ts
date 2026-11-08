@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { buscar } from "@/lib/data";
+import { ipDe, limitar } from "@/lib/limite";
 import type { SearchItem } from "@/lib/types";
 
 // Búsqueda instantánea: una consulta por colección con el prefijo más largo,
@@ -7,8 +8,10 @@ import type { SearchItem } from "@/lib/types";
 const TIPOS: SearchItem["t"][] = ["obra", "persona", "productora", "sala"];
 
 export async function GET(req: Request) {
+  if (!limitar(`buscar:${ipDe(req)}`, 90)) return NextResponse.json({ error: "Demasiadas búsquedas, espera un momento" }, { status: 429, headers: { "retry-after": "30" } });
   const url = new URL(req.url);
-  const q = (url.searchParams.get("q") ?? "").slice(0, 80);
+  // Solo letras, números, espacios y signos básicos; nada más llega a la base de datos
+  const q = (url.searchParams.get("q") ?? "").normalize("NFC").replace(/[^\p{L}\p{N}\s'’.\-&]/gu, " ").slice(0, 80);
   const t = url.searchParams.get("t");
   const tipos = t ? TIPOS.filter((x) => t.split(",").includes(x)) : TIPOS;
   const items = q.trim().length >= 2 ? await buscar(q, tipos) : [];

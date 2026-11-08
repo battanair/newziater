@@ -7,7 +7,7 @@ import { JsonLd, ObraCard } from "@/components/Cards";
 import { ShareButton } from "@/components/ObraActions";
 import { EditarFicha } from "@/components/EditarFicha";
 import { SugerirCambio } from "@/components/SugerirCambio";
-import { OG_POR_DEFECTO, T_CARTEL, T_OG, cld, colorCartel, fechaCorta, hoyES, instagramUrl, recortar } from "@/lib/format";
+import { aHttps, enlaceSeguro, OG_POR_DEFECTO, T_CARTEL, T_OG, cld, colorCartel, fechaCorta, hoyES, instagramUrl, recortar } from "@/lib/format";
 import { SITE_URL } from "@/lib/firebase-config";
 
 export const revalidate = 600;
@@ -34,7 +34,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   };
 }
 
-const webUrl = (w?: string) => (w && /^https?:\/\//.test(w) ? w : w ? `https://${w}` : undefined);
+const webUrl = (w?: string) => enlaceSeguro(aHttps(w));
 
 export default async function SalaPage({ params }: Props) {
   const { id } = await params;
@@ -100,7 +100,7 @@ export default async function SalaPage({ params }: Props) {
               <li key={i} className="funcion">
                 <span className="funcion-fecha"><strong>{fechaCorta(c.fecha)}</strong>{c.hora ? <span className="hint">{c.hora} h</span> : null}</span>
                 <span style={{ minWidth: 0 }}><Link href={`/obra/${c.obra.id}`} style={{ fontWeight: 600, display: "block" }}>{c.obra.titulo}</Link>{c.sala && c.sala !== s.nombre ? <span className="hint">{c.sala}</span> : null}</span>
-                {c.entradas ? <a href={c.entradas} className="btn btn-primary" target="_blank" rel="noopener noreferrer nofollow">Entradas</a> : <span />}
+                {enlaceSeguro(c.entradas) ? <a href={enlaceSeguro(c.entradas)} className="btn btn-primary" target="_blank" rel="noopener noreferrer nofollow">Entradas</a> : <span />}
               </li>
             ))}
           </ul>

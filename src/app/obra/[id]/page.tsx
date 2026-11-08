@@ -12,7 +12,7 @@ import { Galeria } from "@/components/Galeria";
 import { VistaElenco } from "@/components/VistaElenco";
 import { Trailer } from "@/components/Trailer";
 import { Valoracion } from "@/components/Valoracion";
-import { fechaCorta, partirFunciones, OG_POR_DEFECTO, fotosDe, T_OG, agruparPorDepartamento, cld, departamento, instagramHandle, instagramUrl, nombreCompleto, obraActiva, periodo, recortar, tramo } from "@/lib/format";
+import { fechaCorta, partirFunciones, OG_POR_DEFECTO, fotosDe, T_OG, agruparPorDepartamento, cld, departamento, instagramHandle, enlaceSeguro, instagramUrl, nombreCompleto, obraActiva, periodo, recortar, tramo } from "@/lib/format";
 import { SITE_URL } from "@/lib/firebase-config";
 
 // Página estática regenerada en segundo plano: rápida para Google y gratis de servir.
@@ -214,7 +214,7 @@ export default async function ObraPage({ params }: Props) {
                     <li key={i} className="funcion">
                       <span className="funcion-fecha"><strong>{fechaCorta(fn.fecha)}</strong>{fn.hora ? <span className="hint">{fn.hora} h</span> : null}</span>
                       <span style={{ minWidth: 0 }}><strong style={{ display: "block" }}>{fn.sala_id ? <Link href={`/sala/${fn.sala_id}`} style={{ color: "var(--foco)" }}>{fn.sala}</Link> : fn.sala}</strong>{fn.ciudad ? <span className="hint">{fn.ciudad}</span> : null}</span>
-                      {fn.entradas ? <a href={fn.entradas} className="btn btn-primary" target="_blank" rel="noopener noreferrer nofollow">Entradas</a> : <span />}
+                      {enlaceSeguro(fn.entradas) ? <a href={enlaceSeguro(fn.entradas)} className="btn btn-primary" target="_blank" rel="noopener noreferrer nofollow">Entradas</a> : <span />}
                     </li>
                   ))}
                 </ul>

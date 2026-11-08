@@ -34,6 +34,11 @@ service cloud.firestore {
         || (data()[field] is string && data()[field].size() < 500
             && data()[field].matches('^https://res[.]cloudinary[.]com/dk0vvcpyn/.*'));
     }
+    // Enlace: vacío o https (nunca javascript:, data:…)
+    function url(field) {
+      return !(field in data()) || data()[field] == ''
+        || (data()[field] is string && data()[field].size() <= 500 && data()[field].matches('^https://[^\\s]+$'));
+    }
     function unchanged(field) {
       return !(field in data()) && !(field in resource.data)
         || (field in data() && field in resource.data && data()[field] == resource.data[field]);
@@ -48,7 +53,13 @@ service cloud.firestore {
         && str('sinopsis', 3000) && img('cartel') && list('fotos_obra', 30) && list('categoria', 5)
         && str('instagram', 100) && str('trailer', 500) && str('idioma', 40) && str('edad', 20)
         && list('claves', 200) && list('funciones', 40) && str('ultima', 10) && list('salas_ids', 40)
-        && (!('duracion' in data()) || (data().duracion is number && data().duracion >= 0 && data().duracion <= 600));
+        && (!('duracion' in data()) || (data().duracion is number && data().duracion >= 0 && data().duracion <= 600))
+        && url('trailer')
+        // Solo estos campos: nadie puede colar otros (p. ej. «verificado» o «destacada»)
+        && data().keys().hasOnly(['titulo', 'sinopsis', 'anoinicio', 'anofin', 'cartel', 'fotos_obra', 'fotosObra', 'categoria',
+             'instagram', 'trailer', 'idioma', 'edad', 'duracion', 'claves', 'funciones', 'ultima', 'salas_ids', 'id_productora',
+             'creacion', 'creado', 'votos', 'suma_notas', 'nota', 'puntuacion'])
+        && str('anoinicio', 10) && str('anofin', 10) && str('id_productora', 64);
     }
 
     // Contadores de valoración: solo cambian a la vez que la nota del propio
@@ -107,6 +118,7 @@ service cloud.firestore {
       allow create: if signedIn() && personaValida()
         && data().creacion == uid()
         && !('verificado' in data())
+        && data().keys().hasOnly(['Nombre', 'Apellidos', 'biografia', 'foto', 'instagram', 'ciudad', 'roles', 'destacadas', 'artesEscenicas', 'claves', 'coincide', 'creacion'])
         && ((personaId == uid() && data().coincide == uid()) || (personaId != uid() && data().coincide == ''));
 
       // El dueño edita sus datos, pero nunca "coincide", "creacion" ni "verificado"
@@ -172,7 +184,7 @@ service cloud.firestore {
     function salaValida() {
       return data().nombre is string && data().nombre.size() > 0 && data().nombre.size() <= 150
         && data().ciudad is string && data().ciudad.size() > 0 && data().ciudad.size() <= 80
-        && str('direccion', 200) && str('web', 300) && str('instagram', 100) && str('descripcion', 3000)
+        && str('direccion', 200) && url('web') && str('instagram', 100) && str('descripcion', 3000)
         && img('foto') && list('claves', 200)
         && (!('aforo' in data()) || (data().aforo is number && data().aforo >= 0 && data().aforo <= 100000))
         && data().keys().hasOnly(['nombre', 'ciudad', 'direccion', 'web', 'instagram', 'descripcion', 'foto', 'aforo', 'claves', 'creacion', 'creado']);
@@ -218,7 +230,10 @@ service cloud.firestore {
       allow read: if isAdmin() || (signedIn() && userId == uid());
       allow create, update: if signedIn() && userId == uid()
         && str('Nombre', 100) && str('Apellidos', 150)
-        && list('favoritos_obra', 2000) && list('vistas', 5000) && list('favoritos_persona', 2000);
+        && list('favoritos_obra', 2000) && list('vistas', 5000) && list('favoritos_persona', 2000)
+        && str('consentimiento', 20)
+        && data().keys().hasOnly(['Nombre', 'Apellidos', 'nombre', 'apellidos', 'artesEscenicas', 'coincide',
+             'favoritos_obra', 'vistas', 'favoritos_persona', 'consentimiento', 'consentimiento_fecha']);
       allow delete: if signedIn() && userId == uid();
     }
 
