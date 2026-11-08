@@ -128,6 +128,7 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
         {error ? <p className="error" role="alert">{error}</p> : null}
         {info ? <p className="ok" role="status">{info}</p> : null}
         <button type="submit" className="btn btn-primary btn-lg" disabled={busy}>{busy ? "Un momento…" : mode === "signup" ? "Crear cuenta" : "Entrar"}</button>
+        {mode === "signup" ? <p className="hint" style={{ margin: 0, textAlign: "center" }}>Al crear una cuenta, también con Google, aceptas los <Link href="/terminos-de-uso" style={{ color: "var(--foco)" }}>términos de uso</Link> y la <Link href="/politica-de-privacidad" style={{ color: "var(--foco)" }}>política de privacidad</Link>.</p> : null}
         {mode === "login" ? (
           <button type="button" className="btn btn-ghost" onClick={() => reset(document.getElementById("auth-form") as HTMLFormElement)}>He olvidado mi contraseña</button>
         ) : null}

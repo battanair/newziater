@@ -1,23 +1,39 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { LegalPage } from "@/components/LegalPage";
 
-export const metadata: Metadata = { title: "Política de cookies", alternates: { canonical: "/politica-de-cookies" } };
+export const metadata: Metadata = { title: "Política de cookies", description: "Qué guarda Ziater en tu navegador y para qué.", alternates: { canonical: "/politica-de-cookies" } };
 
-// Texto migrado de la web anterior (10/03/2025).
+const H = ({ children }: { children: React.ReactNode }) => <h2 className="h3" style={{ marginTop: 36 }}>{children}</h2>;
+
 export default function Page() {
   return (
     <LegalPage title="Política de cookies">
-      <p>Fecha de entrada en vigor: 10/03/2025</p>
-      <h2 className="h3" style={{ marginTop: 32 }}>¿Qué son las cookies?</h2>
-      <p>Las cookies son pequeños archivos de texto que se almacenan en tu dispositivo cuando visitas un sitio web. En Ziater las utilizamos para mejorar tu experiencia y analizar el uso del sitio.</p>
-      <h2 className="h3" style={{ marginTop: 32 }}>Tipos de cookies que utilizamos</h2>
+      <p>Última actualización: 8 de noviembre de 2026.</p>
+      <p>
+        Ziater no usa cookies publicitarias ni de seguimiento, ni comparte tu navegación con terceros para hacerte publicidad. Solo guardamos en
+        tu navegador lo necesario para que la web funcione, y algunas preferencias.
+      </p>
+
+      <H>Qué guardamos en tu navegador</H>
       <ul>
-        <li>Cookies técnicas necesarias para el funcionamiento del sitio.</li>
-        <li>Cookies de análisis para entender cómo se utiliza la plataforma.</li>
-        <li>Cookies de autenticación para mantener tu sesión iniciada.</li>
+        <li><strong>Sesión (Firebase Authentication):</strong> si entras con tu cuenta, el navegador guarda tu sesión para no pedirte la contraseña en cada visita. Es imprescindible para el servicio y desaparece al cerrar sesión.</li>
+        <li><strong>Preferencias:</strong> modo claro u oscuro, y una marca que indica si tienes la sesión iniciada para mostrarte la portada adecuada.</li>
+        <li><strong>Contador de visitas propio:</strong> una marca con la fecha del día para no contar dos veces al mismo visitante en las estadísticas diarias. No contiene datos personales ni se comparte con nadie.</li>
       </ul>
-      <h2 className="h3" style={{ marginTop: 32 }}>Cómo gestionar las cookies</h2>
-      <p>Puedes configurar tu navegador para rechazar cookies o eliminar las existentes. Ten en cuenta que algunas funciones del sitio podrían dejar de funcionar correctamente.</p>
+
+      <H>Estadísticas</H>
+      <p>
+        Medimos las visitas de forma anónima y agregada con nuestro propio contador y con Vercel Web Analytics, que funciona sin cookies y sin
+        identificarte. Solo vemos cifras totales (por ejemplo, cuántas personas visitaron las fichas de obras un día).
+      </p>
+
+      <H>Cómo borrarlo</H>
+      <p>
+        Puedes borrar en cualquier momento los datos guardados por Ziater desde la configuración de tu navegador (en «Datos de sitios» o
+        «Cookies y datos de sitios»). Si lo haces, tendrás que volver a iniciar sesión.
+      </p>
+      <p>Más información sobre cómo tratamos tus datos en la <Link href="/politica-de-privacidad">política de privacidad</Link>.</p>
     </LegalPage>
   );
 }

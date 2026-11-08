@@ -14,6 +14,7 @@ export function Footer() {
           <Link href="/contacto">Contacto</Link>
           <Link href="/politica-de-privacidad">Privacidad</Link>
           <Link href="/politica-de-cookies">Cookies</Link>
+          <Link href="/terminos-de-uso">Términos</Link>
           <a href="https://www.instagram.com/ziater_/" rel="noopener noreferrer" target="_blank">Instagram</a>
         </nav>
         <Link href="/panel/sala/nueva" className="btn btn-sala">¿Tienes una sala? Dala de alta</Link>

@@ -443,3 +443,6 @@ button.chip[aria-pressed="true"] { background: var(--foco-suave); color: var(--p
 .que-es-lista li::before { content: ""; position: absolute; left: 4px; top: .55em; width: 8px; height: 8px; border-radius: 50%; background: var(--foco); }
 /* Solo para visitantes sin sesión (data-sesion lo pone AuthProvider / SCRIPT_SESION) */
 html[data-sesion] .solo-sin-sesion { display: none; }
+.legal a { color: var(--foco); text-decoration: underline; text-underline-offset: 2px; }
+.legal strong { color: var(--papel); }
+.legal li { margin-bottom: 6px; }
