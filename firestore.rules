@@ -59,7 +59,7 @@ service cloud.firestore {
         && data().keys().hasOnly(['titulo', 'sinopsis', 'anoinicio', 'anofin', 'cartel', 'fotos_obra', 'fotosObra', 'categoria',
              'instagram', 'trailer', 'idioma', 'edad', 'duracion', 'claves', 'funciones', 'ultima', 'salas_ids', 'id_productora',
              'creacion', 'creado', 'votos', 'suma_notas', 'nota', 'puntuacion'])
-        && str('anoinicio', 10) && str('anofin', 10) && str('id_productora', 64);
+        && str('id_productora', 64);
     }
 
     // Contadores de valoración: solo cambian a la vez que la nota del propio
