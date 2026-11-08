@@ -12,7 +12,8 @@ import { ContadorVisitas } from "@/components/ContadorVisitas";
 import { SCRIPT_MODO } from "@/components/ModoToggle";
 import { SITE_URL } from "@/lib/firebase-config";
 // Analítica de Vercel: sin cookies ni datos personales, así que no necesita banner
-import { Analytics } from "@vercel/analytics/next";
+import { BannerCookies } from "@/components/BannerCookies";
+import { PuertaConsentimiento } from "@/components/PuertaConsentimiento";
 
 // Dos fuentes legibles: Fraunces para titulares y Source Sans 3 para el texto.
 const serif = Fraunces({ subsets: ["latin"], variable: "--font-serif", display: "swap", weight: ["500", "600"] });
@@ -51,10 +52,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               <Footer />
               <TabBar />
               <ContadorVisitas />
+              <PuertaConsentimiento />
             </ToastProvider>
           </PendientesProvider>
         </AuthProvider>
-        <Analytics />
+        <BannerCookies />
       </body>
     </html>
   );

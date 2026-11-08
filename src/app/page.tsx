@@ -68,7 +68,7 @@ export default async function Home() {
           <p className="eyebrow" style={{ marginBottom: 12 }}>Qué es Ziater</p>
           <h2 id="que-es-ziater" className="h2" style={{ margin: "0 0 12px" }}>La memoria viva de las artes escénicas.</h2>
           <p className="soft" style={{ margin: 0, maxWidth: 720 }}>
-            Ziater es una base de datos abierta de teatro, danza, circo, impro y musical. Cada obra aparece con su elenco, su equipo, sus fechas y dónde verla. Cada artista, con su trayectoria completa. Gratis, siempre.
+            Ziater es una base de datos abierta de teatro, danza, circo, impro y musical. Cada obra aparece con su elenco, su equipo, sus fechas y dónde verla. Cada artista, con su trayectoria. Consultarla y participar es gratis.
           </p>
         </div>
         <div className="que-es-cols">

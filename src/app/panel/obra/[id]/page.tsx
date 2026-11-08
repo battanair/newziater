@@ -295,7 +295,7 @@ function Editor({ id, user }: { id: string; user: User }) {
           {paso === 1 ? (
             <div className="stack" style={{ gap: 20 }}>
               <h1 className="h2" style={{ fontSize: 40 }}>Elenco y equipo</h1>
-              <p className="soft" style={{ margin: 0 }}>Escribe un nombre. Si la persona ya está en Ziater, queda enlazada a su ficha y recibe un aviso. Si no, le creamos una ficha que podrá reclamar.</p>
+              <p className="soft" style={{ margin: 0 }}>Escribe un nombre. Si la persona ya está en Ziater, queda enlazada a su ficha y lo verá en su espacio. Si no, le creamos una ficha que podrá reclamar.</p>
               <div className="panel panel-foco">
                 <p className="label" style={{ margin: "0 0 10px" }}>Añadir a</p>
                 <div role="group" aria-label="Departamento" style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 14 }}>
@@ -361,7 +361,7 @@ function Editor({ id, user }: { id: string; user: User }) {
                     <div className="member" style={m.hasta ? { opacity: 0.72 } : undefined}>
                       <span style={{ width: 44, height: 66, borderRadius: 4, flex: "none", display: "inline-flex", alignItems: "center", justifyContent: "center", background: m.img ? `center/cover url(${JSON.stringify(m.img)})` : colorCartel(m.key), border: m.estado === "nuevo" ? "1px dashed var(--texto-4)" : 0 }} aria-hidden="true">{m.img ? "" : iniciales(m.nombre)}</span>
                       <span className="who"><strong style={{ display: "block" }}>{m.nombre}</strong>{sub ? <span className="hint">{sub}</span> : null}</span>
-                      <span className={`chip ${m.estado === "tu" ? "chip-foco" : m.estado === "enlazado" ? "chip-ok" : ""}`}>{m.estado === "tu" ? "Eres tú" : m.estado === "enlazado" ? (m.creditoId ? "✓ Enlazado" : "✓ Enlazado · recibirá aviso") : "Ficha nueva · podrá reclamarla"}</span>
+                      <span className={`chip ${m.estado === "tu" ? "chip-foco" : m.estado === "enlazado" ? "chip-ok" : ""}`}>{m.estado === "tu" ? "Eres tú" : m.estado === "enlazado" ? (m.creditoId ? "✓ Enlazado" : "✓ Enlazado · lo verá en su espacio") : "Ficha nueva · podrá reclamarla"}</span>
                       <span style={{ display: "inline-flex", gap: 4 }}>
                         {!m.hasta ? <button type="button" className="btn" aria-expanded={relevo?.key === m.key} onClick={() => { setSalida(null); setRelevo(relevo?.key === m.key ? null : { key: m.key, q: "", desde: mesActual() }); }}>⇄ Sustituir</button> : null}
                         <details className="menu-mini">
@@ -421,7 +421,7 @@ function Editor({ id, user }: { id: string; user: User }) {
             <div className="stack">
               <h1 className="h2" style={{ fontSize: 40 }}>Revisar y publicar</h1>
               <ul style={{ listStyle: "none", padding: 0, margin: 0 }} className="stack">
-                <li className="panel"><strong>La ficha de «{f.titulo || "sin título"}» será pública al momento</strong><span className="hint" style={{ display: "block" }}>Y aparecerá en Google en los próximos días.</span></li>
+                <li className="panel"><strong>La ficha de «{f.titulo || "sin título"}» será pública al momento</strong><span className="hint" style={{ display: "block" }}>Los buscadores, como Google, suelen tardar unos días en mostrar las fichas nuevas.</span></li>
                 <li className="panel"><strong>{equipo.filter((m) => m.estado === "enlazado" && !m.creditoId).length} personas con ficha quedarán enlazadas</strong><span className="hint" style={{ display: "block" }}>La obra se añade a su trayectoria y pueden confirmarlo en su bandeja de vínculos.</span></li>
                 <li className="panel"><strong>{equipo.filter((m) => m.estado === "nuevo").length} fichas nuevas</strong><span className="hint" style={{ display: "block" }}>Podrás compartirles un enlace para que las reclamen desde «Vínculos».</span></li>
               </ul>
@@ -536,7 +536,7 @@ function SalaInput({ f, onChange }: { f: Funcion; onChange: (c: Partial<Funcion>
   const [abierto, setAbierto] = useState(false);
   const { items } = useBusqueda(abierto && !f.sala_id ? f.sala : "", ["sala"]);
   return (
-    <span style={{ position: "relative", display: "block", minWidth: 0 }}>
+    <span style={{ position: "relative", display: "block", minWidth: 0 }} onBlur={(e) => { if (!e.currentTarget.contains(e.relatedTarget as Node | null)) setTimeout(() => setAbierto(false), 150); }} onKeyDown={(e) => { if (e.key === "Escape") setAbierto(false); }}>
       <input
         className="input"
         aria-label="Sala o teatro"
@@ -545,7 +545,6 @@ function SalaInput({ f, onChange }: { f: Funcion; onChange: (c: Partial<Funcion>
         value={f.sala}
         style={f.sala_id ? { borderColor: "var(--foco-borde)", paddingRight: 34 } : undefined}
         onFocus={() => setAbierto(true)}
-        onBlur={() => setTimeout(() => setAbierto(false), 200)}
         onChange={(e) => onChange({ sala: e.target.value, sala_id: undefined })}
       />
       {f.sala_id ? <span title="Enlazada a la ficha de la sala" style={{ position: "absolute", right: 12, top: "50%", transform: "translateY(-50%)", color: "var(--foco)" }}>✓</span> : null}

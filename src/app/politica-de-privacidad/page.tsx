@@ -22,8 +22,8 @@ export default function Page() {
 
       <H>1. Quién es el responsable</H>
       <p>
-        El responsable del tratamiento es Eduardo Battaner, titular del proyecto Ziater (ziater.com). Para cualquier cuestión sobre privacidad
-        puedes escribirnos desde el <Link href="/contacto">formulario de contacto</Link>.
+        El responsable del tratamiento es el titular de Ziater (ziater.com), cuyos datos figuran en el <Link href="/aviso-legal">aviso legal</Link>.
+        Para cualquier cuestión sobre privacidad puedes escribirnos desde el <Link href="/contacto?motivo=borrado">formulario de contacto</Link>.
       </p>
 
       <H>2. Qué datos tratamos</H>
@@ -68,22 +68,25 @@ export default function Page() {
       <H>6. Estadísticas y cookies</H>
       <p>
         No usamos cookies publicitarias ni de seguimiento. Contamos las visitas de forma anónima y agregada (cuántas visitas recibe cada
-        sección al día), sin guardar quién eres. Los detalles están en la <Link href="/politica-de-cookies">política de cookies</Link>.
+        sección al día), sin guardar quién eres. Las estadísticas que necesitan guardar algo en tu navegador solo se activan si las aceptas en
+        el aviso de cookies, y puedes cambiar de opinión desde «Configurar cookies», en el pie de la web. Los detalles están en la{" "}
+        <Link href="/politica-de-cookies">política de cookies</Link>.
       </p>
 
       <H>7. Cuánto tiempo los guardamos</H>
       <ul>
-        <li>Los datos de tu cuenta, mientras la mantengas activa. Si pides borrarla, se eliminan en un plazo máximo de 30 días, salvo lo que debamos conservar por obligación legal.</li>
+        <li>Los datos de tu cuenta, mientras la mantengas activa. Si la borras desde «Mi espacio» → «Cuenta», tu acceso, email, nombre y listas se eliminan al instante y el resto se completa en un máximo de 7 días.</li>
         <li>Las fichas públicas y su historial, mientras Ziater exista, porque forman parte de la base de datos cultural, salvo que ejerzas tu derecho de oposición o supresión.</li>
         <li>Los mensajes de contacto, el tiempo necesario para atenderlos y como máximo un año.</li>
-        <li>Las copias de seguridad, hasta que se sustituyen por otras más recientes.</li>
+        <li>Las copias de seguridad semanales, un máximo de 90 días; después se borran.</li>
       </ul>
 
       <H>8. Tus derechos</H>
       <p>
         Puedes pedir en cualquier momento <strong>acceso</strong> a tus datos, su <strong>rectificación</strong> o <strong>supresión</strong>,
         la <strong>limitación</strong> del tratamiento, la <strong>portabilidad</strong> o <strong>oponerte</strong> a él, escribiéndonos desde
-        el <Link href="/contacto">formulario de contacto</Link>. Muchas cosas puedes hacerlas tú directamente desde «Mi espacio»: editar tu
+        el <Link href="/contacto?motivo=borrado">formulario de contacto</Link> (motivo «Borrar mis datos o ejercer otro derecho de privacidad»).
+        Si tienes cuenta, también puedes borrarla tú mismo desde «Mi espacio» → «Cuenta» → «Borrar mi cuenta y mis datos». Muchas cosas puedes hacerlas tú directamente desde «Mi espacio»: editar tu
         ficha, reclamar una ficha que habla de ti o borrar tus listas.
       </p>
       <p>
@@ -92,7 +95,7 @@ export default function Page() {
       </p>
 
       <H>9. Menores</H>
-      <p>Para crear una cuenta en Ziater debes tener al menos 14 años. Si eres menor de esa edad, necesitas el consentimiento de tus padres o tutores.</p>
+      <p>Para crear una cuenta en Ziater debes tener al menos 14 años: te lo pedimos al registrarte. Si eres madre, padre o tutor y crees que un menor de 14 años se ha registrado, escríbenos desde el <Link href="/contacto?motivo=borrado">formulario de contacto</Link> y borraremos su cuenta.</p>
 
       <H>10. Seguridad</H>
       <p>

@@ -88,7 +88,7 @@ function Editor({ id, user }: { id: string; user: User }) {
       <h1 className="h1" style={{ fontSize: 44 }}>{nueva ? "Da de alta tu sala" : "Editar sala"}</h1>
       {nueva ? (
         <p className="lead soft" style={{ maxWidth: 680 }}>
-          Tu sala tendrá su ficha en Ziater con su cartelera y todas las obras que han pasado por ella. Las compañías podrán enlazarla al anunciar sus funciones, y la gente la encontrará en Google.
+          Tu sala tendrá su ficha en Ziater con su cartelera y todas las obras que han pasado por ella. Las compañías podrán enlazarla al anunciar sus funciones, y será más fácil encontrarla en los buscadores.
         </p>
       ) : null}
       <form onSubmit={guardar} className="stack" style={{ gap: 20, marginTop: 24 }}>

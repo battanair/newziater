@@ -10,6 +10,7 @@ import { EditarFicha } from "@/components/EditarFicha";
 import { Anadirme } from "@/components/Anadirme";
 import { Galeria } from "@/components/Galeria";
 import { VistaElenco } from "@/components/VistaElenco";
+import { Trailer } from "@/components/Trailer";
 import { Valoracion } from "@/components/Valoracion";
 import { fechaCorta, partirFunciones, OG_POR_DEFECTO, fotosDe, T_OG, agruparPorDepartamento, cld, departamento, instagramHandle, instagramUrl, nombreCompleto, obraActiva, periodo, recortar, tramo } from "@/lib/format";
 import { SITE_URL } from "@/lib/firebase-config";
@@ -234,9 +235,7 @@ export default async function ObraPage({ params }: Props) {
             <section id="galeria" style={{ marginTop: 56 }}>
               <h2 className="h2" style={{ marginBottom: 20 }}>Galería</h2>
               {yt ? (
-                <div style={{ position: "relative", aspectRatio: "16/9", borderRadius: 12, overflow: "hidden", marginBottom: 12 }}>
-                  <iframe src={`https://www.youtube-nocookie.com/embed/${yt}`} title={`Tráiler de ${obra.titulo}`} loading="lazy" allow="encrypted-media; picture-in-picture" allowFullScreen style={{ position: "absolute", inset: 0, width: "100%", height: "100%", border: 0 }} />
-                </div>
+                <Trailer id={yt} titulo={obra.titulo} />
               ) : null}
               <Galeria fotos={fotos} titulo={obra.titulo} />
             </section>

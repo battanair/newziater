@@ -31,7 +31,10 @@ export function ContadorVisitas() {
     const dia = hoyES();
     try {
       noContar = localStorage.getItem("ziater-no-contar") === "1";
-      nuevoHoy = localStorage.getItem("ziater-visto") !== dia;
+      // La marca de «ya contado hoy» solo se guarda si la persona ha aceptado las estadísticas.
+      // Sin permiso se cuenta la visita, pero no se guarda nada en su navegador ni se cuenta como visitante.
+      const permiso = localStorage.getItem("ziater-consentimiento-v1") === "si";
+      nuevoHoy = permiso && localStorage.getItem("ziater-visto") !== dia;
       if (!noContar && nuevoHoy) localStorage.setItem("ziater-visto", dia);
     } catch { /* sin almacenamiento: se cuenta la visita pero no el visitante */ }
     if (noContar) return;

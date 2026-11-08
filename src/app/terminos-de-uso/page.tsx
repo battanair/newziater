@@ -15,7 +15,8 @@ export default function Page() {
     <LegalPage title="Términos de uso">
       <p>Última actualización: 8 de noviembre de 2026.</p>
       <p>
-        Ziater (ziater.com) es una base de datos abierta y gratuita de las artes escénicas, gestionada por Eduardo Battaner. Al usar la web o
+        Ziater (ziater.com) es una base de datos abierta y gratuita de las artes escénicas (los datos del titular están en el{" "}
+        <Link href="/aviso-legal">aviso legal</Link>). Al usar la web o
         crear una cuenta aceptas estos términos. Si no estás de acuerdo, por favor no la uses.
       </p>
 

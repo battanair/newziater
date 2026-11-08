@@ -18,14 +18,18 @@ export default function Page() {
       <H>Qué guardamos en tu navegador</H>
       <ul>
         <li><strong>Sesión (Firebase Authentication):</strong> si entras con tu cuenta, el navegador guarda tu sesión para no pedirte la contraseña en cada visita. Es imprescindible para el servicio y desaparece al cerrar sesión.</li>
+        <li><strong>Tráiler de las obras:</strong> los vídeos de YouTube no se cargan hasta que pulsas «Ver tráiler». Al hacerlo, YouTube (Google) puede guardar sus propios datos en tu navegador; usamos su modo de privacidad mejorada.</li>
         <li><strong>Preferencias:</strong> modo claro u oscuro, y una marca que indica si tienes la sesión iniciada para mostrarte la portada adecuada.</li>
-        <li><strong>Contador de visitas propio:</strong> una marca con la fecha del día para no contar dos veces al mismo visitante en las estadísticas diarias. No contiene datos personales ni se comparte con nadie.</li>
+        <li><strong>Tu elección sobre cookies:</strong> recordamos si aceptaste o rechazaste las estadísticas para no volver a preguntarte.</li>
+        <li><strong>Contador de visitas propio (solo si lo aceptas):</strong> una marca con la fecha del día para no contar dos veces al mismo visitante en las estadísticas diarias. No contiene datos personales ni se comparte con nadie.</li>
       </ul>
 
       <H>Estadísticas</H>
       <p>
-        Medimos las visitas de forma anónima y agregada con nuestro propio contador y con Vercel Web Analytics, que funciona sin cookies y sin
-        identificarte. Solo vemos cifras totales (por ejemplo, cuántas personas visitaron las fichas de obras un día).
+        Si aceptas las estadísticas en el aviso de cookies, medimos las visitas de forma anónima y agregada con nuestro propio contador y con
+        Vercel Web Analytics, que funciona sin cookies y sin identificarte. Solo vemos cifras totales (por ejemplo, cuántas personas visitaron
+        las fichas de obras un día). Si las rechazas, Vercel Web Analytics no se carga y nuestro contador solo suma la visita, sin guardar nada
+        en tu navegador. Puedes cambiar tu elección cuando quieras desde «Configurar cookies», en el pie de la web.
       </p>
 
       <H>Cómo borrarlo</H>

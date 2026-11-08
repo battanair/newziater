@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { deleteUser, sendEmailVerification, sendPasswordResetEmail, signOut, updateProfile, type User } from "firebase/auth";
-import { deleteDoc, doc, setDoc } from "firebase/firestore";
+import { EmailAuthProvider, GoogleAuthProvider, deleteUser, reauthenticateWithCredential, reauthenticateWithPopup, sendEmailVerification, sendPasswordResetEmail, signOut, updateProfile, type User } from "firebase/auth";
+import { deleteDoc, doc, serverTimestamp, setDoc } from "firebase/firestore";
 import { auth, db } from "@/lib/firebase-client";
 import { RequireAuth } from "@/components/RequireAuth";
 import { PanelNav } from "@/components/PanelNav";
@@ -20,6 +20,10 @@ function Cuenta({ user }: { user: User }) {
   const [personaId, setPersonaId] = useState<string>();
   const [msg, setMsg] = useState<{ t: "ok" | "error"; m: string } | null>(null);
   const [borrar, setBorrar] = useState("");
+  const [borrarFicha, setBorrarFicha] = useState(false);
+  const [pass, setPass] = useState("");
+  const [pidePass, setPidePass] = useState(false);
+  const [borrando, setBorrando] = useState(false);
   const conPassword = user.providerData.some((p) => p.providerId === "password");
   const conGoogle = user.providerData.some((p) => p.providerId === "google.com");
 
@@ -39,15 +43,34 @@ function Cuenta({ user }: { user: User }) {
     }
   }
 
+  /**
+   * Borrado de la cuenta y los datos personales:
+   *  1. Se registra la solicitud (bajas/{uid}) para terminar lo que no se puede borrar desde el navegador
+   *     (desvincular o borrar la ficha de artista, anonimizar sugerencias…). Lo procesa una tarea automática semanal.
+   *  2. Se borran ya el perfil privado y el perfil de colaborador.
+   *  3. Se borra la cuenta de acceso (puede pedir confirmar la identidad).
+   */
   async function eliminar() {
+    setBorrando(true);
+    setMsg(null);
     try {
-      await deleteDoc(doc(db, "users", user.uid));
+      // Firebase exige un inicio de sesión reciente para borrar la cuenta: se confirma antes de tocar nada
+      if (pidePass) await reauthenticateWithCredential(user, EmailAuthProvider.credential(user.email!, pass));
+      else if (conGoogle && !conPassword) await reauthenticateWithPopup(user, new GoogleAuthProvider());
+      else if (conPassword) { setPidePass(true); setBorrando(false); return; }
+      await setDoc(doc(db, "bajas", user.uid), { email: (user.email ?? "").slice(0, 200), fecha: serverTimestamp(), borrar_ficha: borrarFicha && Boolean(personaId), persona_id: personaId ?? "" });
+      await deleteDoc(doc(db, "colaboradores", user.uid)).catch(() => {});
+      await deleteDoc(doc(db, "users", user.uid)).catch(() => {});
+      try { localStorage.removeItem("ziater-sesion"); } catch {}
       await deleteUser(user);
       router.replace("/");
     } catch (e) {
-      setMsg({ t: "error", m: (e as { code?: string }).code === "auth/requires-recent-login"
-        ? "Por seguridad, cierra sesión, vuelve a entrar y repite este paso en los próximos minutos."
-        : "No se pudo eliminar la cuenta. Escríbenos desde Contacto y lo hacemos por ti." });
+      const code = (e as { code?: string }).code ?? "";
+      setMsg({ t: "error", m: code === "auth/wrong-password" || code === "auth/invalid-credential" ? "La contraseña no es correcta."
+        : code === "auth/popup-closed-by-user" ? "Has cerrado la ventana de Google. Vuelve a pulsar el botón para confirmar."
+        : "No se pudo completar el borrado. Escríbenos desde Contacto (motivo «Borrar mis datos») y lo hacemos por ti." });
+    } finally {
+      setBorrando(false);
     }
   }
 
@@ -83,14 +106,27 @@ function Cuenta({ user }: { user: User }) {
           </div>
         </section>
 
-        <section className="panel panel-peligro">
-          <h2 className="h3" style={{ marginBottom: 8 }}>Eliminar mi cuenta</h2>
-          <p className="soft" style={{ marginTop: 0 }}>Se borran tu cuenta, tus listas y tus datos privados. Las obras y fichas públicas que hayas creado se quedan en Ziater, porque forman parte del archivo común. Tus notas siguen contando en las medias, sin tu nombre.</p>
+        <section className="panel panel-peligro" id="borrar">
+          <h2 className="h3" style={{ marginBottom: 8 }}>Borrar mi cuenta y mis datos</h2>
+          <p className="soft" style={{ marginTop: 0 }}>Al instante se borran tu cuenta de acceso, tu email, tu nombre, tus listas y tu perfil de colaborador. En un máximo de 7 días se completa el resto: tus sugerencias quedan sin tu nombre y tu ficha de artista deja de estar vinculada a ti (o se borra, si lo marcas abajo).</p>
+          <p className="soft">Las obras y salas que hayas creado se quedan en Ziater porque forman parte del archivo común, ya sin estar a tu nombre. Tus puntuaciones siguen contando en las medias de forma anónima.</p>
+          {personaId ? (
+            <label className="casilla" htmlFor="c-ficha" style={{ marginBottom: 12 }}>
+              <input id="c-ficha" type="checkbox" checked={borrarFicha} onChange={(e) => setBorrarFicha(e.target.checked)} />
+              <span>Borrar también mi ficha pública de artista y mis créditos en las obras.</span>
+            </label>
+          ) : null}
           <div className="field" style={{ maxWidth: 360 }}>
-            <label className="label" htmlFor="c-borrar">Escribe ELIMINAR para confirmar</label>
+            <label className="label" htmlFor="c-borrar">Escribe BORRAR para confirmar</label>
             <input id="c-borrar" className="input" value={borrar} onChange={(e) => setBorrar(e.target.value)} autoComplete="off" />
           </div>
-          <button type="button" className="btn btn-peligro" style={{ marginTop: 12 }} disabled={borrar.trim() !== "ELIMINAR"} onClick={eliminar}>Eliminar mi cuenta para siempre</button>
+          {pidePass ? (
+            <div className="field" style={{ maxWidth: 360, marginTop: 12 }}>
+              <label className="label" htmlFor="c-pass">Por seguridad, escribe tu contraseña</label>
+              <input id="c-pass" type="password" className="input" value={pass} onChange={(e) => setPass(e.target.value)} autoComplete="current-password" autoFocus />
+            </div>
+          ) : null}
+          <button type="button" className="btn btn-peligro" style={{ marginTop: 12 }} disabled={borrar.trim().toUpperCase() !== "BORRAR" || borrando || (pidePass && !pass)} onClick={eliminar}>{borrando ? "Borrando…" : "Borrar mi cuenta y mis datos"}</button>
         </section>
       </main>
     </>

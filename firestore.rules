@@ -224,7 +224,9 @@ service cloud.firestore {
 
     // ---------- Formulario de contacto (privado) ----------
     match /fallos/{msgId} {
-      allow create: if data().keys().hasOnly(['nombre', 'email', 'mensaje', 'fecha'])
+      allow create: if data().keys().hasOnly(['nombre', 'email', 'mensaje', 'fecha', 'tipo', 'acepta_privacidad'])
+        && (!('tipo' in data()) || data().tipo in ['consulta', 'ficha', 'borrado'])
+        && (!('acepta_privacidad' in data()) || data().acepta_privacidad == true)
         && data().nombre is string && data().nombre.size() <= 100
         && data().email is string && data().email.size() <= 200
         && data().mensaje is string && data().mensaje.size() > 0 && data().mensaje.size() <= 5000;
@@ -293,6 +295,17 @@ service cloud.firestore {
         && data().nombre is string && data().nombre.size() <= 100
         && data().publico is bool && str('persona_id', 64);
       allow delete: if signedIn() && userId == uid();
+    }
+
+    // ---------- Solicitudes de borrado de cuenta (derecho de supresión) ----------
+    // La crea la propia persona al borrar su cuenta; solo administración la lee. La procesa
+    // una tarea automática semanal (repositorio ziater-copias, scripts/bajas.mjs).
+    match /bajas/{userId} {
+      allow create, update: if signedIn() && userId == uid()
+        && data().keys().hasOnly(['email', 'fecha', 'borrar_ficha', 'persona_id'])
+        && str('email', 200) && data().borrar_ficha is bool && str('persona_id', 64)
+        && data().fecha == request.time;
+      allow read, delete: if isAdmin();
     }
 
     // ---------- Estadísticas de visitas (contador diario anónimo) ----------

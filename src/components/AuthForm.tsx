@@ -1,6 +1,8 @@
 "use client";
 
 import Link from "next/link";
+import { CasillasCuenta } from "./Consentimientos";
+import { EDAD_MINIMA, VERSION_TERMINOS } from "@/lib/consentimiento";
 import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
@@ -12,7 +14,7 @@ import {
   signInWithPopup,
   updateProfile,
 } from "firebase/auth";
-import { doc, setDoc } from "firebase/firestore";
+import { doc, setDoc, serverTimestamp } from "firebase/firestore";
 import { auth, authDisponible, db } from "@/lib/firebase-client";
 
 const ERRORES: Record<string, string> = {
@@ -39,13 +41,27 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
   const [error, setError] = useState("");
   const [info, setInfo] = useState("");
   const [busy, setBusy] = useState(false);
+  const [edad, setEdad] = useState(false);
+  const [acepto, setAcepto] = useState(false);
+  /** En el registro, edad y términos son obligatorios (también para entrar con Google). */
+  function faltaConsentimiento() {
+    if (mode !== "signup") return false;
+    if (!edad) { setError(`Para tener cuenta en Ziater necesitas tener al menos ${EDAD_MINIMA} años.`); return true; }
+    if (!acepto) { setError("Para crear tu cuenta, acepta los términos de uso y la política de privacidad."); return true; }
+    return false;
+  }
 
   async function guardarUsuario(uid: string, nombre: string, apellidos = "") {
-    await setDoc(doc(db, "users", uid), { Nombre: nombre.slice(0, 100), Apellidos: apellidos.slice(0, 150) }, { merge: true });
+    await setDoc(doc(db, "users", uid), {
+      Nombre: nombre.slice(0, 100), Apellidos: apellidos.slice(0, 150),
+      // Constancia del consentimiento dado en el registro (versión y fecha)
+      ...(mode === "signup" ? { consentimiento: VERSION_TERMINOS, consentimiento_fecha: serverTimestamp() } : {}),
+    }, { merge: true });
   }
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    if (faltaConsentimiento()) return;
     const f = new FormData(e.currentTarget);
     const email = String(f.get("email")).trim();
     const password = String(f.get("password"));
@@ -72,6 +88,7 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
   }
 
   async function google() {
+    if (faltaConsentimiento()) return;
     setBusy(true);
     setError("");
     try {
@@ -108,6 +125,7 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
           ? profesional ? "Después buscaremos si ya tienes ficha para que la reclames." : "Guarda obras, sigue artistas y crea tu ficha si eres profesional."
           : "Bienvenido de nuevo a Ziater."}
       </p>
+      {mode === "signup" ? <div className="panel" style={{ marginBottom: 16 }}><CasillasCuenta edad={edad} acepto={acepto} onEdad={(v) => { setEdad(v); setError(""); }} onAcepto={(v) => { setAcepto(v); setError(""); }} idPrefijo="reg" /></div> : null}
       <button type="button" className="btn btn-light btn-lg" style={{ width: "100%" }} onClick={google} disabled={busy}>
         Continuar con Google
       </button>
@@ -128,7 +146,6 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
         {error ? <p className="error" role="alert">{error}</p> : null}
         {info ? <p className="ok" role="status">{info}</p> : null}
         <button type="submit" className="btn btn-primary btn-lg" disabled={busy}>{busy ? "Un momento…" : mode === "signup" ? "Crear cuenta" : "Entrar"}</button>
-        {mode === "signup" ? <p className="hint" style={{ margin: 0, textAlign: "center" }}>Al crear una cuenta, también con Google, aceptas los <Link href="/terminos-de-uso" style={{ color: "var(--foco)" }}>términos de uso</Link> y la <Link href="/politica-de-privacidad" style={{ color: "var(--foco)" }}>política de privacidad</Link>.</p> : null}
         {mode === "login" ? (
           <button type="button" className="btn btn-ghost" onClick={() => reset(document.getElementById("auth-form") as HTMLFormElement)}>He olvidado mi contraseña</button>
         ) : null}

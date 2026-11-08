@@ -14,7 +14,7 @@
   --papel: #f3ede2;     /* blanco crudo */
   --texto-2: #d3c8b6;   /* gris arena */
   --texto-3: #ada291;
-  --texto-4: #7d7466;
+  --texto-4: #9a907f;   /* ≥ 5:1 sobre todos los fondos oscuros */
   --foco: #c9a063;      /* bronce dorado: acentos, enlaces y botón principal */
   --foco-hover: #d8b077;
   --foco-tinta: #17120b;
@@ -44,10 +44,10 @@
   --linea-3: #b2a691;
   --papel: #25211c;
   --texto-2: #4a433a;
-  --texto-3: #6d6458;
-  --texto-4: #9a9082;
-  --foco: #82592a;      /* el bronce se oscurece para leerse bien sobre claro */
-  --foco-hover: #6e4a21;
+  --texto-3: #5f574c;
+  --texto-4: #655c50;   /* ≥ 4,8:1 sobre todos los fondos claros */
+  --foco: #7a5226;      /* el bronce se oscurece para leerse bien sobre claro (≥ 5:1) */
+  --foco-hover: #66441f;
   --foco-tinta: #fffdf8;
   --foco-suave: rgba(184, 140, 72, .16);
   --foco-borde: rgba(130, 89, 42, .45);
@@ -446,3 +446,26 @@ html[data-sesion] .solo-sin-sesion { display: none; }
 .legal a { color: var(--foco); text-decoration: underline; text-underline-offset: 2px; }
 .legal strong { color: var(--papel); }
 .legal li { margin-bottom: 6px; }
+
+/* Banner de cookies: abajo, sin tapar la barra móvil; botones del mismo peso */
+.banner-cookies { position: fixed; left: 16px; right: 16px; bottom: 16px; z-index: 60; max-width: 760px; margin: 0 auto; display: flex; flex-wrap: wrap; align-items: center; gap: 16px; padding: 16px 20px; border-radius: var(--radio); background: var(--butaca); border: 1px solid var(--linea-2); box-shadow: 0 18px 40px -12px var(--sombra); color: var(--texto-2); font-size: 15px; line-height: 1.5; }
+.banner-cookies p { flex: 1 1 320px; }
+.banner-cookies a { color: var(--foco); text-decoration: underline; }
+.banner-cookies-botones { display: flex; gap: 8px; }
+.banner-cookies-botones .btn { min-width: 110px; }
+@media (max-width: 760px) { .banner-cookies { bottom: calc(76px + env(safe-area-inset-bottom)); } .banner-cookies-botones { width: 100%; } .banner-cookies-botones .btn { flex: 1; } }
+.enlace-pie { background: none; border: 0; padding: 0; font: inherit; color: inherit; cursor: pointer; }
+.enlace-pie:hover { color: var(--papel); }
+
+/* Casillas de consentimiento: nunca marcadas por defecto, área de clic grande */
+.casilla { display: flex; align-items: flex-start; gap: 10px; cursor: pointer; color: var(--texto-2); line-height: 1.45; }
+.casilla input { width: 20px; height: 20px; margin: 1px 0 0; flex: none; accent-color: var(--foco); }
+.casilla a { color: var(--foco); text-decoration: underline; }
+/* Velo para diálogos modales */
+.velo { position: fixed; inset: 0; z-index: 80; background: rgba(0,0,0,.55); display: flex; align-items: center; justify-content: center; padding: 16px; }
+.velo-caja { max-width: 520px; width: 100%; background: var(--butaca); }
+
+/* Tráiler: portada que se pulsa para cargar YouTube */
+.trailer-portada { position: absolute; inset: 0; width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; padding: 16px; text-align: center; background: none; border: 0; cursor: pointer; font: inherit; }
+.trailer-play { width: 64px; height: 64px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; background: var(--foco); color: var(--foco-tinta); font-size: 24px; padding-left: 4px; }
+.trailer-portada:hover .trailer-play { background: var(--foco-hover); }
