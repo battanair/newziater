@@ -22,15 +22,18 @@ jobs:
           node-version: 20
       # Si aún no hay package-lock.json, se genera y se guarda: así Vercel instala siempre
       # exactamente las mismas versiones (evita que se cuele una versión nueva comprometida).
-      - name: Fijar versiones (package-lock.json)
+      - name: Fijar versiones (package-lock.json) y aplicar parches de seguridad compatibles
         run: |
-          if [ ! -f package-lock.json ]; then
-            npm install --package-lock-only --ignore-scripts --no-fund
+          [ -f package-lock.json ] || npm install --package-lock-only --ignore-scripts --no-fund
+          # Actualiza dentro de los rangos permitidos lo que tenga vulnerabilidades conocidas (sin cambios incompatibles)
+          npm audit fix --package-lock-only --ignore-scripts --no-fund || true
+          if [ -n "$(git status --porcelain package-lock.json package.json)" ]; then
             git config user.name "Revisión de seguridad"
             git config user.email "actions@users.noreply.github.com"
-            git add package-lock.json
-            git commit -m "Fijar versiones de dependencias (package-lock.json)"
-            git push
+            git add package-lock.json package.json
+            git commit -m "Dependencias: fijar versiones y aplicar parches de seguridad"
+            git pull --rebase origin main
+            git push origin HEAD:main
           fi
       - name: Buscar vulnerabilidades conocidas (npm audit)
         run: npm audit --omit=dev --audit-level=high
