@@ -469,3 +469,4 @@ html[data-sesion] .solo-sin-sesion { display: none; }
 .trailer-portada { position: absolute; inset: 0; width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; padding: 16px; text-align: center; background: none; border: 0; cursor: pointer; font: inherit; }
 .trailer-play { width: 64px; height: 64px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; background: var(--foco); color: var(--foco-tinta); font-size: 24px; padding-left: 4px; }
 .trailer-portada:hover .trailer-play { background: var(--foco-hover); }
+.velo-caja .btn:not(.btn-primary), .banner-cookies .btn { border: 1px solid var(--linea-3); }
