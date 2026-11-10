@@ -4,7 +4,7 @@ import { addDoc, collection, doc, getDoc, getDocs, query, serverTimestamp, setDo
 import { auth, db } from "./firebase-client";
 import type { Credito, Obra, Persona } from "./types";
 import { clavesDe } from "./claves";
-import { arrayRemove, arrayUnion, documentId, getCountFromServer, limit as lim, orderBy, startAfter, type DocumentSnapshot } from "firebase/firestore";
+import { arrayRemove, arrayUnion, documentId, getCountFromServer, limit as lim, type DocumentSnapshot } from "firebase/firestore";
 import type { UserDoc } from "./types";
 
 const withId = <T,>(s: { id: string; data: () => unknown }) => ({ id: s.id, ...(s.data() as object) }) as T;
@@ -126,10 +126,15 @@ export async function anadirALista(uid: string, campo: ListaUsuario, id: string)
 export interface MiNota { obra: string; nota: number; fecha?: { seconds: number } }
 
 /** Mis notas, de la más reciente a la más antigua, de 24 en 24. */
-export async function misNotas(uid: string, despues?: DocumentSnapshot) {
-  const c = [where("uid", "==", uid), orderBy("fecha", "desc"), ...(despues ? [startAfter(despues)] : []), lim(24)];
-  const s = await getDocs(query(collection(db, "valoraciones"), ...c));
-  return { notas: s.docs.map((d) => d.data() as MiNota), ultimo: s.docs.length === 24 ? s.docs[s.docs.length - 1] : undefined };
+/**
+ * Notas de una persona, de la más reciente a la más antigua. Se filtra solo por uid
+ * (no necesita índice compuesto en Firestore) y se ordena aquí: nadie tiene miles de notas.
+ */
+export async function misNotas(uid: string, _despues?: DocumentSnapshot) {
+  const s = await getDocs(query(collection(db, "valoraciones"), where("uid", "==", uid), lim(2000)));
+  const seg = (x: unknown) => (x as { seconds?: number } | undefined)?.seconds ?? 0;
+  const notas = s.docs.map((d) => d.data() as MiNota).sort((a, b) => seg((b as { fecha?: unknown }).fecha) - seg((a as { fecha?: unknown }).fecha));
+  return { notas, ultimo: undefined as DocumentSnapshot | undefined };
 }
 
 export async function contarMisNotas(uid: string) {
