@@ -477,3 +477,5 @@ html[data-sesion] .solo-sin-sesion { display: none; }
 .input-mini::placeholder { color: var(--texto-4); }
 .input-mini:hover { border-color: var(--linea-2); }
 .input-mini:focus { outline: none; border-color: var(--foco); background: var(--campo); color: var(--papel); }
+.casilla-mini { margin-top: 6px; font-size: 14px; gap: 8px; }
+.casilla-mini input { width: 18px; height: 18px; }

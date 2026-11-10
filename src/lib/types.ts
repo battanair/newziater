@@ -73,6 +73,7 @@ export interface Credito {
   /** Relevos: mes de entrada ("AAAA-MM"; vacío = desde el estreno) y de salida (vacío = sigue). */
   desde?: string;
   hasta?: string;
+  cover?: boolean; // hizo de cover (sustituto preparado para el papel)
   // Campos nuevos (opcionales; los créditos antiguos se tratan como confirmados)
   estado?: EstadoCredito;
   creado_por?: string;

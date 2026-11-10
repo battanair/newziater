@@ -35,6 +35,7 @@ type Miembro = {
   dep: string;
   titulo: string;
   estado: "tu" | "enlazado" | "nuevo";
+  cover?: boolean; // hizo de cover (sustituto preparado para el papel)
   desde?: string; // "AAAA-MM"; vacío = desde el estreno
   hasta?: string; // "AAAA-MM"; vacío = sigue
   cambiado?: boolean; // crédito ya guardado cuyas fechas hay que actualizar
@@ -65,6 +66,7 @@ function Editor({ id, user }: { id: string; user: User }) {
   const [relevo, setRelevo] = useState<{ key: string; q: string; desde: string } | null>(null);
   const [salida, setSalida] = useState<{ key: string; hasta: string } | null>(null);
   const [enfocar, setEnfocar] = useState<string | null>(null);
+  const [coverNuevo, setCoverNuevo] = useState(false);
   const [ft, setFt] = useState<FichaTecnica>(FICHA_VACIA);
   const [premios, setPremios] = useState<PremioEditable[]>([]);
   const [estado, setEstado] = useState<"idle" | "saving" | "error">("idle");
@@ -86,7 +88,7 @@ function Editor({ id, user }: { id: string; user: User }) {
         setPremios((pr?.docs ?? []).map((d) => ({ id: d.id, galardon: String(d.data().galardon_obra ?? ""), anio: String(d.data().anio_premobr ?? "").replace("NaN", "") })).filter((p) => p.galardon));
         const cs = await creditosDe("id_obra", id);
         const ps = await Promise.all(cs.map((c) => leer<Persona>("persona", c.id_persona)));
-        setEquipo(cs.map((c, i) => ({ key: c.id, creditoId: c.id, personaId: c.id_persona, nombre: ps[i] ? `${ps[i]!.Nombre} ${ps[i]!.Apellidos ?? ""}`.trim() : "Ficha eliminada", img: ps[i]?.foto, dep: c.puesto || "Equipo", titulo: c.titulo ?? "", estado: c.id_persona === user.uid || ps[i]?.coincide === user.uid ? "tu" : "enlazado", desde: c.desde ?? "", hasta: c.hasta ?? "" })));
+        setEquipo(cs.map((c, i) => ({ key: c.id, creditoId: c.id, personaId: c.id_persona, nombre: ps[i] ? `${ps[i]!.Nombre} ${ps[i]!.Apellidos ?? ""}`.trim() : "Ficha eliminada", img: ps[i]?.foto, dep: c.puesto || "Equipo", titulo: c.titulo ?? "", estado: c.id_persona === user.uid || ps[i]?.coincide === user.uid ? "tu" : "enlazado", desde: c.desde ?? "", hasta: c.hasta ?? "", cover: c.cover === true })));
       }
       setCargando(false);
     })();
@@ -133,7 +135,8 @@ function Editor({ id, user }: { id: string; user: User }) {
     if (p && equipo.some((m) => m.personaId === p.id && m.dep === dep)) { setQ(""); return; } // ya estaba en ese departamento
     const esYo = Boolean(p && yo && p.id === yo.id);
     const key = crypto.randomUUID();
-    setEquipo((e) => [...e, { key, personaId: p?.id, nombre, img: p?.img, dep, titulo: dep === "Interpretación" ? personaje.trim() : "", estado: esYo ? "tu" : p ? "enlazado" : "nuevo", desde: nueva ? "" : incorpora }]);
+    setEquipo((e) => [...e, { key, personaId: p?.id, nombre, img: p?.img, dep, titulo: dep === "Interpretación" ? personaje.trim() : "", estado: esYo ? "tu" : p ? "enlazado" : "nuevo", desde: nueva ? "" : incorpora, cover: dep === "Interpretación" && coverNuevo }]);
+    setCoverNuevo(false);
     if (dep === "Interpretación" && !personaje.trim()) setEnfocar(key);
     setQ("");
     setPersonaje("");
@@ -141,6 +144,10 @@ function Editor({ id, user }: { id: string; user: User }) {
 
   /** Cambia las fechas de un miembro (si ya estaba guardado, se actualizará al publicar). */
   /** Cambia el personaje (o el detalle del puesto) de un miembro ya añadido. */
+  function cambiarCover(key: string, cover: boolean) {
+    setEquipo((e) => e.map((x) => (x.key === key ? { ...x, cover, cambiado: Boolean(x.creditoId) } : x)));
+  }
+
   function cambiarTitulo(key: string, titulo: string) {
     setEquipo((e) => e.map((x) => (x.key === key ? { ...x, titulo: titulo.slice(0, 150), cambiado: Boolean(x.creditoId) } : x)));
   }
@@ -212,7 +219,7 @@ function Editor({ id, user }: { id: string; user: User }) {
       const nuevas = new Map<string, string>();
       const normal = (n: string) => n.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/\s+/g, " ").trim();
       for (const m of equipo.filter((x) => x.creditoId && x.cambiado)) {
-        await updateDoc(doc(db, "persona_obra", m.creditoId!), { titulo: (m.titulo.trim() || m.dep).slice(0, 150), desde: (m.desde ?? "").slice(0, 7), hasta: (m.hasta ?? "").slice(0, 7) });
+        await updateDoc(doc(db, "persona_obra", m.creditoId!), { titulo: (m.titulo.trim() || m.dep).slice(0, 150), desde: (m.desde ?? "").slice(0, 7), hasta: (m.hasta ?? "").slice(0, 7), cover: m.dep === "Interpretación" && m.cover === true });
         if (m.personaId) personasTocadas.push(m.personaId);
       }
       for (const m of equipo.filter((x) => !x.creditoId)) {
@@ -220,7 +227,7 @@ function Editor({ id, user }: { id: string; user: User }) {
         const personaId: string = m.personaId ?? nuevas.get(k) ?? (await crearPersonaSinCuenta(m.nombre));
         if (!m.personaId) nuevas.set(k, personaId);
         personasTocadas.push(personaId);
-        await anadirCredito({ id_obra: obraId, id_persona: personaId, puesto: m.dep, titulo: m.titulo || m.dep, fecha_inicio: f.anoinicio, fecha_fin: f.activa ? "" : f.anofin, desde: m.desde, hasta: m.hasta }, m.estado === "tu");
+        await anadirCredito({ id_obra: obraId, id_persona: personaId, puesto: m.dep, titulo: m.titulo || m.dep, fecha_inicio: f.anoinicio, fecha_fin: f.activa ? "" : f.anofin, desde: m.desde, hasta: m.hasta, cover: m.dep === "Interpretación" && m.cover === true }, m.estado === "tu");
       }
       await authFetch("/api/revalidar", { obras: [obraId], personas: personasTocadas }).catch(() => {});
       // Carga completa (no navegación interna): así se ve la ficha recién guardada y no la que el navegador tenía en caché
@@ -331,6 +338,12 @@ function Editor({ id, user }: { id: string; user: User }) {
                   <label className="sr-only" htmlFor="who">Nombre</label>
                   <input id="who" type="search" className="input" style={{ flex: "2 1 240px", background: "var(--sala)" }} placeholder="Nombre de la persona…" value={q} onChange={(e) => setQ(e.target.value)} maxLength={120} autoComplete="off" />
                   {dep === "Interpretación" ? <><label className="sr-only" htmlFor="pj">Personaje</label><input id="pj" className="input" style={{ flex: "1 1 160px", background: "var(--sala)" }} placeholder="Personaje" value={personaje} onChange={(e) => setPersonaje(e.target.value)} maxLength={150} /></> : null}
+                  {dep === "Interpretación" ? (
+                    <label className="casilla" htmlFor="cover-nuevo" style={{ alignItems: "center", flex: "0 0 auto" }}>
+                      <input id="cover-nuevo" type="checkbox" checked={coverNuevo} onChange={(e) => setCoverNuevo(e.target.checked)} />
+                      <span>Cover</span>
+                    </label>
+                  ) : null}
                   <button type="submit" hidden aria-hidden="true" tabIndex={-1} />{/* Enter añade a la persona */}
                 </form>
                 {!nueva ? (
@@ -399,6 +412,12 @@ function Editor({ id, user }: { id: string; user: User }) {
                           onFocus={() => enfocar === m.key && setEnfocar(null)}
                           onChange={(e) => cambiarTitulo(m.key, e.target.value)}
                         />
+                        {esReparto ? (
+                          <label className="casilla casilla-mini" htmlFor={`cov-${m.key}`}>
+                            <input id={`cov-${m.key}`} type="checkbox" checked={m.cover === true} onChange={(e) => cambiarCover(m.key, e.target.checked)} />
+                            <span>Cover</span>
+                          </label>
+                        ) : null}
                         {t ? <span className="hint" style={{ display: "block" }}>{t}</span> : null}
                       </span>
                       <span className={`chip ${m.estado === "tu" ? "chip-foco" : m.estado === "enlazado" ? "chip-ok" : ""}`}>{m.estado === "tu" ? "Eres tú" : m.estado === "enlazado" ? (m.creditoId ? "✓ Enlazado" : "✓ Enlazado · lo verá en su espacio") : "Ficha nueva · podrá reclamarla"}</span>

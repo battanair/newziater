@@ -86,7 +86,7 @@ export default async function ObraPage({ params }: Props) {
                   <Link key={c.id} href={`/persona/${c.persona.id}`} className={`card ${fuera(c)}`}>
                     <Avatar persona={c.persona} />
                     <span className="card-title" style={{ textAlign: "center" }}>{nombreCompleto(c.persona)}</span>
-                    {c.titulo ? <span className="card-sub" style={{ textAlign: "center" }}>{c.titulo}</span> : null}
+                    {c.titulo || c.cover ? <span className="card-sub" style={{ textAlign: "center" }}>{[c.titulo, c.cover ? "cover" : ""].filter(Boolean).join(" · ")}</span> : null}
                     {hayRelevos ? <span className="tramo" style={{ textAlign: "center" }}>{tramo(c, true)}</span> : null}
                   </Link>
                 ))}
