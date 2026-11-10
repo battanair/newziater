@@ -18,7 +18,7 @@ export default function Page() {
       <H>Qué guardamos en tu navegador</H>
       <ul>
         <li><strong>Sesión (Firebase Authentication):</strong> si entras con tu cuenta, el navegador guarda tu sesión para no pedirte la contraseña en cada visita. Es imprescindible para el servicio y desaparece al cerrar sesión.</li>
-        <li><strong>Tráiler de las obras:</strong> los vídeos de YouTube no se cargan hasta que pulsas «Ver tráiler». Al hacerlo, YouTube (Google) puede guardar sus propios datos en tu navegador; usamos su modo de privacidad mejorada.</li>
+        <li><strong>Tráiler de las obras:</strong> mostramos la imagen de portada del vídeo, que se descarga de los servidores de YouTube (Google) sin cookies. El reproductor no se carga hasta que pulsas sobre él; al hacerlo, YouTube puede guardar sus propios datos en tu navegador. Usamos su modo de privacidad mejorada.</li>
         <li><strong>Preferencias:</strong> modo claro u oscuro, y una marca que indica si tienes la sesión iniciada para mostrarte la portada adecuada.</li>
         <li><strong>Tu elección sobre cookies:</strong> recordamos si aceptaste o rechazaste las estadísticas para no volver a preguntarte.</li>
         <li><strong>Contador de visitas propio (solo si lo aceptas):</strong> una marca con la fecha del día para no contar dos veces al mismo visitante en las estadísticas diarias. No contiene datos personales ni se comparte con nadie.</li>

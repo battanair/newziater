@@ -6,7 +6,7 @@ const csp = [
   // Next.js necesita 'unsafe-inline' para sus scripts de hidratación; Google para el login con popup
   "script-src 'self' 'unsafe-inline' https://apis.google.com https://www.gstatic.com",
   "style-src 'self' 'unsafe-inline'",
-  "img-src 'self' data: blob: https://res.cloudinary.com https://lh3.googleusercontent.com",
+  "img-src 'self' data: blob: https://res.cloudinary.com https://lh3.googleusercontent.com https://i.ytimg.com",
   "font-src 'self' data:",
   "connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://*.firebaseapp.com https://api.cloudinary.com",
   "frame-src https://*.firebaseapp.com https://accounts.google.com https://www.instagram.com https://www.youtube-nocookie.com",

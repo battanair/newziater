@@ -14,9 +14,11 @@ export function Trailer({ id, titulo }: { id: string; titulo: string }) {
         <iframe src={`https://www.youtube-nocookie.com/embed/${id}?autoplay=1`} title={`Tráiler de ${titulo}`} allow="autoplay; encrypted-media; picture-in-picture" allowFullScreen style={{ position: "absolute", inset: 0, width: "100%", height: "100%", border: 0 }} />
       ) : (
         <button type="button" onClick={() => setCargar(true)} className="trailer-portada" aria-label={`Ver el tráiler de ${titulo} (se cargará YouTube)`}>
+          {/* Miniatura del vídeo: es solo una imagen, YouTube no se carga hasta pulsar */}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={`https://i.ytimg.com/vi/${id}/hqdefault.jpg`} alt="" loading="lazy" referrerPolicy="no-referrer" className="trailer-mini" />
           <span className="trailer-play" aria-hidden="true">▶</span>
-          <span style={{ fontWeight: 600, color: "var(--papel)" }}>Ver tráiler</span>
-          <span className="hint">Al pulsar se cargará YouTube, que puede guardar datos en tu navegador.</span>
+          <span className="trailer-aviso">Al reproducirlo se cargará YouTube</span>
         </button>
       )}
     </div>
