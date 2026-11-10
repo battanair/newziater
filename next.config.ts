@@ -39,6 +39,10 @@ const nextConfig: NextConfig = {
       { protocol: "https", hostname: "lh3.googleusercontent.com" },
     ],
   },
+  // /sitemap.xml es la dirección estándar: sirve el índice con todos los trozos del sitemap
+  async rewrites() {
+    return [{ source: "/sitemap.xml", destination: "/sitemap-index.xml" }];
+  },
   async headers() {
     return [
       { source: "/:path*", headers: securityHeaders },
