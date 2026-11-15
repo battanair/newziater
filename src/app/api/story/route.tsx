@@ -64,20 +64,22 @@ export async function GET(req: Request) {
     ...(sans ? [{ name: "Sans", data: sans, weight: 400 as const, style: "normal" as const }] : []),
     ...(sansB ? [{ name: "Sans", data: sansB, weight: 600 as const, style: "normal" as const }] : []),
   ];
+  // El cartel se adapta para que todo quepa entre las zonas que tapa Instagram
+  const PW = esElenco ? 500 : prox ? 580 : 640, PH = Math.round(PW * 1.5);
   const tituloGrande = obra.titulo.length > 28 ? 72 : obra.titulo.length > 16 ? 88 : 104;
 
   const img = new ImageResponse(
     (
-      <div style={{ width: W, height: H, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", background: FONDO, padding: "200px 90px 280px", fontFamily: "Sans", color: PAPEL, position: "relative" }}>
+      <div style={{ width: W, height: H, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", background: FONDO, padding: "160px 90px 220px", fontFamily: "Sans", color: PAPEL }}>
         <div style={{ display: "flex", alignItems: "center", gap: 14, fontFamily: "Fraunces", fontSize: 40, letterSpacing: 6, color: PAPEL }}>
           <div style={{ width: 14, height: 14, borderRadius: 999, background: ORO }} />
           ZIATER
         </div>
         <div style={{ display: "flex", marginTop: 48, fontFamily: "Fraunces", fontSize: 54, color: ORO }}>{cabecera}</div>
-        <div style={{ display: "flex", marginTop: 40, width: 660, height: 990, borderRadius: 26, overflow: "hidden", background: colorCartel(obra.id), boxShadow: "0 30px 80px rgba(0,0,0,.55)", alignItems: "flex-end", justifyContent: "flex-start" }}>
+        <div style={{ display: "flex", marginTop: 36, width: PW, height: PH, borderRadius: 26, overflow: "hidden", background: colorCartel(obra.id), boxShadow: "0 30px 80px rgba(0,0,0,.55)", alignItems: "flex-end", justifyContent: "flex-start" }}>
           {cartel ? (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={cartel} width={660} height={990} style={{ width: 660, height: 990, objectFit: "cover" }} alt="" />
+            <img src={cartel} width={PW} height={PH} style={{ width: PW, height: PH, objectFit: "cover" }} alt="" />
           ) : (
             <div style={{ display: "flex", padding: 48, fontFamily: "Fraunces", fontSize: 72, lineHeight: 1.05, color: PAPEL }}>{obra.titulo}</div>
           )}
@@ -96,7 +98,7 @@ export async function GET(req: Request) {
             {donde ? <div style={{ display: "flex", fontSize: 36, color: TEXTO2, marginTop: 4 }}>{donde}</div> : null}
           </div>
         ) : null}
-        <div style={{ display: "flex", position: "absolute", bottom: 300, left: 0, right: 0, justifyContent: "center", fontSize: 34, color: TEXTO2 }}>Ficha completa en ziater.com</div>
+        <div style={{ display: "flex", marginTop: 44, fontSize: 34, color: TEXTO2 }}>Ficha completa en ziater.com</div>
       </div>
     ),
     { width: W, height: H, fonts: fonts.length ? fonts : undefined },
