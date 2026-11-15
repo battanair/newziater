@@ -197,7 +197,7 @@ export interface MiSolicitud { id: string; tipo: "persona" | "obra" | TipoEntida
 
 /** Las solicitudes del usuario (fichas, obras, salas y compañías) con su estado, de la más reciente a la más antigua. */
 export async function misSolicitudes(uid: string): Promise<MiSolicitud[]> {
-  const q = (col: string) => getDocs(query(collection(db, col), where("uid", "==", uid), limit(50))).then((s) => s.docs.map((d) => ({ id: d.id, ...(d.data() as Record<string, unknown>) }))).catch(() => [] as Record<string, unknown>[]);
+  const q = (col: string): Promise<Record<string, unknown>[]> => getDocs(query(collection(db, col), where("uid", "==", uid), limit(50))).then((s) => s.docs.map((d) => ({ id: d.id, ...(d.data() as Record<string, unknown>) }) as Record<string, unknown>)).catch(() => []);
   const [fichas, obras, entidades] = await Promise.all([q("reclamaciones"), q("reclamaciones_obra"), q("reclamaciones_entidad")]);
   const base = [
     ...fichas.map((r) => ({ id: String(r.id), tipo: "persona" as const, ref: String(r.id_persona ?? ""), r })),
