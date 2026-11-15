@@ -162,18 +162,38 @@ async function paginaObrasSinCache(opts: OpcionesPagina): Promise<Pagina<Obra>> 
 }
 export const paginaObras = memo("paginaObras", paginaObrasSinCache);
 
+/** ¿Tiene alguna obra confirmada? (los créditos pendientes aún no salen en la ficha) */
+async function tieneObras(idPersona: string): Promise<boolean> {
+  const s = await getDocs(query(collection(db, "persona_obra"), where("id_persona", "==", idPersona), limit(20))).catch(() => null);
+  return (s?.docs ?? []).some((d) => (d.data().estado ?? "confirmado") === "confirmado");
+}
+
+// La lista de artistas solo muestra fichas con al menos una obra: las vacías siguen
+// existiendo (y se encuentran por su enlace o en el buscador), pero no ocupan el listado.
 export const paginaPersonas = memo(
   "paginaPersonas",
   async (opts: { despues?: string }): Promise<{ items: Persona[]; siguiente?: string }> => {
-    const c: QueryConstraint[] = [orderBy("Nombre")];
-    if (opts.despues && validId(opts.despues)) {
-      const cur = await getDoc(doc(db, "persona", opts.despues));
-      if (cur.exists()) c.push(startAfter(cur));
+    const POR = 48;
+    let cursor = opts.despues && validId(opts.despues) ? await getDoc(doc(db, "persona", opts.despues)) : null;
+    const items: Persona[] = [];
+    let siguiente: string | undefined;
+    for (let vuelta = 0; vuelta < 6 && items.length < POR; vuelta++) {
+      const c: QueryConstraint[] = [orderBy("Nombre")];
+      if (cursor?.exists()) c.push(startAfter(cursor));
+      c.push(limit(POR));
+      const s = await getDocs(query(collection(db, "persona"), ...c));
+      const conObras = await Promise.all(s.docs.map(async (d) => ({ d, ok: Boolean(String(d.data().Nombre ?? "").trim()) && (await tieneObras(d.id)) })));
+      siguiente = undefined;
+      for (const { d, ok } of conObras) {
+        if (items.length >= POR) { siguiente = items[items.length - 1].id; break; }
+        if (ok) items.push(withId<Persona>(d));
+        cursor = d;
+      }
+      if (siguiente) break;
+      if (s.docs.length < POR) return { items };
+      siguiente = cursor?.id;
     }
-    c.push(limit(48 + 1));
-    const s = await getDocs(query(collection(db, "persona"), ...c));
-    const docs = s.docs.slice(0, 48);
-    return { items: docs.map((d) => withId<Persona>(d)).filter((p) => p.Nombre?.trim()), siguiente: s.docs.length > 48 ? docs[docs.length - 1].id : undefined };
+    return { items, siguiente };
   },
 );
 
