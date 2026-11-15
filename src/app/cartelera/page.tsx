@@ -24,11 +24,11 @@ export default async function CarteleraPage() {
       <EventosCartelera funciones={semana} />
       <p className="eyebrow" style={{ marginBottom: 12 }}>Cartelera</p>
       <h1 className="h1" style={{ marginBottom: 12 }}>Esta semana en el teatro</h1>
-      <p className="lead soft" style={{ maxWidth: 680, marginTop: 0 }}>Las funciones que compañías y salas anuncian en Ziater, con hora, sala y enlace a las entradas. Elige tu ciudad:</p>
+      <p className="lead soft" style={{ maxWidth: 680, marginTop: 0 }}>Las funciones que compañías y salas anuncian en Ziater, con hora, sala y enlace a las entradas.{ciudades.length ? " Elige tu ciudad:" : ""}</p>
       <div style={{ margin: "20px 0 36px" }}><CiudadesCartelera ciudades={ciudades} /></div>
 
       {semana.length ? <DiasCartelera funciones={semana} hoy={hoy} conCiudad /> : (
-        <p className="soft">No hay funciones anunciadas para los próximos siete días.</p>
+        <p className="soft">{funciones.length ? "No hay funciones anunciadas para los próximos siete días." : "Todavía no hay funciones anunciadas. En cuanto una compañía o una sala añada fechas, aparecerán aquí."}</p>
       )}
 
       {despues.length ? (
