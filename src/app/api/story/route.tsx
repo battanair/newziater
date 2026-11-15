@@ -57,7 +57,7 @@ export async function GET(req: Request) {
   const cartel = obra.cartel?.includes("res.cloudinary.com") ? cld(obra.cartel, T_STORY) : undefined;
 
   const textoSerif = "ZIATER" + cabecera + obra.titulo + persona;
-  const textoSans = linea + cuando + donde + papel + "Ficha completa en ziater.com·" + periodo(obra.anoinicio, obra.anofin);
+  const textoSans = linea.toUpperCase() + linea + cuando + donde + papel + persona + " Ficha completa en ziater.com·–() " + periodo(obra.anoinicio, obra.anofin);
   const [serif, sans, sansB] = await Promise.all([fuente("Fraunces", 600, textoSerif), fuente("Source+Sans+3", 400, textoSans), fuente("Source+Sans+3", 600, textoSans)]);
   const fonts = [
     ...(serif ? [{ name: "Fraunces", data: serif, weight: 600 as const, style: "normal" as const }] : []),
