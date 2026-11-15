@@ -1,0 +1,26 @@
+name: Comprobar
+
+# Compila la web en cada cambio para ver los errores aquí (sin entrar en Vercel).
+on:
+  push:
+    branches: [main]
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  compilar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci --no-fund --no-audit
+      - name: Compilar (tipos y lint incluidos)
+        run: npx next build --no-lint 2>&1 | tail -80; npx tsc --noEmit -p . 2>&1 | tail -60; npx next lint 2>&1 | tail -60
+        env:
+          NEXT_TELEMETRY_DISABLED: "1"
