@@ -12,6 +12,7 @@ import { Galeria } from "@/components/Galeria";
 import { VistaElenco } from "@/components/VistaElenco";
 import { contactoDistribucion } from "@/lib/ficha-tecnica";
 import { Trailer } from "@/components/Trailer";
+import { StoryBoton } from "@/components/StoryBoton";
 import { Valoracion } from "@/components/Valoracion";
 import { fechaCorta, partirFunciones, OG_POR_DEFECTO, fotosDe, T_OG, agruparPorDepartamento, cld, departamento, instagramHandle, enlaceSeguro, instagramUrl, nombreCompleto, obraActiva, periodo, recortar, tramo } from "@/lib/format";
 import { SITE_URL } from "@/lib/firebase-config";
@@ -211,6 +212,7 @@ export default async function ObraPage({ params }: Props) {
             <div className="actions">
               <EditarFicha dueno={obra.creacion} href={`/panel/obra/${obra.id}`} texto="Editar obra" />
               <ObraActions obraId={obra.id} />
+              <StoryBoton obraId={obra.id} titulo={obra.titulo} personasEnObra={[...new Set(equipo.map((c) => c.persona.id))]} />
             </div>
             {obra.sinopsis ? (
               <>
