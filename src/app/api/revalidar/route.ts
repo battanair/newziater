@@ -19,6 +19,7 @@ export async function POST(req: Request) {
   for (const id of ids(body.personas)) revalidatePath(`/persona/${id}`);
   for (const id of ids(body.salas)) revalidatePath(`/sala/${id}`);
   if (ids(body.salas).length) revalidatePath("/salas");
+  if (ids(body.obras).length || ids(body.salas).length) revalidatePath("/cartelera", "layout");
   revalidatePath("/");
   return NextResponse.json({ ok: true });
 }

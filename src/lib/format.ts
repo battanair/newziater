@@ -168,3 +168,22 @@ export function aHttps(u?: string): string {
   if (/^[a-z][a-z0-9+.-]*:/i.test(v)) return ""; // otros esquemas (javascript:, data:…) se descartan
   return "https://" + v.replace(/^\/+/, "");
 }
+
+// ---------- Cartelera por ciudad ----------
+/** «Madrid» → «madrid», «A Coruña» → «a-coruna», «L'Hospitalet» → «l-hospitalet» */
+export function slugCiudad(ciudad: string): string {
+  return ciudad.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+}
+/** Suma días a una fecha AAAA-MM-DD. */
+export function sumarDias(iso: string, n: number): string {
+  const [y, m, d] = iso.split("-").map(Number);
+  return new Date(Date.UTC(y, m - 1, d + n, 12)).toISOString().slice(0, 10);
+}
+/** «Hoy», «Mañana» o «Viernes 20 de noviembre». */
+export function diaCartelera(iso: string, hoy: string): string {
+  if (iso === hoy) return "Hoy";
+  if (iso === sumarDias(hoy, 1)) return "Mañana";
+  const [y, m, d] = iso.split("-").map(Number);
+  const t = new Intl.DateTimeFormat("es-ES", { weekday: "long", day: "numeric", month: "long", timeZone: "UTC" }).format(new Date(Date.UTC(y, m - 1, d, 12)));
+  return t.charAt(0).toUpperCase() + t.slice(1);
+}

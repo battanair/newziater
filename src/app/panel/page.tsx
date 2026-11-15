@@ -7,6 +7,7 @@ import { RequireAuth } from "@/components/RequireAuth";
 import { PanelNav } from "@/components/PanelNav";
 import { Poster } from "@/components/Cards";
 import { Vacio } from "@/components/Vacio";
+import { MisSolicitudes } from "@/components/MisSolicitudes";
 import { contarMisNotas, creditosDe, miPersona, miUsuario, misAportaciones, misNotas, porIds, type MiNota } from "@/lib/client-data";
 import { nombreCompleto } from "@/lib/format";
 import type { Obra, Persona, UserDoc } from "@/lib/types";
@@ -108,6 +109,7 @@ function Resumen({ user }: { user: User }) {
           </div>
 
           <aside className="side-col">
+            <MisSolicitudes uid={user.uid} />
             {d.persona ? (
               <div className="panel">
                 <h2 className="eyebrow">Tu ficha de artista</h2>

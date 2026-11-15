@@ -3,7 +3,9 @@
 import Link from "next/link";
 import { use, useEffect, useState } from "react";
 import { RequireAuth } from "@/components/RequireAuth";
-import { leer, solicitarReclamacion } from "@/lib/client-data";
+import { doc, getDoc } from "firebase/firestore";
+import { db } from "@/lib/firebase-client";
+import { leer, miPersona, solicitarReclamacion } from "@/lib/client-data";
 import { nombreCompleto } from "@/lib/format";
 import type { Persona } from "@/lib/types";
 import type { User } from "firebase/auth";
@@ -25,12 +27,31 @@ function Reclamar({ id, user }: { id: string; user: User }) {
   const [contacto, setContacto] = useState("");
   const [estado, setEstado] = useState<"idle" | "busy" | "ok" | "error">("idle");
 
-  useEffect(() => { leer<Persona>("persona", id).then(setPersona).catch(() => setPersona(null)); }, [id]);
+  const [previa, setPrevia] = useState<string | null>(null);
+  const [mia, setMia] = useState<Persona | null>(null);
+
+  useEffect(() => {
+    leer<Persona>("persona", id).then(setPersona).catch(() => setPersona(null));
+    getDoc(doc(db, "reclamaciones", `${id}_${user.uid}`)).then((s) => setPrevia(s.exists() ? String(s.data().estado ?? "pendiente") : null)).catch(() => {});
+    miPersona(user.uid).then(setMia).catch(() => {});
+  }, [id, user.uid]);
 
   if (persona === undefined) return <main className="wrap section"><p className="muted">Cargando…</p></main>;
   if (!persona) return <main className="wrap section"><p>Esta ficha no existe.</p></main>;
   if (persona.coincide === user.uid) return <main className="wrap section"><p>Esta ficha ya es tuya. <Link href="/panel/ficha" style={{ color: "var(--foco)" }}>Editar mi ficha</Link></p></main>;
   if (persona.coincide) return <main className="wrap section"><p>Esta ficha ya la ha reclamado otra persona. Si crees que es un error, <Link href="/contacto" style={{ color: "var(--foco)" }}>escríbenos</Link>.</p></main>;
+
+  if (previa && estado !== "ok") {
+    return (
+      <main className="wrap section" style={{ maxWidth: 720 }}>
+        <h1 className="h1" style={{ fontSize: 44 }}>{previa === "rechazada" ? "Solicitud no aprobada" : "Ya has enviado la solicitud"}</h1>
+        <p className="lead soft">{previa === "rechazada"
+          ? <>No pudimos confirmar que eres {nombreCompleto(persona)}. Si crees que es un error, <Link href="/contacto" style={{ color: "var(--foco)" }}>escríbenos</Link> y lo revisamos.</>
+          : <>Estamos comprobando que eres {nombreCompleto(persona)}. Verás el estado en Mi espacio.</>}</p>
+        <Link href="/panel" className="btn btn-primary">Ir a Mi espacio</Link>
+      </main>
+    );
+  }
 
   const m = METODOS.find((x) => x.id === metodo)!;
 
@@ -49,8 +70,8 @@ function Reclamar({ id, user }: { id: string; user: User }) {
     return (
       <main className="wrap section" style={{ maxWidth: 720 }}>
         <h1 className="h1" style={{ fontSize: 44 }}>Solicitud enviada</h1>
-        <p className="lead soft">Revisaremos que eres {nombreCompleto(persona)} en uno o dos días y te avisaremos por email. Después podrás editar la ficha y confirmar tus créditos.</p>
-        <Link href="/" className="btn">Volver al inicio</Link>
+        <p className="lead soft">Revisaremos que eres {nombreCompleto(persona)} en uno o dos días. Verás el estado de tu solicitud en Mi espacio y, cuando esté aprobada, podrás editar la ficha y confirmar tus créditos.</p>
+        <Link href="/panel" className="btn btn-primary">Ir a Mi espacio</Link>
       </main>
     );
   }
@@ -60,6 +81,9 @@ function Reclamar({ id, user }: { id: string; user: User }) {
       <p className="eyebrow" style={{ marginBottom: 14 }}>Paso 2 de 2</p>
       <h1 className="h1" style={{ fontSize: 48 }}>Confirma que eres {nombreCompleto(persona)}</h1>
       <p className="lead soft">Así nadie puede apropiarse de tu ficha. Elige la forma más cómoda para ti.</p>
+      {mia && mia.id !== id ? (
+        <p className="panel" style={{ marginTop: 16 }}>Ya gestionas la ficha de <Link href={`/persona/${mia.id}`} style={{ color: "var(--foco)" }}>{nombreCompleto(mia)}</Link>. Si esta es un duplicado tuyo, envía la solicitud igualmente: al revisarla uniremos las dos.</p>
+      ) : null}
       <form onSubmit={enviar} className="stack" style={{ marginTop: 28 }}>
         <div role="radiogroup" aria-label="Forma de verificación" className="form-grid">
           {METODOS.map((x) => (

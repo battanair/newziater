@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { artistasDestacados, obrasEnCartel, obrasMejorValoradas, obrasRecientes, productorasDestacadas } from "@/lib/data";
+import { artistasDestacados, cartelera, obrasEnCartel, obrasMejorValoradas, obrasRecientes, productorasDestacadas } from "@/lib/data";
 import { fechaCorta, hoyES } from "@/lib/format";
 import { ParaTi } from "@/components/ParaTi";
 import { ObraCard, PersonaCard, ProductoraCard, JsonLd } from "@/components/Cards";
@@ -14,12 +14,13 @@ export const metadata: Metadata = { alternates: { canonical: "/" } };
 export const revalidate = 600;
 
 export default async function Home() {
-  const [enCartel, top, recientes, artistas, prods] = await Promise.all([
+  const [enCartel, top, recientes, artistas, prods, cart] = await Promise.all([
     obrasEnCartel(hoyES(), 6),
     obrasMejorValoradas(12),
     obrasRecientes(12),
     artistasDestacados(12),
     productorasDestacadas(8),
+    cartelera(hoyES()),
   ]);
   const recientesSinTop = recientes.filter((o) => !top.slice(0, 6).some((t) => t.id === o.id));
 
@@ -105,7 +106,13 @@ export default async function Home() {
               <h2 className="h2">En cartel</h2>
               <p className="muted" style={{ margin: "6px 0 0" }}>Próximas funciones</p>
             </div>
+            <Link href="/cartelera" style={{ color: "var(--foco)", fontWeight: 600 }}>Ver la cartelera →</Link>
           </div>
+          {cart.ciudades.length ? (
+            <nav aria-label="Cartelera por ciudad" style={{ display: "flex", flexWrap: "wrap", gap: 8, margin: "-6px 0 20px" }}>
+              {cart.ciudades.slice(0, 8).map((c) => <Link key={c.slug} href={`/cartelera/${c.slug}`} className="chip" style={{ minHeight: 36, padding: "0 12px", fontSize: 14 }}>Esta semana en {c.nombre}</Link>)}
+            </nav>
+          ) : null}
           <div className="grid-posters">{enCartel.map((o) => <ObraCard key={o.id} obra={o} etiqueta={`Próxima: ${fechaCorta(o.proxima)}`} />)}</div>
         </section>
       ) : null}

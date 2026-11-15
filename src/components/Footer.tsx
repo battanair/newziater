@@ -7,6 +7,7 @@ export function Footer() {
       <div className="wrap footer-in">
         <span className="serif" style={{ fontSize: 20, color: "var(--papel)", fontWeight: 700, letterSpacing: ".04em" }}>ZIATER</span>
         <nav aria-label="Pie" style={{ display: "flex", flexWrap: "wrap", gap: 20 }}>
+          <Link href="/cartelera">Cartelera</Link>
           <Link href="/obras">Obras</Link>
           <Link href="/personas">Artistas</Link>
           <Link href="/companias">Compañías</Link>

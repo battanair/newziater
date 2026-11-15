@@ -7,7 +7,7 @@ import {
 } from "firebase/firestore";
 import { serverDb as db } from "./firebase-server";
 import type { Credito, Obra, Persona, PremioObra, Productora, Sala, SearchItem } from "./types";
-import { T_MINI, T_MINI_RETRATO, cld, nombreCompleto, periodo } from "./format";
+import { T_MINI, T_MINI_RETRATO, cld, nombreCompleto, periodo, slugCiudad, sumarDias } from "./format";
 import { normalizar, partirBusqueda } from "./claves";
 
 // ============================================================================
@@ -346,4 +346,49 @@ export const obrasEnCartel = memo("obrasEnCartel", async (hoy: string, n: number
     .filter((o) => o.proxima)
     .sort((a, b) => a.proxima.localeCompare(b.proxima))
     .slice(0, n);
+}, 600);
+
+// ---------- Cartelera: todas las funciones próximas, ciudad a ciudad ----------
+export interface FuncionCartel {
+  fecha: string; hora: string; sala: string; sala_id?: string; ciudad: string; slug: string; entradas: string;
+  obra: { id: string; titulo: string; cartel?: string; categoria?: string[] };
+}
+export interface Cartelera { funciones: FuncionCartel[]; ciudades: { slug: string; nombre: string; n: number }[] }
+
+/** Funciones de los próximos 60 días. La ciudad sale de la función o, si falta, de su sala. */
+export const cartelera = memo("cartelera", async (hoy: string): Promise<Cartelera> => {
+  const hasta = sumarDias(hoy, 60);
+  const [s, salas] = await Promise.all([
+    getDocs(query(collection(db, "obra"), where("ultima", ">=", hoy), orderBy("ultima"), limit(400))).catch(() => null),
+    todasLasSalas(),
+  ]);
+  const ciudadSala = new Map(salas.map((x) => [x.id, x.ciudad]));
+  const funciones: FuncionCartel[] = [];
+  for (const d of s?.docs ?? []) {
+    const o = withId<Obra>(d);
+    for (const f of o.funciones ?? []) {
+      if (!f?.fecha || f.fecha < hoy || f.fecha > hasta) continue;
+      const ciudad = (f.ciudad?.trim() || (f.sala_id ? ciudadSala.get(f.sala_id) : "") || "").trim();
+      funciones.push({
+        fecha: f.fecha, hora: (f.hora ?? "").slice(0, 5), sala: f.sala ?? "", sala_id: f.sala_id || undefined,
+        ciudad, slug: ciudad ? slugCiudad(ciudad) : "", entradas: f.entradas ?? "",
+        obra: { id: o.id, titulo: o.titulo, cartel: cld(o.cartel, T_MINI), categoria: o.categoria },
+      });
+    }
+  }
+  funciones.sort((a, b) => (a.fecha + (a.hora || "99") + a.obra.titulo).localeCompare(b.fecha + (b.hora || "99") + b.obra.titulo));
+  // Una entrada por ciudad, con su nombre más habitual («Madrid» gana a «madrid»)
+  const porSlug = new Map<string, Map<string, number>>();
+  for (const f of funciones) {
+    if (!f.slug) continue;
+    const m = porSlug.get(f.slug) ?? new Map<string, number>();
+    m.set(f.ciudad, (m.get(f.ciudad) ?? 0) + 1);
+    porSlug.set(f.slug, m);
+  }
+  const ciudades = [...porSlug.entries()].map(([slug, m]) => ({
+    slug,
+    nombre: [...m.entries()].sort((a, b) => b[1] - a[1])[0][0],
+    n: [...m.values()].reduce((a, b) => a + b, 0),
+  })).sort((a, b) => b.n - a.n || a.nombre.localeCompare(b.nombre, "es"));
+  return { funciones, ciudades };
 }, 600);

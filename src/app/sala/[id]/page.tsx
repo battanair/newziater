@@ -7,6 +7,7 @@ import { JsonLd, ObraCard } from "@/components/Cards";
 import { ShareButton } from "@/components/ObraActions";
 import { EditarFicha } from "@/components/EditarFicha";
 import { SugerirCambio } from "@/components/SugerirCambio";
+import { PedirGestion } from "@/components/ReclamarEntidad";
 import { aHttps, enlaceSeguro, OG_POR_DEFECTO, T_CARTEL, T_OG, cld, colorCartel, fechaCorta, hoyES, instagramUrl, recortar } from "@/lib/format";
 import { SITE_URL } from "@/lib/firebase-config";
 
@@ -87,6 +88,7 @@ export default async function SalaPage({ params }: Props) {
               {mapa ? <a href={mapa} className="btn" target="_blank" rel="noopener noreferrer nofollow">Cómo llegar</a> : null}
               <ShareButton />
               <SugerirCambio tipo="sala" refId={s.id} nombre={s.nombre} className="btn btn-ghost" />
+              <PedirGestion tipo="sala" id={s.id} dueno={s.creacion} />
             </div>
           </div>
         </div>

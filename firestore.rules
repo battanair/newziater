@@ -309,6 +309,21 @@ service cloud.firestore {
       allow update, delete: if isAdmin();
     }
 
+    // ---------- Solicitudes para gestionar una sala o una compañía ----------
+    // Las pide quien forma parte de su equipo; aprueba administración (pasa «creacion» al solicitante).
+    match /reclamaciones_entidad/{recId} {
+      allow create: if signedIn()
+        && (data().tipo == 'sala' || data().tipo == 'compania')
+        && data().ref is string && data().ref.size() > 0 && data().ref.size() <= 64
+        && recId == data().tipo + '_' + data().ref + '_' + uid()
+        && exists(/databases/$(database)/documents/$(data().tipo == 'sala' ? 'salas' : 'productoras')/$(data().ref))
+        && data().uid == uid() && data().estado == 'pendiente'
+        && str('nombre', 100) && str('cargo', 100) && str('contacto', 200) && str('motivo', 1000)
+        && data().keys().hasOnly(['tipo', 'ref', 'uid', 'nombre', 'cargo', 'contacto', 'motivo', 'estado', 'fecha']);
+      allow read: if isAdmin() || (signedIn() && resource.data.uid == uid());
+      allow update, delete: if isAdmin();
+    }
+
     // ---------- Perfil público de colaborador (voluntario) ----------
     // Solo nombre y si quiere aparecer; las cifras se calculan con los datos reales.
     match /colaboradores/{userId} {

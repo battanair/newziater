@@ -13,9 +13,9 @@ import type { Obra, Persona } from "@/lib/types";
 import { ResumenAdmin } from "@/components/ResumenAdmin";
 import { MensajesAdmin, type Mensaje } from "@/components/MensajesAdmin";
 import { EMAIL_ADMIN } from "@/components/EsAdmin";
-import { aprobarSolicitudObra, rechazarSolicitudObra, resolverSugerencia, solicitudesObra, sugerenciasPendientes, type SolicitudObra, type Sugerencia } from "@/lib/colaboracion";
+import { aprobarSolicitudEntidad, rechazarSolicitudEntidad, solicitudesEntidad, type SolicitudEntidad, aprobarSolicitudObra, rechazarSolicitudObra, resolverSugerencia, solicitudesObra, sugerenciasPendientes, type SolicitudObra, type Sugerencia } from "@/lib/colaboracion";
 
-type Reclamacion = { id: string; id_persona: string; uid: string; metodo: string; contacto: string; persona?: Persona | null };
+type Reclamacion = { id: string; id_persona: string; uid: string; metodo: string; contacto: string; persona?: Persona | null; yaTiene?: Persona[] };
 
 export default function AdminPage() {
   return <RequireAuth>{(user) => <Admin user={user} />}</RequireAuth>;
@@ -28,6 +28,7 @@ function Admin({ user }: { user: User }) {
   const [lista, setLista] = useState<Reclamacion[]>([]);
   const [obras, setObras] = useState<(SolicitudObra & { obraDoc?: Obra | null })[]>([]);
   const [sugs, setSugs] = useState<Sugerencia[]>([]);
+  const [entidades, setEntidades] = useState<(SolicitudEntidad & { fichaNombre?: string; dueno?: string })[]>([]);
   const [mensajes, setMensajes] = useState<Mensaje[]>([]);
   const [tab, setTab] = useState<"resumen" | "mensajes" | "fichas" | "obras" | "sugerencias">("resumen");
 
@@ -37,7 +38,16 @@ function Admin({ user }: { user: User }) {
     setEsAdmin(true);
     const q = await getDocs(query(collection(db, "reclamaciones"), where("estado", "==", "pendiente")));
     const rs = q.docs.map((d) => ({ id: d.id, ...(d.data() as Omit<Reclamacion, "id">) }));
-    setLista(await Promise.all(rs.map(async (r) => ({ ...r, persona: await leer<Persona>("persona", r.id_persona) }))));
+    setLista(await Promise.all(rs.map(async (r) => {
+      // ¿Ya gestiona otra ficha? Entonces puede ser un duplicado que hay que unir
+      const ya = await getDocs(query(collection(db, "persona"), where("coincide", "==", r.uid))).then((s) => s.docs.map((d) => ({ id: d.id, ...(d.data() as Omit<Persona, "id">) }))).catch(() => [] as Persona[]);
+      return { ...r, persona: await leer<Persona>("persona", r.id_persona), yaTiene: ya.filter((p) => p.id !== r.id_persona) };
+    })));
+    const se = await solicitudesEntidad();
+    setEntidades(await Promise.all(se.map(async (x) => {
+      const d = await leer<{ nombre?: string; nombre_prod?: string; creacion?: string }>(x.tipo === "sala" ? "salas" : "productoras", x.ref).catch(() => null);
+      return { ...x, fichaNombre: d?.nombre ?? d?.nombre_prod ?? x.ref, dueno: d?.creacion ?? "" };
+    })));
     const so = await solicitudesObra();
     setObras(await Promise.all(so.map(async (x) => ({ ...x, obraDoc: await leer<Obra>("obra", x.obra) }))));
     setSugs(await sugerenciasPendientes(null));
@@ -71,7 +81,7 @@ function Admin({ user }: { user: User }) {
   const tabs = [
     { k: "resumen" as const, l: "Resumen", n: null },
     { k: "mensajes" as const, l: "Mensajes", n: mensajes.filter((m) => !m.atendido).length },
-    { k: "fichas" as const, l: "Fichas de artista", n: lista.length },
+    { k: "fichas" as const, l: "Fichas, salas y compañías", n: lista.length + entidades.length },
     { k: "obras" as const, l: "Gestionar obras", n: obras.length },
     { k: "sugerencias" as const, l: "Sugerencias", n: sugs.length },
   ];
@@ -83,7 +93,7 @@ function Admin({ user }: { user: User }) {
         {tabs.map((t) => <button key={t.k} type="button" role="tab" className="tab" aria-selected={tab === t.k} onClick={() => setTab(t.k)}>{t.l} {t.n !== null ? <span style={{ opacity: .7 }}>{t.n}</span> : null}</button>)}
       </div>
 
-      {tab === "resumen" ? <ResumenAdmin pendientes={{ mensajes: mensajes.filter((m) => !m.atendido).length, fichas: lista.length, obras: obras.length, sugerencias: sugs.length }} /> : null}
+      {tab === "resumen" ? <ResumenAdmin pendientes={{ mensajes: mensajes.filter((m) => !m.atendido).length, fichas: lista.length + entidades.length, obras: obras.length, sugerencias: sugs.length }} /> : null}
       {tab === "mensajes" ? <MensajesAdmin mensajes={mensajes} recargar={cargar} /> : null}
 
       {tab === "obras" ? (
@@ -126,7 +136,26 @@ function Admin({ user }: { user: User }) {
         </div>
       ) : null}
 
-      {tab === "fichas" && !lista.length ? <p className="soft">No hay solicitudes pendientes.</p> : null}
+      {tab === "fichas" && !lista.length && !entidades.length ? <p className="soft">No hay solicitudes pendientes.</p> : null}
+      {tab === "fichas" && entidades.length ? (
+        <div className="stack" style={{ marginBottom: 16 }}>
+          {entidades.map((x) => (
+            <div key={x.id} className="panel" style={{ display: "flex", flexWrap: "wrap", gap: 16, alignItems: "center" }}>
+              <div style={{ flex: "1 1 360px" }}>
+                <span className="chip" style={{ marginBottom: 6 }}>{x.tipo === "sala" ? "Sala" : "Compañía"}</span>
+                <Link href={`/${x.tipo}/${x.ref}`} target="_blank" style={{ fontWeight: 600, fontSize: 18, display: "block" }}>{x.fichaNombre}</Link>
+                <div className="hint">{x.nombre} · {x.cargo} · confirmar en: {x.contacto}</div>
+                {x.motivo ? <p className="soft" style={{ margin: "8px 0 0", whiteSpace: "pre-line" }}>{x.motivo}</p> : null}
+                <div className="hint">Dueño actual: {x.dueno || "ninguno"} · Solicitante: {x.uid}</div>
+              </div>
+              <div className="actions">
+                <button type="button" className="btn btn-ghost" onClick={async () => { await rechazarSolicitudEntidad(x.id); cargar(); }}>Rechazar</button>
+                <button type="button" className="btn btn-primary" onClick={async () => { await aprobarSolicitudEntidad(x); await authFetch("/api/revalidar", x.tipo === "sala" ? { salas: [x.ref] } : {}).catch(() => {}); cargar(); }}>Pasarle la ficha</button>
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : null}
       <div className="stack" hidden={tab !== "fichas"}>
         {lista.map((r) => (
           <div key={r.id} className="panel" style={{ display: "flex", flexWrap: "wrap", gap: 16, alignItems: "center" }}>
@@ -134,6 +163,7 @@ function Admin({ user }: { user: User }) {
               <Link href={`/persona/${r.id_persona}`} target="_blank" style={{ fontWeight: 600, fontSize: 18 }}>{r.persona ? nombreCompleto(r.persona) : r.id_persona}</Link>
               <div className="hint">Verificación por {r.metodo}: {r.contacto}</div>
               <div className="hint">Usuario: {r.uid}</div>
+              {r.yaTiene?.length ? <div className="hint" style={{ color: "var(--foco)" }}>Ojo: ya gestiona {r.yaTiene.map((p) => nombreCompleto(p)).join(", ")}. Puede ser un duplicado: habría que unir las fichas.</div> : null}
             </div>
             <div className="actions">
               <button type="button" className="btn btn-ghost" onClick={() => rechazar(r)}>Rechazar</button>

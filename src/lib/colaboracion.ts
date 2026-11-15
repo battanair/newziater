@@ -155,3 +155,61 @@ export async function guardarColaborador(uid: string, c: Colaborador) {
   await setDoc(doc(db, "colaboradores", uid), { nombre: c.nombre.trim().slice(0, 100), publico: c.publico, persona_id: c.persona_id ?? "" });
 }
 
+
+// ------------------------------------------- Gestionar una sala o una compañía
+// Quien lleva una sala o una compañía puede pedir hacerse cargo de su ficha
+// (por ejemplo, si la creó otra persona). Lo aprueba administración.
+export type TipoEntidad = "sala" | "compania";
+export const COL_ENTIDAD: Record<TipoEntidad, string> = { sala: "salas", compania: "productoras" };
+export interface SolicitudEntidad { id: string; tipo: TipoEntidad; ref: string; uid: string; nombre: string; cargo: string; contacto: string; motivo: string; estado: string }
+
+export async function pedirGestionarEntidad(tipo: TipoEntidad, ref: string, d: { nombre: string; cargo: string; contacto: string; motivo: string }) {
+  const uid = auth.currentUser!.uid;
+  await setDoc(doc(db, "reclamaciones_entidad", `${tipo}_${ref}_${uid}`), {
+    tipo, ref, uid,
+    nombre: d.nombre.trim().slice(0, 100),
+    cargo: d.cargo.trim().slice(0, 100),
+    contacto: d.contacto.trim().slice(0, 200),
+    motivo: d.motivo.trim().slice(0, 1000),
+    estado: "pendiente",
+    fecha: serverTimestamp(),
+  });
+}
+
+export async function solicitudesEntidad(): Promise<SolicitudEntidad[]> {
+  const s = await getDocs(query(collection(db, "reclamaciones_entidad"), where("estado", "==", "pendiente"), limit(100))).catch(() => null);
+  return (s?.docs ?? []).map((x) => withId<SolicitudEntidad>(x));
+}
+
+/** Solo administración: pasa la sala o la compañía a quien la ha pedido. */
+export async function aprobarSolicitudEntidad(s: SolicitudEntidad) {
+  const b = writeBatch(db);
+  b.update(doc(db, COL_ENTIDAD[s.tipo], s.ref), { creacion: s.uid });
+  b.update(doc(db, "reclamaciones_entidad", s.id), { estado: "aprobada" });
+  await b.commit();
+}
+export async function rechazarSolicitudEntidad(id: string) {
+  await updateDoc(doc(db, "reclamaciones_entidad", id), { estado: "rechazada" });
+}
+
+// ------------------------------------------------ Mis solicitudes (de todo tipo)
+export interface MiSolicitud { id: string; tipo: "persona" | "obra" | TipoEntidad; ref: string; nombre: string; estado: "pendiente" | "aprobada" | "rechazada"; fecha: number }
+
+/** Las solicitudes del usuario (fichas, obras, salas y compañías) con su estado, de la más reciente a la más antigua. */
+export async function misSolicitudes(uid: string): Promise<MiSolicitud[]> {
+  const q = (col: string) => getDocs(query(collection(db, col), where("uid", "==", uid), limit(50))).then((s) => s.docs.map((d) => ({ id: d.id, ...(d.data() as Record<string, unknown>) }))).catch(() => [] as Record<string, unknown>[]);
+  const [fichas, obras, entidades] = await Promise.all([q("reclamaciones"), q("reclamaciones_obra"), q("reclamaciones_entidad")]);
+  const base = [
+    ...fichas.map((r) => ({ id: String(r.id), tipo: "persona" as const, ref: String(r.id_persona ?? ""), r })),
+    ...obras.map((r) => ({ id: String(r.id), tipo: "obra" as const, ref: String(r.obra ?? ""), r })),
+    ...entidades.map((r) => ({ id: String(r.id), tipo: (r.tipo === "compania" ? "compania" : "sala") as TipoEntidad, ref: String(r.ref ?? ""), r })),
+  ];
+  const col: Record<MiSolicitud["tipo"], string> = { persona: "persona", obra: "obra", sala: "salas", compania: "productoras" };
+  const out = await Promise.all(base.map(async (b) => {
+    const d = await getDoc(doc(db, col[b.tipo], b.ref)).then((x) => (x.exists() ? x.data() : null)).catch(() => null);
+    const nombre = !d ? "Ficha" : b.tipo === "persona" ? [d.Nombre, d.Apellidos].filter(Boolean).join(" ") : b.tipo === "obra" ? d.titulo : b.tipo === "compania" ? d.nombre_prod : d.nombre;
+    const f = b.r.fecha as { seconds?: number } | undefined;
+    return { id: b.id, tipo: b.tipo, ref: b.ref, nombre: String(nombre ?? "Ficha"), estado: (b.r.estado as MiSolicitud["estado"]) ?? "pendiente", fecha: f?.seconds ?? 0 };
+  }));
+  return out.sort((a, b) => b.fecha - a.fecha);
+}
