@@ -619,7 +619,7 @@ function SalaInput({ f, onChange }: { f: Funcion; onChange: (c: Partial<Funcion>
               <span style={{ color: "var(--foco)", fontWeight: 600, fontSize: 13 }}>{t("Enlazar")}</span>
             </button>
           ))}
-          <a href="/panel/sala/nueva" target="_blank" rel="noopener" className="suggest-item" style={{ textDecoration: "none" }}>
+          <a href={ruta(lang, "/panel/sala/nueva")} target="_blank" rel="noopener" className="suggest-item" style={{ textDecoration: "none" }}>
             <span><strong style={{ display: "block" }}>{items.length ? t("¿No está?") : t("Esta sala aún no está en Ziater")}</strong><span className="hint">{t("Puedes escribirla tal cual o darla de alta (se abre aparte)")}</span></span>
           </a>
         </span>

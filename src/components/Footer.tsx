@@ -1,6 +1,7 @@
 import { tServidor } from "@/lib/idioma-servidor";
 import Link from "@/components/Idioma";
 import { EnlaceCookies } from "./BannerCookies";
+import { SelectorIdioma } from "./SelectorIdioma";
 
 export function Footer() {
   const t = tServidor();
@@ -24,6 +25,7 @@ export function Footer() {
           <a href="https://www.instagram.com/ziater_/" rel="noopener noreferrer" target="_blank">{t("Instagram")}</a>
         </nav>
         <Link href="/panel/sala/nueva" className="btn btn-sala">{t("¿Tienes una sala? Dala de alta")}</Link>
+        <SelectorIdioma />
         <span>{t("© {getFullYear} Ziater", { getFullYear: new Date().getFullYear() })}</span>
       </div>
     </footer>

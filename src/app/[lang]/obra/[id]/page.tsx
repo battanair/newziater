@@ -279,7 +279,7 @@ export default async function ObraPage({ params }: Props) {
               {obra.basada_en ? <><dt>{t("Basada en")}</dt><dd><em>{obra.basada_en}</em>{obra.basada_autor ? t(", de {basada_autor}", { basada_autor: obra.basada_autor }) : ""}</dd></> : null}
               {obra.duracion ? <><dt>{t("Duración")}</dt><dd>{duracionTexto(obra.duracion)}</dd></> : null}
               {obra.edad ? <><dt>{t("Edad")}</dt><dd>{t(obra.edad)}</dd></> : null}
-              {obra.idioma ? <><dt>{t("Idioma")}</dt><dd>{obra.idioma}</dd></> : null}
+              {obra.idioma ? <><dt>{t("Idioma")}</dt><dd>{t(obra.idioma)}</dd></> : null}
               {obra.accesibilidad?.length ? <><dt>{t("Accesibilidad")}</dt><dd>{obra.accesibilidad.map((a) => t(a)).join(" · ")}</dd></> : null}
               {ig ? <><dt>{t("Redes")}</dt><dd><a href={ig} target="_blank" rel="noopener noreferrer nofollow" style={{ color: "var(--foco)" }}>{instagramHandle(obra.instagram)}</a></dd></> : null}
             </dl>

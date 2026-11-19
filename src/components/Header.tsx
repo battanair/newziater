@@ -46,6 +46,7 @@ export function Header() {
         </nav>
         <div className="actions">
           <span className="solo-escritorio"><SelectorIdioma /></span>
+          <span className="solo-movil"><SelectorIdioma compacto /></span>
           <ModoToggle />
           {esAdmin ? (
             <Link href="/panel/admin" className="btn btn-admin" aria-label={mensajesNuevos ? t("Administración: {n} mensajes sin atender", { n: mensajesNuevos }) : t("Administración")} title={t("Administración")} style={{ position: "relative" }}>

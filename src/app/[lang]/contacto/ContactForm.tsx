@@ -1,7 +1,7 @@
 "use client";
 
 
-import { useT } from "@/components/Idioma";
+import Link, { useT } from "@/components/Idioma";
 import { useRef, useState } from "react";
 import { addDoc, collection } from "firebase/firestore";
 import { db } from "@/lib/firebase-client";
@@ -55,7 +55,7 @@ export function ContactForm({ tipoInicial = "consulta" }: { tipoInicial?: string
       <div className="field"><label className="label" htmlFor="mensaje">{t("Mensaje")}</label><textarea id="mensaje" name="mensaje" className="textarea" rows={6} required maxLength={5000} /></div>
       <label className="casilla" htmlFor="privacidad">
         <input id="privacidad" name="privacidad" type="checkbox" required />
-        <span>{t("He leído la")}{" "}<a href="/politica-de-privacidad" target="_blank">{t("política de privacidad")}</a>{t(". Usaremos tu email solo para responderte.")}</span>
+        <span>{t("He leído la")}{" "}<Link href="/politica-de-privacidad" target="_blank">{t("política de privacidad")}</Link>{t(". Usaremos tu email solo para responderte.")}</span>
       </label>
       <div className="sr-only" aria-hidden="true"><label htmlFor="web">{t("No rellenar")}</label><input id="web" name="web" tabIndex={-1} autoComplete="off" /></div>
       {status === "error" ? <p className="error" role="alert">{t("No se pudo enviar. Inténtalo de nuevo.")}</p> : null}
