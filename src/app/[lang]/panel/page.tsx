@@ -25,6 +25,8 @@ interface Datos {
   quiero: Obra[];
   aport: number;
   pendientes: number;
+  creditos: number;
+  obrasCreadas: number;
 }
 
 function Resumen({ user }: { user: User }) {
@@ -45,7 +47,8 @@ function Resumen({ user }: { user: User }) {
       const quieroIds = [...(u.favoritos_obra ?? [])].reverse().slice(0, 4);
       const obras = await porIds<Obra>("obra", [...ultimas3.map((n) => n.obra), ...quieroIds]);
       const porId = new Map(obras.map((o) => [o.id, o]));
-      const pendientes = persona ? (await creditosDe("id_persona", persona.id)).filter((c) => c.estado === "pendiente" && c.creado_por !== user.uid).length : 0;
+      const misCreditos = persona ? await creditosDe("id_persona", persona.id) : [];
+      const pendientes = misCreditos.filter((c) => c.estado === "pendiente" && c.creado_por !== user.uid).length;
       setD({
         u,
         persona,
@@ -54,6 +57,8 @@ function Resumen({ user }: { user: User }) {
         quiero: quieroIds.map((id) => porId.get(id)).filter((o): o is Obra => Boolean(o)),
         aport: aport.obras.length + aport.personas.length + aport.creditos.length,
         pendientes,
+        creditos: misCreditos.filter((c) => c.estado !== "pendiente").length,
+        obrasCreadas: aport.obras.length,
       });
     })().catch(() => setError(true));
   }, [user.uid]);
@@ -76,6 +81,8 @@ function Resumen({ user }: { user: User }) {
       <main className="wrap section">
         <h1 className="h1" style={{ fontSize: 48 }}>{nombre ? t("Hola, {nombre}", { nombre: nombre }) : t("Tu espacio")}</h1>
         <p className="soft" style={{ margin: "10px 0 28px" }}>{t("Tus notas, tus listas y todo lo que has aportado a Ziater.")}</p>
+
+        {d.persona ? <PasosArtista d={d} /> : null}
 
         <div className="cifras">
           {cifras.map((c) => (
@@ -138,5 +145,54 @@ function Resumen({ user }: { user: User }) {
         </div>
       </main>
     </>
+  );
+}
+
+/** Pasos para que quien es artista complete su ficha y añada obras. Desaparece cuando lo tiene todo. */
+function PasosArtista({ d }: { d: Datos }) {
+  const t = useT();
+  const p = d.persona!;
+  const pasos = [
+    { ok: Boolean(p.foto), l: "Añade tu retrato", d: "Las fichas con foto se visitan mucho más.", href: "/panel/ficha" },
+    { ok: (p.biografia ?? "").length > 80, l: "Escribe tu biografía", d: "Unas líneas sobre quién eres y qué haces.", href: "/panel/ficha" },
+    { ok: (p.roles ?? []).length > 0, l: "Elige tus roles", d: "Interpretación, dirección, dramaturgia… Así te encuentran en las búsquedas.", href: "/panel/ficha" },
+    { ok: d.creditos >= 3, l: "Añade al menos 3 obras", d: d.creditos ? t("Llevas {n}. Añade las obras en las que has trabajado.", { n: d.creditos }) : "Añade las obras en las que has trabajado: tu trayectoria es tu CV.", href: "/panel/ficha#creditos" },
+    { ok: d.obrasCreadas > 0, l: "Sube una obra que falte en Ziater", d: "Con su cartel, elenco y fechas. Tus compañeros quedarán enlazados.", href: "/panel/obra/nueva" },
+    { ok: Boolean(p.instagram), l: "Añade tu Instagram", d: "Para que puedan seguirte desde tu ficha.", href: "/panel/ficha" },
+    ...(d.pendientes ? [{ ok: false, l: "Confirma tus créditos pendientes", d: d.pendientes === 1 ? t("1 crédito por confirmar") : t("{n} créditos por confirmar", { n: d.pendientes }), href: "/panel/vinculos" }] : []),
+  ];
+  const hechos = pasos.filter((x) => x.ok).length;
+  const pct = Math.round((hechos / pasos.length) * 100);
+  const siguiente = pasos.find((x) => !x.ok);
+
+  if (!siguiente) {
+    return (
+      <div className="panel panel-foco" style={{ marginBottom: 28, display: "flex", flexWrap: "wrap", gap: 14, alignItems: "center", justifyContent: "space-between" }}>
+        <span><strong style={{ display: "block" }}>{t("¡Tu ficha está completa!")}</strong><span className="hint">{t("Compártela como si fuera tu CV: en tu bio de Instagram, en tus stories o al escribir a una sala.")}</span></span>
+        <Link href={`/persona/${p.id}`} className="btn btn-primary">{t("Ver mi ficha pública")}</Link>
+      </div>
+    );
+  }
+
+  return (
+    <section className="panel panel-foco" style={{ marginBottom: 28 }} aria-labelledby="pasos-tit">
+      <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "space-between", alignItems: "baseline", gap: 8 }}>
+        <h2 id="pasos-tit" className="h3" style={{ margin: 0 }}>{t("Tus próximos pasos")}</h2>
+        <span className="hint">{t("{hechos} de {total} hechos", { hechos, total: pasos.length })}</span>
+      </div>
+      <div className="progress" style={{ margin: "12px 0 6px" }} aria-hidden="true"><span style={{ width: `${pct}%` }} /></div>
+      <ol className="pasos">
+        {pasos.map((x) => (
+          <li key={x.l} className={x.ok ? "paso hecho" : x === siguiente ? "paso siguiente" : "paso"}>
+            <span className="paso-marca" aria-hidden="true">{x.ok ? "✓" : ""}</span>
+            <span style={{ flex: 1, minWidth: 0 }}>
+              <strong style={{ display: "block" }}>{t(x.l)}{x.ok ? <span className="sr-only">{" "}{t("(hecho)")}</span> : null}</strong>
+              {!x.ok ? <span className="hint">{t(x.d)}</span> : null}
+            </span>
+            {!x.ok ? <Link href={x.href} className={x === siguiente ? "btn btn-primary" : "btn"}>{x === siguiente ? t("Empezar") : t("Ir")}</Link> : null}
+          </li>
+        ))}
+      </ol>
+    </section>
   );
 }

@@ -1,6 +1,22 @@
 // Traducciones al inglés. La clave es el texto en español tal y como aparece en el código (t("…")).
 // Si falta una clave, se muestra el español. Para añadir textos nuevos: escribe t("Texto") y añade aquí su traducción.
 export const EN: Record<string, string> = {
+  "Las fichas con foto se visitan mucho más.": "Profiles with a photo get many more visits.",
+  "Unas líneas sobre quién eres y qué haces.": "A few lines about who you are and what you do.",
+  "Interpretación, dirección, dramaturgia… Así te encuentran en las búsquedas.": "Acting, directing, playwriting… This is how people find you in searches.",
+  "Llevas {n}. Añade las obras en las que has trabajado.": "You have {n}. Add the shows you've worked on.",
+  "Añade las obras en las que has trabajado: tu trayectoria es tu CV.": "Add the shows you've worked on: your career is your CV.",
+  "Sube una obra que falte en Ziater": "Add a show that's missing from Ziater",
+  "Con su cartel, elenco y fechas. Tus compañeros quedarán enlazados.": "With its poster, cast and dates. Your colleagues will be linked.",
+  "Para que puedan seguirte desde tu ficha.": "So people can follow you from your profile.",
+  "Confirma tus créditos pendientes": "Confirm your pending credits",
+  "¡Tu ficha está completa!": "Your profile is complete!",
+  "Compártela como si fuera tu CV: en tu bio de Instagram, en tus stories o al escribir a una sala.": "Share it like a CV: in your Instagram bio, in your stories or when writing to a venue.",
+  "Tus próximos pasos": "Your next steps",
+  "{hechos} de {total} hechos": "{hechos} of {total} done",
+  "(hecho)": "(done)",
+  "Empezar": "Start",
+  "Ir": "Go",
   "+ Añadir obra": "+ Add show",
   " como": " as",
   " y en tu ficha de artista como": " and on your artist profile as",

@@ -185,7 +185,7 @@ function Panel({ user }: { user: User }) {
             </div>
           </section>
 
-          <section className="panel" style={{ background: "transparent" }}>
+          <section id="creditos" className="panel" style={{ background: "transparent", scrollMarginTop: 90 }}>
             <div className="section-head" style={{ marginBottom: 6 }}><h2 className="h3">{t("Trayectoria")}</h2></div>
             <p className="muted" style={{ marginTop: 0 }}>{t("Cada crédito te une a la ficha de la obra. Marca con ★ hasta 4 obras para «Conocido por».")}</p>
             <AnadirCredito persona={persona} uid={user.uid} onAdded={cargar} />
