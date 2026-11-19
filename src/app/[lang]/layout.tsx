@@ -25,7 +25,7 @@ const sans = Source_Sans_3({ subsets: ["latin"], variable: "--font-sans", displa
 
 type P = Promise<{ lang: string }>;
 
-export const dynamicParams = false;
+// Solo llegan es y en: el middleware manda todo lo demás a /es (y aquí se comprueba con notFound)
 export function generateStaticParams() {
   return IDIOMAS.map((lang) => ({ lang }));
 }

@@ -12,7 +12,7 @@ on:
         default: "/,/en,/en/obras,/en/personas,/en/companias,/en/salas,/en/cartelera,/en/colaboradores,/en/buscar?q=vagos,/en/obra/PCdBR7E4UAdtuq0kEW9u,/obra/PCdBR7E4UAdtuq0kEW9u,/en/persona/3RCVwO2G7iX53oPpBXxK,/en/compania/zbNecwtuPe3iTNw6YGMX,/en/politica-de-privacidad,/en/terminos-de-uso,/en/politica-de-cookies,/en/aviso-legal,/en/contacto,/en/login,/en/signup,/en/no-existe,/no-existe,/es/obras,/en/panel"
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   revisar:
@@ -39,8 +39,10 @@ jobs:
           node scripts/revisar-idiomas.mjs
         env:
           PAGINAS: ${{ inputs.paginas || '/,/en,/en/obras,/en/personas,/en/companias,/en/salas,/en/cartelera,/en/colaboradores,/en/buscar?q=vagos,/en/obra/PCdBR7E4UAdtuq0kEW9u,/obra/PCdBR7E4UAdtuq0kEW9u,/en/persona/3RCVwO2G7iX53oPpBXxK,/en/compania/zbNecwtuPe3iTNw6YGMX,/en/politica-de-privacidad,/en/terminos-de-uso,/en/politica-de-cookies,/en/aviso-legal,/en/contacto,/en/login,/en/signup,/en/no-existe,/no-existe,/es/obras,/en/panel' }}
-      - uses: actions/upload-artifact@v4
-        with:
-          name: revision
-          path: revision/
-          retention-days: 3
+      # Las capturas se suben a una rama aparte (capturas-revision) para poder verlas; se borra al terminar la revisión
+      - run: |
+          cd revision
+          git init -q && git checkout -q -b capturas-revision
+          git config user.name "revision" && git config user.email "revision@users.noreply.github.com"
+          git add -A && git commit -qm "Capturas de la revisión de idiomas"
+          git push -q -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}" capturas-revision

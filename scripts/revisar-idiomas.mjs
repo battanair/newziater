@@ -42,4 +42,4 @@ for (const [ancho, alto, nombre] of [[390, 844, "movil"], [1280, 900, "escritori
 }
 await browser.close();
 fs.writeFileSync("revision/resultado.json", JSON.stringify(out, null, 1));
-console.log(out.map((o) => `${o.vista} ${o.estado} ${o.pagina} lang=${o.lang} «${o.titulo}» errores=${o.errores.length} sinPrefijo=${o.enlacesSinPrefijo.length} desborde=${o.desborde}`).join("\n"));
+console.log(out.map((o) => `${o.vista} ${o.estado} ${o.pagina} lang=${o.lang} «${o.titulo}» h1=«${o.h1}» desborde=${o.desborde}\n   errores: ${JSON.stringify(o.errores)}\n   sinPrefijo: ${JSON.stringify(o.enlacesSinPrefijo.filter((h) => h !== "/" && !h.startsWith("/?")))}\n   canonical: ${o.canonical} hreflang: ${o.hreflang.join(" ")}`).join("\n"));
