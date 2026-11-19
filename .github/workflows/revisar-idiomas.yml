@@ -2,6 +2,8 @@ name: Revisar idiomas
 
 # Arranca la web compilada y hace capturas y comprobaciones en español e inglés.
 on:
+  push:
+    branches: [ingles]
   workflow_dispatch:
     inputs:
       paginas:
@@ -36,7 +38,7 @@ jobs:
           curl -s http://localhost:3000/sitemap/0.xml | head -c 1500; echo
           node scripts/revisar-idiomas.mjs
         env:
-          PAGINAS: ${{ inputs.paginas }}
+          PAGINAS: ${{ inputs.paginas || '/,/en,/en/obras,/en/personas,/en/companias,/en/salas,/en/cartelera,/en/colaboradores,/en/buscar?q=vagos,/en/obra/PCdBR7E4UAdtuq0kEW9u,/obra/PCdBR7E4UAdtuq0kEW9u,/en/persona/3RCVwO2G7iX53oPpBXxK,/en/compania/zbNecwtuPe3iTNw6YGMX,/en/politica-de-privacidad,/en/terminos-de-uso,/en/politica-de-cookies,/en/aviso-legal,/en/contacto,/en/login,/en/signup,/en/no-existe,/no-existe,/es/obras,/en/panel' }}
       - uses: actions/upload-artifact@v4
         with:
           name: revision
