@@ -596,6 +596,7 @@ function FuncionesEditor({ value, onChange }: { value: Funcion[]; onChange: (v: 
 /** Campo «Sala o teatro» que sugiere las salas dadas de alta en Ziater y las enlaza. */
 function SalaInput({ f, onChange }: { f: Funcion; onChange: (c: Partial<Funcion>) => void }) {
   const t = useT();
+  const lang = useIdioma();
   const [abierto, setAbierto] = useState(false);
   const { items } = useBusqueda(abierto && !f.sala_id ? f.sala : "", ["sala"]);
   return (
