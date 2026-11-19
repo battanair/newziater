@@ -1,5 +1,9 @@
 "use client";
 
+import { LOCALE } from "@/lib/i18n";
+
+
+import { useT, useIdioma } from "@/components/Idioma";
 import { useEffect, useState } from "react";
 import { versiones, type Version } from "@/lib/colaboracion";
 
@@ -16,6 +20,8 @@ const NOMBRES: Record<string, string> = {
  * el formulario; al guardar, la actual pasa a su vez al historial.
  */
 export function Historial({ tipo, refId, onRecuperar, recarga = 0 }: { tipo: "obra" | "persona"; refId: string; onRecuperar: (antes: Record<string, unknown>) => void; recarga?: number }) {
+  const t = useT();
+  const lang = useIdioma();
   const [lista, setLista] = useState<Version[] | null>(null);
   const [abierto, setAbierto] = useState(false);
   const [recuperada, setRecuperada] = useState("");
@@ -23,25 +29,25 @@ export function Historial({ tipo, refId, onRecuperar, recarga = 0 }: { tipo: "ob
   useEffect(() => { versiones(tipo, refId).then(setLista).catch(() => setLista([])); }, [tipo, refId, recarga]);
 
   if (!lista?.length) return null;
-  const fecha = (v: Version) => (v.fecha ? new Date(v.fecha.seconds * 1000).toLocaleString("es-ES", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" }) : "ahora");
+  const fecha = (v: Version) => (v.fecha ? new Date(v.fecha.seconds * 1000).toLocaleString(LOCALE[lang], { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" }) : "ahora");
 
   return (
     <section className="panel" style={{ marginTop: 8 }}>
       <button type="button" className="btn btn-ghost" style={{ width: "100%", justifyContent: "space-between", padding: 0, minHeight: 32 }} aria-expanded={abierto} onClick={() => setAbierto((x) => !x)}>
-        <span className="eyebrow" style={{ margin: 0 }}>Historial de cambios · {lista.length}</span>
+        <span className="eyebrow" style={{ margin: 0 }}>{t("Historial de cambios · {length}", { length: lista.length })}</span>
         <span aria-hidden="true">{abierto ? "−" : "+"}</span>
       </button>
       {abierto ? (
         <>
-          <p className="hint" style={{ margin: "10px 0 6px" }}>Si has borrado o cambiado algo por error, recupera cómo estaba. Se carga en el formulario y no se guarda hasta que pulses Guardar o Publicar.</p>
+          <p className="hint" style={{ margin: "10px 0 6px" }}>{t("Si has borrado o cambiado algo por error, recupera cómo estaba. Se carga en el formulario y no se guarda hasta que pulses Guardar o Publicar.")}</p>
           <ul className="list">
             {lista.map((v) => (
               <li key={v.id} style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 12, padding: "12px 0" }}>
                 <span style={{ flex: "1 1 220px" }}>
-                  <strong style={{ display: "block", fontSize: 15 }}>Antes del cambio del {fecha(v)}</strong>
-                  <span className="hint">Cambió: {[...new Set((v.cambios ?? []).map((c) => NOMBRES[c] ?? c))].join(", ")}</span>
+                  <strong style={{ display: "block", fontSize: 15 }}>{t("Antes del cambio del")}{" "}{fecha(v)}</strong>
+                  <span className="hint">{t("Cambió: {join}", { join: [...new Set((v.cambios ?? []).map((c) => t(NOMBRES[c] ?? c)))].join(", ") })}</span>
                 </span>
-                <button type="button" className="btn" onClick={() => { onRecuperar(v.antes); setRecuperada(v.id); }}>{recuperada === v.id ? "✓ Cargada en el formulario" : "Recuperar esta versión"}</button>
+                <button type="button" className="btn" onClick={() => { onRecuperar(v.antes); setRecuperada(v.id); }}>{recuperada === v.id ? t("✓ Cargada en el formulario") : t("Recuperar esta versión")}</button>
               </li>
             ))}
           </ul>

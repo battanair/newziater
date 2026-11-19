@@ -15,11 +15,13 @@ export async function POST(req: Request) {
   const ids = (v: unknown) => (Array.isArray(v) ? v.filter((x): x is string => typeof x === "string" && validId(x)).slice(0, 50) : []);
 
   revalidateTag(CACHE_TAG);
-  for (const id of ids(body.obras)) revalidatePath(`/obra/${id}`);
-  for (const id of ids(body.personas)) revalidatePath(`/persona/${id}`);
-  for (const id of ids(body.salas)) revalidatePath(`/sala/${id}`);
-  if (ids(body.salas).length) revalidatePath("/salas");
-  if (ids(body.obras).length || ids(body.salas).length) revalidatePath("/cartelera", "layout");
-  revalidatePath("/");
+  // Las páginas viven en /es/… y /en/… (el español se sirve sin prefijo, pero por dentro es /es)
+  const ambos = (p: string, tipo?: "layout" | "page") => { for (const l of ["es", "en"]) revalidatePath(`/${l}${p === "/" ? "" : p}`, tipo); };
+  for (const id of ids(body.obras)) ambos(`/obra/${id}`);
+  for (const id of ids(body.personas)) ambos(`/persona/${id}`);
+  for (const id of ids(body.salas)) ambos(`/sala/${id}`);
+  if (ids(body.salas).length) ambos("/salas");
+  if (ids(body.obras).length || ids(body.salas).length) ambos("/cartelera", "layout");
+  ambos("/");
   return NextResponse.json({ ok: true });
 }

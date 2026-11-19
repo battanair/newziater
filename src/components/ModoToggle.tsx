@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useT } from "./Idioma";
 
 type Modo = "oscuro" | "claro";
 export const CLAVE_MODO = "ziater-modo";
@@ -28,6 +29,7 @@ const Luna = () => (
 
 /** Botón para cambiar entre fondo oscuro (por defecto) y claro. Recuerda la elección. */
 export function ModoToggle() {
+  const t = useT();
   const [modo, setModo] = useState<Modo>("oscuro");
   useEffect(() => {
     setModo(document.documentElement.dataset.modo === "claro" ? "claro" : "oscuro");
@@ -40,7 +42,7 @@ export function ModoToggle() {
     try { localStorage.setItem(CLAVE_MODO, m); } catch { /* navegación privada: solo dura esta visita */ }
   }
 
-  const texto = `Cambiar a modo ${modo === "claro" ? "oscuro" : "claro"}`;
+  const texto = modo === "claro" ? t("Cambiar a modo oscuro") : t("Cambiar a modo claro");
   return (
     <button type="button" className="btn modo" onClick={cambiar} aria-label={texto} title={texto}>
       {modo === "claro" ? <Luna /> : <Sol />}

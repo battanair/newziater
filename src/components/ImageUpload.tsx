@@ -1,5 +1,9 @@
 "use client";
 
+import { traductor, type T } from "@/lib/i18n";
+
+
+import { useT } from "@/components/Idioma";
 import { useRef, useState } from "react";
 import { authFetch } from "./AuthProvider";
 import { MAX_FOTOS_OBRA, PROPORCION, T_CARTEL, T_RETRATO, cld } from "@/lib/format";
@@ -37,18 +41,18 @@ async function comprimir(file: File, tipo: string): Promise<File> {
   return new File([blob], file.name.replace(/\.[^.]+$/, "") + (blob.type === "image/webp" ? ".webp" : ".jpg"), { type: blob.type });
 }
 
-export async function subirImagen(original: File, tipo: "cartel" | "foto" | "galeria" | "logo"): Promise<string> {
-  if (!original.type.startsWith("image/")) throw new Error("El archivo tiene que ser una imagen");
-  if (original.size > MAX_MB_ORIGINAL * 1024 * 1024) throw new Error(`«${original.name}» pesa ${(original.size / 1048576).toFixed(1)} MB. El máximo son ${MAX_MB_ORIGINAL} MB.`);
+export async function subirImagen(original: File, tipo: "cartel" | "foto" | "galeria" | "logo", t: T = (s, v) => traductor("es")(s, v)): Promise<string> {
+  if (!original.type.startsWith("image/")) throw new Error(t("El archivo tiene que ser una imagen"));
+  if (original.size > MAX_MB_ORIGINAL * 1024 * 1024) throw new Error(t("«{nombre}» pesa {mb} MB. El máximo son {max} MB.", { nombre: original.name, mb: (original.size / 1048576).toFixed(1), max: MAX_MB_ORIGINAL }));
   const file = await comprimir(original, tipo);
-  if (file.size > MAX_MB * 1024 * 1024) throw new Error(`«${original.name}» sigue pesando ${(file.size / 1048576).toFixed(1)} MB después de comprimirla. Prueba con otra versión de la foto.`);
+  if (file.size > MAX_MB * 1024 * 1024) throw new Error(t("«{nombre}» sigue pesando {mb} MB después de comprimirla. Prueba con otra versión de la foto.", { nombre: original.name, mb: (file.size / 1048576).toFixed(1) }));
   const firma = await authFetch("/api/cloudinary-firma", { tipo });
   const form = new FormData();
   form.append("file", file);
   for (const k of ["api_key", "timestamp", "signature", "folder", "allowed_formats", "transformation"]) if (firma[k]) form.append(k, firma[k]);
   const res = await fetch(firma.url, { method: "POST", body: form });
   const data = await res.json();
-  if (!res.ok || !data.secure_url) throw new Error(data.error?.message ?? "No se pudo subir la imagen");
+  if (!res.ok || !data.secure_url) throw new Error(data.error?.message ?? t("No se pudo subir la imagen"));
   return data.secure_url as string;
 }
 
@@ -64,14 +68,14 @@ function medir(file: File): Promise<{ w: number; h: number } | null> {
 }
 
 /** Explica cómo se recortará una imagen que no es 2:3. */
-function avisoProporcion(w: number, h: number): string {
+function avisoProporcion(w: number, h: number, t: T): string {
   const r = w / h, ideal = PROPORCION.ancho / PROPORCION.alto;
   const avisos: string[] = [];
   if (Math.abs(r - ideal) > 0.06) {
-    const forma = r > 1.05 ? "horizontal" : r > 0.95 ? "cuadrada" : r > ideal ? "un poco ancha" : "más alargada de lo normal";
-    avisos.push(`Tu imagen es ${forma} (${w} × ${h} px), así que se recortará ${r > ideal ? "por los lados" : "por arriba y por abajo"}. Mira la vista previa: así se verá.`);
+    const forma = r > 1.05 ? t("horizontal") : r > 0.95 ? t("cuadrada") : r > ideal ? t("un poco ancha") : t("más alargada de lo normal");
+    avisos.push(r > ideal ? t("Tu imagen es {forma} ({w} × {h} px), así que se recortará por los lados. Mira la vista previa: así se verá.", { forma, w, h }) : t("Tu imagen es {forma} ({w} × {h} px), así que se recortará por arriba y por abajo. Mira la vista previa: así se verá.", { forma, w, h }));
   }
-  if (h < MIN_ALTO) avisos.push(`Tiene poca resolución (${h} px de alto) y puede verse borrosa. Mejor a partir de ${PROPORCION.px}.`);
+  if (h < MIN_ALTO) avisos.push(t("Tiene poca resolución ({h} px de alto) y puede verse borrosa. Mejor a partir de {px}.", { h, px: PROPORCION.px }));
   return avisos.join(" ");
 }
 
@@ -82,6 +86,7 @@ export function ImageUpload({ value, onChange, tipo, label, shape = "poster" }: 
   label: string;
   shape?: "poster" | "portrait";
 }) {
+  const t = useT();
   const input = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -93,9 +98,9 @@ export function ImageUpload({ value, onChange, tipo, label, shape = "poster" }: 
     setBusy(true);
     setError("");
     const dim = await medir(file);
-    setAviso(dim ? avisoProporcion(dim.w, dim.h) : "");
+    setAviso(dim ? avisoProporcion(dim.w, dim.h, t) : "");
     try {
-      onChange(await subirImagen(file, tipo));
+      onChange(await subirImagen(file, tipo, t));
     } catch (e) {
       setError((e as Error).message);
     } finally {
@@ -112,21 +117,19 @@ export function ImageUpload({ value, onChange, tipo, label, shape = "poster" }: 
         onClick={() => input.current?.click()}
         onDragOver={(e) => e.preventDefault()}
         onDrop={(e) => { e.preventDefault(); handle(e.dataTransfer.files[0]); }}
-        aria-label={value ? `Cambiar ${label.toLowerCase()}` : `Subir ${label.toLowerCase()}`}
+        aria-label={value ? t("Cambiar {toLowerCase}", { toLowerCase: label.toLowerCase() }) : t("Subir {toLowerCase}", { toLowerCase: label.toLowerCase() })}
         aria-describedby={`${tipo}-formato`}
       >
         {!value ? (
           <>
             <span style={{ fontSize: 28 }} aria-hidden="true">+</span>
-            <span style={{ fontWeight: 600, color: "var(--papel)" }}>{busy ? "Subiendo…" : label}</span>
-            <span style={{ fontSize: 13 }}>Vertical 2:3</span>
+            <span style={{ fontWeight: 600, color: "var(--papel)" }}>{busy ? t("Subiendo…") : label}</span>
+            <span style={{ fontSize: 13 }}>{t("Vertical 2:3")}</span>
           </>
-        ) : busy ? <span className="chip" style={{ background: "var(--sala)" }}>Subiendo…</span> : null}
+        ) : busy ? <span className="chip" style={{ background: "var(--sala)" }}>{t("Subiendo…")}</span> : null}
       </button>
       <input ref={input} type="file" accept="image/jpeg,image/png,image/webp,image/heic" hidden onChange={(e) => handle(e.target.files?.[0])} />
-      <p id={`${tipo}-formato`} className="hint" style={{ margin: "8px 0 0" }}>
-        Formato <strong style={{ color: "var(--texto-2)" }}>{PROPORCION.texto}</strong>, recomendado {PROPORCION.px}. JPG, PNG o WebP; se comprime sola al subirla. Si tiene otra forma, se recortará.
-      </p>
+      <p id={`${tipo}-formato`} className="hint" style={{ margin: "8px 0 0" }}>{t("Formato")}{" "}<strong style={{ color: "var(--texto-2)" }}>{PROPORCION.texto}</strong>{t(", recomendado {px}. JPG, PNG o WebP; se comprime sola al subirla. Si tiene otra forma, se recortará.", { px: PROPORCION.px })}</p>
       {aviso ? <p className="hint" role="status" style={{ margin: "8px 0 0", color: "var(--foco)" }}>{aviso}</p> : null}
       {error ? <p className="error" role="alert" style={{ margin: "8px 0 0" }}>{error}</p> : null}
     </div>
@@ -136,6 +139,7 @@ export function ImageUpload({ value, onChange, tipo, label, shape = "poster" }: 
 /** Galería de fotos de una obra: varias a la vez, con miniaturas y botón para quitar. */
 export const MAX_FOTOS = MAX_FOTOS_OBRA;
 export function GaleriaUpload({ value, onChange }: { value: string[]; onChange: (urls: string[]) => void }) {
+  const t = useT();
   const input = useRef<HTMLInputElement>(null);
   const [subiendo, setSubiendo] = useState(0);
   const [error, setError] = useState("");
@@ -145,12 +149,12 @@ export function GaleriaUpload({ value, onChange }: { value: string[]; onChange: 
     setError("");
     const hueco = MAX_FOTOS - value.length;
     const lista = [...files].slice(0, Math.max(0, hueco));
-    if (files.length > hueco) setError(`Caben ${MAX_FOTOS} fotos como máximo; se han añadido ${lista.length}.`);
+    if (files.length > hueco) setError(t("Caben {MAX_FOTOS} fotos como máximo; se han añadido {length}.", { MAX_FOTOS: MAX_FOTOS, length: lista.length }));
     let urls = [...value];
     setSubiendo(lista.length);
     for (const file of lista) {
       try {
-        urls = [...urls, await subirImagen(file, "galeria")];
+        urls = [...urls, await subirImagen(file, "galeria", t)];
         onChange(urls);
       } catch (e) {
         setError((e as Error).message);
@@ -166,8 +170,8 @@ export function GaleriaUpload({ value, onChange }: { value: string[]; onChange: 
         {value.map((url, i) => (
           <div key={url} style={{ position: "relative", aspectRatio: "4/3", borderRadius: 8, overflow: "hidden", background: "var(--capa)" }}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={cld(url, "c_fill,g_auto,w_300,h_225,f_auto,q_auto") ?? url} alt={`Foto ${i + 1}`} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-            <button type="button" className="btn" aria-label={`Quitar foto ${i + 1}`} onClick={() => onChange(value.filter((u) => u !== url))}
+            <img src={cld(url, "c_fill,g_auto,w_300,h_225,f_auto,q_auto") ?? url} alt={t("Foto {v}", { v: i + 1 })} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+            <button type="button" className="btn" aria-label={t("Quitar foto {v}", { v: i + 1 })} onClick={() => onChange(value.filter((u) => u !== url))}
               style={{ position: "absolute", top: 6, right: 6, minHeight: 30, width: 30, padding: 0, borderRadius: 999, background: "rgba(0,0,0,.65)", color: "#fff" }}>×</button>
           </div>
         ))}
@@ -175,13 +179,12 @@ export function GaleriaUpload({ value, onChange }: { value: string[]; onChange: 
           <button type="button" className="dropzone" style={{ aspectRatio: "4/3", minHeight: 0 }} onClick={() => input.current?.click()}
             onDragOver={(e) => e.preventDefault()} onDrop={(e) => { e.preventDefault(); handle(e.dataTransfer.files); }}>
             <span style={{ fontSize: 24 }} aria-hidden="true">+</span>
-            <span style={{ fontSize: 13 }}>{subiendo ? `Subiendo ${subiendo}…` : "Añadir fotos"}</span>
+            <span style={{ fontSize: 13 }}>{subiendo ? t("Subiendo {subiendo}…", { subiendo: subiendo }) : t("Añadir fotos")}</span>
           </button>
         ) : null}
       </div>
       <input ref={input} type="file" accept="image/jpeg,image/png,image/webp,image/heic" multiple hidden onChange={(e) => handle(e.target.files)} />
-      <p className="hint" style={{ margin: "8px 0 0" }}>
-        Fotos de la función o de ensayos. Mejor en horizontal (4:3, a partir de 1600 × 1200 px). JPG, PNG o WebP; se comprimen solas al subirlas. Máximo {MAX_FOTOS}.
+      <p className="hint" style={{ margin: "8px 0 0" }}>{t("Fotos de la función o de ensayos. Mejor en horizontal (4:3, a partir de 1600 × 1200 px). JPG, PNG o WebP; se comprimen solas al subirlas. Máximo")}{" "}{MAX_FOTOS}.
       </p>
       {error ? <p className="error" role="alert" style={{ margin: "8px 0 0" }}>{error}</p> : null}
     </div>

@@ -1,5 +1,9 @@
 "use client";
 
+import { LOCALE } from "@/lib/i18n";
+
+
+import { useT, useIdioma } from "@/components/Idioma";
 import { useEffect, useState } from "react";
 import { collection, getDocs } from "firebase/firestore";
 import { db } from "@/lib/firebase-client";
@@ -27,6 +31,8 @@ async function textoDeTodo(): Promise<string> {
 }
 
 export function LimpiezaFotos() {
+  const t = useT();
+  const lang = useIdioma();
   const [estado, setEstado] = useState<"idle" | "revisando" | "borrando">("idle");
   const [huerfanas, setHuerfanas] = useState<Foto[] | null>(null);
   const [total, setTotal] = useState(0);
@@ -56,7 +62,7 @@ export function LimpiezaFotos() {
     setEstado("borrando");
     const { borradas } = (await authFetch("/api/admin/fotos", { accion: "borrar", ids: lista.map((f) => f.public_id) })) as { borradas: number };
     const mb = lista.reduce((s, f) => s + f.bytes, 0) / 1048576;
-    setMsg(`Borradas ${borradas} fotos sin usar (${mb.toLocaleString("es-ES", { maximumFractionDigits: 1 })} MB liberados).`);
+    setMsg(t("Borradas {borradas} fotos sin usar ({toLocaleString} MB liberados).", { borradas: borradas, toLocaleString: mb.toLocaleString(LOCALE[lang], { maximumFractionDigits: 1 }) }));
     setHuerfanas([]);
     setEstado("idle");
   }
@@ -70,15 +76,15 @@ export function LimpiezaFotos() {
   const mb = (huerfanas ?? []).reduce((s, f) => s + f.bytes, 0) / 1048576;
   return (
     <section>
-      <h2 className="eyebrow" style={{ marginBottom: 12 }}>Fotos en Cloudinary</h2>
+      <h2 className="eyebrow" style={{ marginBottom: 12 }}>{t("Fotos en Cloudinary")}</h2>
       <div className="panel" style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 16 }}>
         <span style={{ flex: "1 1 260px" }}>
-          {estado === "revisando" ? "Comprobando qué fotos se usan…" : estado === "borrando" ? "Borrando fotos sin usar…" : huerfanas === null ? "Las fotos que ya no usa ninguna ficha se borran solas una vez por semana." : huerfanas.length ? <><strong>{huerfanas.length} fotos sin usar</strong> ({mb.toLocaleString("es-ES", { maximumFractionDigits: 1 })} MB) de {total} subidas desde la web nueva.</> : <>Todo limpio: las {total} fotos subidas desde la web nueva están en uso o son recientes.</>}
-          <span className="hint" style={{ display: "block", marginTop: 4 }}>Solo se borran fotos de más de 30 días que no aparecen en ninguna ficha ni en su historial. Las de la web antigua no se tocan.</span>
+          {estado === "revisando" ? t("Comprobando qué fotos se usan…") : estado === "borrando" ? t("Borrando fotos sin usar…") : huerfanas === null ? t("Las fotos que ya no usa ninguna ficha se borran solas una vez por semana.") : huerfanas.length ? <><strong>{t("{length} fotos sin usar", { length: huerfanas.length })}</strong>{" "}{t("({toLocaleString} MB) de {total} subidas desde la web nueva.", { toLocaleString: mb.toLocaleString(LOCALE[lang], { maximumFractionDigits: 1 }), total: total })}</> : <>{t("Todo limpio: las {total} fotos subidas desde la web nueva están en uso o son recientes.", { total: total })}</>}
+          <span className="hint" style={{ display: "block", marginTop: 4 }}>{t("Solo se borran fotos de más de 30 días que no aparecen en ninguna ficha ni en su historial. Las de la web antigua no se tocan.")}</span>
           {msg ? <span className="hint" role="status" style={{ display: "block", marginTop: 4, color: "var(--foco)" }}>{msg}</span> : null}
         </span>
-        {huerfanas?.length ? <button type="button" className="btn btn-primary" disabled={estado !== "idle"} onClick={() => borrar(huerfanas)}>Borrar {huerfanas.length}</button> : null}
-        <button type="button" className="btn" disabled={estado !== "idle"} onClick={() => revisar(false)}>Comprobar ahora</button>
+        {huerfanas?.length ? <button type="button" className="btn btn-primary" disabled={estado !== "idle"} onClick={() => borrar(huerfanas)}>{t("Borrar {length}", { length: huerfanas.length })}</button> : null}
+        <button type="button" className="btn" disabled={estado !== "idle"} onClick={() => revisar(false)}>{t("Comprobar ahora")}</button>
       </div>
     </section>
   );

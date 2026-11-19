@@ -1,5 +1,7 @@
 "use client";
 
+
+import { useT } from "@/components/Idioma";
 import Image from "next/image";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { cld } from "@/lib/format";
@@ -10,6 +12,7 @@ import { cld } from "@/lib/format";
  * (también teclado: ← → y Esc) y deslizamiento en móvil.
  */
 export function Galeria({ fotos, titulo }: { fotos: string[]; titulo: string }) {
+  const t = useT();
   const [abierta, setAbierta] = useState<number | null>(null);
   const [inicioX, setInicioX] = useState<number | null>(null);
   const pista = useRef<HTMLDivElement>(null);
@@ -51,18 +54,18 @@ export function Galeria({ fotos, titulo }: { fotos: string[]; titulo: string }) 
 
   return (
     <>
-      <div className="carrusel" role="region" aria-roledescription="carrusel" aria-label={`Fotos de ${titulo}`}>
+      <div className="carrusel" role="region" aria-roledescription="carrusel" aria-label={t("Fotos de {titulo}", { titulo: titulo })}>
         <div className="carrusel-pista" ref={pista} onScroll={actualizarBordes}>
           {fotos.map((f, i) => (
-            <button key={f} type="button" className="carrusel-item" onClick={() => setAbierta(i)} aria-label={`Ver foto ${i + 1} de ${fotos.length} de ${titulo}`}>
-              <Image src={cld(f, "c_fill,g_auto,w_640,h_480,f_auto,q_auto") ?? f} alt={`${titulo}, foto ${i + 1}`} fill sizes="(max-width: 640px) 45vw, 260px" />
+            <button key={f} type="button" className="carrusel-item" onClick={() => setAbierta(i)} aria-label={t("Ver foto {v} de {length} de {titulo}", { v: i + 1, length: fotos.length, titulo: titulo })}>
+              <Image src={cld(f, "c_fill,g_auto,w_640,h_480,f_auto,q_auto") ?? f} alt={t("{titulo}, foto {v}", { titulo: titulo, v: i + 1 })} fill sizes="(max-width: 640px) 45vw, 260px" />
             </button>
           ))}
         </div>
         {fotos.length > 1 ? (
           <>
-            <button type="button" className="carrusel-btn carrusel-ant" onClick={() => deslizar(-1)} disabled={bordes.inicio} aria-label="Fotos anteriores">‹</button>
-            <button type="button" className="carrusel-btn carrusel-sig" onClick={() => deslizar(1)} disabled={bordes.fin} aria-label="Más fotos">›</button>
+            <button type="button" className="carrusel-btn carrusel-ant" onClick={() => deslizar(-1)} disabled={bordes.inicio} aria-label={t("Fotos anteriores")}>‹</button>
+            <button type="button" className="carrusel-btn carrusel-sig" onClick={() => deslizar(1)} disabled={bordes.fin} aria-label={t("Más fotos")}>›</button>
           </>
         ) : null}
       </div>
@@ -72,7 +75,7 @@ export function Galeria({ fotos, titulo }: { fotos: string[]; titulo: string }) 
           className="visor"
           role="dialog"
           aria-modal="true"
-          aria-label={`Foto ${abierta + 1} de ${fotos.length} de ${titulo}`}
+          aria-label={t("Foto {v} de {length} de {titulo}", { v: abierta + 1, length: fotos.length, titulo: titulo })}
           onClick={(e) => { if (e.target === e.currentTarget) setAbierta(null); }}
           onTouchStart={(e) => setInicioX(e.touches[0].clientX)}
           onTouchEnd={(e) => {
@@ -83,12 +86,12 @@ export function Galeria({ fotos, titulo }: { fotos: string[]; titulo: string }) 
           }}
         >
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={cld(fotos[abierta], "c_limit,w_2000,h_2000,f_auto,q_auto") ?? fotos[abierta]} alt={`${titulo}, foto ${abierta + 1}`} className="visor-img" />
-          <button type="button" className="visor-btn visor-cerrar" onClick={() => setAbierta(null)} aria-label="Cerrar" autoFocus>×</button>
+          <img src={cld(fotos[abierta], "c_limit,w_2000,h_2000,f_auto,q_auto") ?? fotos[abierta]} alt={t("{titulo}, foto {v}", { titulo: titulo, v: abierta + 1 })} className="visor-img" />
+          <button type="button" className="visor-btn visor-cerrar" onClick={() => setAbierta(null)} aria-label={t("Cerrar")} autoFocus>×</button>
           {fotos.length > 1 ? (
             <>
-              <button type="button" className="visor-btn visor-ant" onClick={() => mover(-1)} aria-label="Foto anterior">‹</button>
-              <button type="button" className="visor-btn visor-sig" onClick={() => mover(1)} aria-label="Foto siguiente">›</button>
+              <button type="button" className="visor-btn visor-ant" onClick={() => mover(-1)} aria-label={t("Foto anterior")}>‹</button>
+              <button type="button" className="visor-btn visor-sig" onClick={() => mover(1)} aria-label={t("Foto siguiente")}>›</button>
               <span className="visor-cont">{abierta + 1} / {fotos.length}</span>
             </>
           ) : null}

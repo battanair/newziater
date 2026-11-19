@@ -1,5 +1,6 @@
 import { ImageResponse } from "next/og";
 import { equipoDeObra, getObra, validId } from "@/lib/data";
+import { idiomaDe, traductor } from "@/lib/i18n";
 import { colorCartel, cld, nombreCompleto, partirFunciones, fechaCorta, periodo } from "@/lib/format";
 import { ipDe, limitar } from "@/lib/limite";
 
@@ -31,6 +32,8 @@ export async function GET(req: Request) {
   const id = url.searchParams.get("obra") ?? "";
   const tipo = url.searchParams.get("tipo") === "elenco" ? "elenco" : "recomiendo";
   const personaId = url.searchParams.get("persona") ?? "";
+  const lang = idiomaDe(url.searchParams.get("lang"));
+  const tr = traductor(lang);
   if (!validId(id)) return new Response("Obra no válida", { status: 400 });
   const obra = await getObra(id);
   if (!obra) return new Response("Obra no encontrada", { status: 404 });
@@ -42,22 +45,22 @@ export async function GET(req: Request) {
     if (c) {
       persona = nombreCompleto(c.persona);
       const t = c.titulo?.trim();
-      papel = t && t !== c.puesto ? (c.puesto === "Interpretación" || /actor|actriz|int[eé]rprete/i.test(c.puesto ?? "") ? `como ${t}` : t) : c.puesto ?? "";
+      papel = t && t !== c.puesto ? (c.puesto === "Interpretación" || /actor|actriz|int[eé]rprete/i.test(c.puesto ?? "") ? tr("como {papel}", { papel: t }) : t) : tr(c.puesto ?? "");
       if (c.cover) papel = papel ? `${papel} (cover)` : "Cover";
     }
   }
   const esElenco = tipo === "elenco" && Boolean(persona);
-  const cabecera = esElenco ? "Estoy en el elenco de" : "Te recomiendo";
+  const cabecera = esElenco ? tr("Estoy en el elenco de") : tr("Te recomiendo");
 
   const prox = partirFunciones(obra.funciones ?? []).proximas[0];
-  const cuando = prox ? `${fechaCorta(prox.fecha)}${prox.hora ? ` · ${prox.hora} h` : ""}` : "";
+  const cuando = prox ? `${fechaCorta(prox.fecha, lang)}${prox.hora ? ` · ${prox.hora} h` : ""}` : "";
   const donde = prox ? [prox.sala, prox.ciudad].filter(Boolean).join(", ") : "";
-  const linea = prox ? (esElenco ? "Próxima función" : "Puedes verla") : periodo(obra.anoinicio, obra.anofin);
+  const linea = prox ? (esElenco ? tr("Próxima función") : tr("Puedes verla")) : periodo(obra.anoinicio, obra.anofin, lang);
   // Solo carteles de Cloudinary (se piden en JPG; otros formatos como WebP no los admite el generador)
   const cartel = obra.cartel?.includes("res.cloudinary.com") ? cld(obra.cartel, T_STORY) : undefined;
 
   const textoSerif = "ZIATER" + cabecera + obra.titulo + persona;
-  const textoSans = linea.toUpperCase() + linea + cuando + donde + papel + persona + " Ficha completa en ziater.com·–() " + periodo(obra.anoinicio, obra.anofin);
+  const textoSans = linea.toUpperCase() + linea + cuando + donde + papel + persona + " " + tr("Ficha completa en ziater.com") + "·–() " + periodo(obra.anoinicio, obra.anofin, lang);
   const [serif, sans, sansB] = await Promise.all([fuente("Fraunces", 600, textoSerif), fuente("Source+Sans+3", 400, textoSans), fuente("Source+Sans+3", 600, textoSans)]);
   const fonts = [
     ...(serif ? [{ name: "Fraunces", data: serif, weight: 600 as const, style: "normal" as const }] : []),
@@ -98,7 +101,7 @@ export async function GET(req: Request) {
             {donde ? <div style={{ display: "flex", fontSize: 36, color: TEXTO2, marginTop: 4 }}>{donde}</div> : null}
           </div>
         ) : null}
-        <div style={{ display: "flex", marginTop: 44, fontSize: 34, color: TEXTO2 }}>Ficha completa en ziater.com</div>
+        <div style={{ display: "flex", marginTop: 44, fontSize: 34, color: TEXTO2 }}>{tr("Ficha completa en ziater.com")}</div>
       </div>
     ),
     { width: W, height: H, fonts: fonts.length ? fonts : undefined },

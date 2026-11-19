@@ -1,7 +1,8 @@
 "use client";
 
+import { usePathname } from "@/components/Idioma";
+
 import { useEffect } from "react";
-import { usePathname } from "next/navigation";
 import { doc, increment, setDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase-client";
 import { hoyES } from "@/lib/format";

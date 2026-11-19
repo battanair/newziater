@@ -1,14 +1,19 @@
-import Link from "next/link";
+"use client";
+
+// Tarjetas: se usan en páginas de servidor y en componentes de cliente, así que son de cliente (los datos ya llegan como objetos simples).
+import Link, { useIdioma, useT } from "@/components/Idioma";
+import { numero } from "@/lib/i18n";
 import Image from "next/image";
 import type { Obra, Persona, Productora, Sala } from "@/lib/types";
 import { T_CARTEL, T_LOGO, T_RETRATO, cld, colorCartel, iniciales, nombreCompleto, obraActiva, periodo } from "@/lib/format";
 
 export function Poster({ obra, sizes = "200px", priority = false }: { obra: Pick<Obra, "id" | "titulo" | "cartel">; sizes?: string; priority?: boolean }) {
+  const t = useT();
   const src = cld(obra.cartel, T_CARTEL);
   return (
     <span className="poster" style={{ background: colorCartel(obra.id) }}>
       {src ? (
-        <Image src={src} alt={`Cartel de ${obra.titulo}`} fill sizes={sizes} priority={priority} />
+        <Image src={src} alt={t("Cartel de {titulo}", { titulo: obra.titulo })} fill sizes={sizes} priority={priority} />
       ) : (
         <span className="poster-title">{obra.titulo}</span>
       )}
@@ -17,21 +22,24 @@ export function Poster({ obra, sizes = "200px", priority = false }: { obra: Pick
 }
 
 export function ObraCard({ obra, etiqueta }: { obra: Obra; etiqueta?: string }) {
+  const t = useT();
+  const lang = useIdioma();
   const cat = obra.categoria?.filter(Boolean)[0];
   return (
     <Link href={`/obra/${obra.id}`} className="card" style={{ display: "block" }}>
       <Poster obra={obra} />
       <span className="card-title" style={{ display: "flex", justifyContent: "space-between", gap: 8 }}>
         <span>{obra.titulo}</span>
-        {obra.votos ? <span style={{ whiteSpace: "nowrap", fontSize: 14 }}><span style={{ color: "var(--foco)" }} aria-hidden="true">★</span> {obra.nota?.toLocaleString("es-ES", { maximumFractionDigits: 1 })}<span className="sr-only"> de 10</span></span> : null}
+        {obra.votos ? <span style={{ whiteSpace: "nowrap", fontSize: 14 }}><span style={{ color: "var(--foco)" }} aria-hidden="true">★</span> {obra.nota !== undefined ? numero(lang, obra.nota) : null}<span className="sr-only">{" "}{t("de 10")}</span></span> : null}
       </span>
-      <span className="card-sub">{[cat, periodo(obra.anoinicio, obra.anofin)].filter(Boolean).join(" · ")}</span>
-      {etiqueta ? <span className="card-sub" style={{ color: "var(--foco)", fontWeight: 600 }}>{etiqueta}</span> : obraActiva(obra) ? <span className="card-sub" style={{ color: "var(--foco)" }}>En activo</span> : null}
+      <span className="card-sub">{[cat ? t(cat) : "", periodo(obra.anoinicio, obra.anofin, lang)].filter(Boolean).join(" · ")}</span>
+      {etiqueta ? <span className="card-sub" style={{ color: "var(--foco)", fontWeight: 600 }}>{etiqueta}</span> : obraActiva(obra) ? <span className="card-sub" style={{ color: "var(--foco)" }}>{t("En activo")}</span> : null}
     </Link>
   );
 }
 
 export function Avatar({ persona, size }: { persona: Pick<Persona, "id" | "Nombre" | "Apellidos" | "foto">; size?: number }) {
+  const t = useT();
   const nombre = nombreCompleto(persona);
   // Retrato vertical en el mismo marco 2:3 que los carteles
   const src = cld(persona.foto, T_RETRATO);
@@ -39,7 +47,7 @@ export function Avatar({ persona, size }: { persona: Pick<Persona, "id" | "Nombr
   return (
     <span className="avatar" style={{ background: colorCartel(persona.id), width: size, height: size ? size * 1.5 : undefined, flex: size ? "none" : undefined, padding: size ? 0 : undefined, borderRadius: peq ? 4 : undefined }}>
       {src ? (
-        <Image src={src} alt={`Foto de ${nombre}`} fill sizes={size ? `${size}px` : "(max-width: 640px) 50vw, 200px"} />
+        <Image src={src} alt={t("Foto de {nombre}", { nombre: nombre })} fill sizes={size ? `${size}px` : "(max-width: 640px) 50vw, 200px"} />
       ) : (
         <span className="avatar-ini" aria-hidden="true" style={size ? { fontSize: Math.max(13, size / 2.8) } : undefined}>{iniciales(nombre)}</span>
       )}
@@ -48,21 +56,23 @@ export function Avatar({ persona, size }: { persona: Pick<Persona, "id" | "Nombr
 }
 
 export function PersonaCard({ persona, sub }: { persona: Persona; sub?: string }) {
+  const t = useT();
   return (
     <Link href={`/persona/${persona.id}`} className="card" style={{ display: "block" }}>
       <Avatar persona={persona} />
       <span className="card-title">{nombreCompleto(persona)}</span>
-      {sub || persona.roles?.length ? <span className="card-sub">{sub ?? persona.roles!.slice(0, 2).join(" · ")}</span> : null}
+      {sub || persona.roles?.length ? <span className="card-sub">{sub ?? persona.roles!.slice(0, 2).map((r) => t(r)).join(" · ")}</span> : null}
     </Link>
   );
 }
 
 export function ProductoraCard({ p }: { p: Productora }) {
+  const t = useT();
   return (
     <Link href={`/compania/${p.id}`} className="card" style={{ display: "block" }}>
       <span className="avatar cuadrado" style={{ background: colorCartel(p.id) }}>
         {cld(p.foto_prod, T_LOGO) ? (
-          <Image src={cld(p.foto_prod, T_LOGO)!} alt={`Logo de ${p.nombre_prod}`} fill sizes="180px" />
+          <Image src={cld(p.foto_prod, T_LOGO)!} alt={t("Logo de {nombre_prod}", { nombre_prod: p.nombre_prod })} fill sizes="180px" />
         ) : (
           <span className="avatar-ini" aria-hidden="true">{iniciales(p.nombre_prod)}</span>
         )}
@@ -73,10 +83,11 @@ export function ProductoraCard({ p }: { p: Productora }) {
 }
 
 export function SalaCard({ sala }: { sala: Sala }) {
+  const t = useT();
   return (
     <Link href={`/sala/${sala.id}`} className="card" style={{ display: "block" }}>
       <span className="poster" style={{ background: colorCartel(sala.id) }}>
-        {cld(sala.foto, T_CARTEL) ? <Image src={cld(sala.foto, T_CARTEL)!} alt={`Foto de ${sala.nombre}`} fill sizes="(max-width: 640px) 50vw, 200px" /> : <span className="poster-title">{sala.nombre}</span>}
+        {cld(sala.foto, T_CARTEL) ? <Image src={cld(sala.foto, T_CARTEL)!} alt={t("Foto de {nombre}", { nombre: sala.nombre })} fill sizes="(max-width: 640px) 50vw, 200px" /> : <span className="poster-title">{sala.nombre}</span>}
       </span>
       <span className="card-title">{sala.nombre}</span>
       {sala.ciudad ? <span className="card-sub">{sala.ciudad}</span> : null}

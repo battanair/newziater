@@ -1,0 +1,81 @@
+import { idiomaDePagina } from "@/lib/idioma-servidor";
+import { OG_LOCALE, alternos, idiomaDe, ruta, traductor } from "@/lib/i18n";
+import type { Metadata } from "next";
+import Image from "next/image";
+import { notFound } from "next/navigation";
+import { getProductora, obrasDeProductora } from "@/lib/data";
+import { JsonLd, ObraCard } from "@/components/Cards";
+import { SugerirCambio } from "@/components/SugerirCambio";
+import { PedirGestion } from "@/components/ReclamarEntidad";
+import { ShareButton } from "@/components/ObraActions";
+import { OG_POR_DEFECTO, T_LOGO, T_OG, cld, colorCartel, iniciales, instagramUrl, recortar } from "@/lib/format";
+import { SITE_URL } from "@/lib/firebase-config";
+
+export const revalidate = 600;
+export const dynamicParams = true;
+export async function generateStaticParams() {
+  return [];
+}
+
+type Props = { params: Promise<{ id: string; lang: string }> };
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const lang = idiomaDe((await params).lang);
+  const t = traductor(lang);
+  const { id } = await params;
+  const p = await getProductora(id);
+  if (!p) return { title: t("Compañía no encontrada"), robots: { index: false } };
+  const description = recortar(p.descripcion, 158) || t("{nombre}: compañía de artes escénicas en Ziater.", { nombre: p.nombre_prod });
+  const image = cld(p.foto_prod, T_OG);
+  return {
+    title: p.nombre_prod,
+    description,
+    alternates: alternos(lang, `/compania/${p.id}`),
+    openGraph: { type: "profile", siteName: "Ziater", locale: OG_LOCALE[lang], title: p.nombre_prod, description, url: ruta(lang, `/compania/${p.id}`), images: [{ url: image ?? OG_POR_DEFECTO, width: 1200, height: 630, alt: p.nombre_prod }] },
+    twitter: { card: "summary_large_image", title: p.nombre_prod, description, images: [image ?? OG_POR_DEFECTO] },
+  };
+}
+
+export default async function CompaniaPage({ params }: Props) {
+  const { lang, t } = await idiomaDePagina(params);
+  const { id } = await params;
+  const p = await getProductora(id);
+  if (!p) notFound();
+  const obras = await obrasDeProductora(p.id);
+  const ig = instagramUrl(p.instagram);
+  const url = `${SITE_URL}${ruta(lang, `/compania/${p.id}`)}`;
+
+  return (
+    <main>
+      <JsonLd data={{ "@context": "https://schema.org", "@type": "PerformingGroup", "@id": url, url, name: p.nombre_prod, description: p.descripcion, logo: p.foto_prod, sameAs: ig ? [ig] : undefined }} />
+      <section className="hero-ficha">
+        <div className="wrap hero-ficha-in">
+          <div className="hero-media" style={{ maxWidth: 240 }}>
+            <div style={{ position: "relative", aspectRatio: "1", borderRadius: 16, overflow: "hidden", background: colorCartel(p.id), display: "flex", alignItems: "center", justifyContent: "center" }}>
+              {cld(p.foto_prod, T_LOGO) ? <Image src={cld(p.foto_prod, T_LOGO)!} alt={t("Logo de {nombre_prod}", { nombre_prod: p.nombre_prod })} fill sizes="240px" priority /> : <span className="serif" style={{ fontSize: 72 }}>{iniciales(p.nombre_prod)}</span>}
+            </div>
+          </div>
+          <div className="hero-text">
+            <div className="hero-cab">
+              <p className="eyebrow" style={{ marginBottom: 12 }}>{t("Compañía")}</p>
+              <h1 className="h1">{p.nombre_prod}</h1>
+            </div>
+            {p.descripcion ? <p className="lead" style={{ maxWidth: 700, whiteSpace: "pre-line" }}>{p.descripcion}</p> : null}
+            <div className="actions">
+              {ig ? <a href={ig} className="btn" target="_blank" rel="noopener noreferrer nofollow">{t("Instagram")}</a> : null}
+              <ShareButton />
+              <SugerirCambio tipo="productora" refId={p.id} nombre={p.nombre_prod} className="btn btn-ghost" />
+              <PedirGestion tipo="compania" id={p.id} dueno={p.creacion} />
+            </div>
+          </div>
+        </div>
+      </section>
+      {obras.length ? (
+        <section className="wrap section">
+          <h2 className="h2" style={{ marginBottom: 20 }}>{t("Repertorio")}</h2>
+          <div className="grid-posters">{obras.map((o) => <ObraCard key={o.id} obra={o} />)}</div>
+        </section>
+      ) : null}
+    </main>
+  );
+}

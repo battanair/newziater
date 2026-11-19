@@ -1,7 +1,8 @@
 "use client";
 
+
+import { useT, usePathname } from "@/components/Idioma";
 import { useEffect, useRef, useState } from "react";
-import { usePathname } from "next/navigation";
 import { signOut } from "firebase/auth";
 import { doc, getDoc, serverTimestamp, setDoc } from "firebase/firestore";
 import { auth, db } from "@/lib/firebase-client";
@@ -17,6 +18,7 @@ const LIBRES = ["/terminos-de-uso", "/politica-de-privacidad", "/politica-de-coo
  * términos han cambiado), se le pide antes de seguir. Puede negarse y cerrar sesión.
  */
 export function PuertaConsentimiento() {
+  const t = useT();
   const { user } = useAuth();
   const path = usePathname();
   const [falta, setFalta] = useState(false);
@@ -37,8 +39,8 @@ export function PuertaConsentimiento() {
   if (!user || !falta || LIBRES.includes(path)) return null;
 
   async function aceptar() {
-    if (!edad) return setError(`Para tener cuenta en Ziater necesitas tener al menos ${EDAD_MINIMA} años.`);
-    if (!acepto) return setError("Para seguir, acepta los términos de uso y la política de privacidad.");
+    if (!edad) return setError(t("Para tener cuenta en Ziater necesitas tener al menos {EDAD_MINIMA} años.", { EDAD_MINIMA: EDAD_MINIMA }));
+    if (!acepto) return setError(t("Para seguir, acepta los términos de uso y la política de privacidad."));
     await setDoc(doc(db, "users", user!.uid), { consentimiento: VERSION_TERMINOS, consentimiento_fecha: serverTimestamp() }, { merge: true });
     setFalta(false);
   }
@@ -46,13 +48,13 @@ export function PuertaConsentimiento() {
   return (
     <div className="velo" role="dialog" aria-modal="true" aria-labelledby="pc-titulo">
       <div className="panel velo-caja" ref={caja}>
-        <h2 id="pc-titulo" className="h3" style={{ marginBottom: 8 }}>Antes de seguir</h2>
-        <p className="soft" style={{ marginTop: 0 }}>Para usar tu cuenta en Ziater necesitamos que confirmes esto. Solo te lo pediremos una vez, o si cambian las condiciones.</p>
+        <h2 id="pc-titulo" className="h3" style={{ marginBottom: 8 }}>{t("Antes de seguir")}</h2>
+        <p className="soft" style={{ marginTop: 0 }}>{t("Para usar tu cuenta en Ziater necesitamos que confirmes esto. Solo te lo pediremos una vez, o si cambian las condiciones.")}</p>
         <CasillasCuenta edad={edad} acepto={acepto} onEdad={setEdad} onAcepto={setAcepto} idPrefijo="pc" />
         {error ? <p className="error" role="alert" style={{ margin: "12px 0 0" }}>{error}</p> : null}
         <div className="actions" style={{ marginTop: 16 }}>
-          <button type="button" className="btn" onClick={() => signOut(auth)}>No acepto, cerrar sesión</button>
-          <button type="button" className="btn btn-primary" onClick={aceptar}>Aceptar y continuar</button>
+          <button type="button" className="btn" onClick={() => signOut(auth)}>{t("No acepto, cerrar sesión")}</button>
+          <button type="button" className="btn btn-primary" onClick={aceptar}>{t("Aceptar y continuar")}</button>
         </div>
       </div>
     </div>

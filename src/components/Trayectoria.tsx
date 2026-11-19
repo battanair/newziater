@@ -1,27 +1,28 @@
 "use client";
 
-import Link from "next/link";
+import Link, { useT } from "@/components/Idioma";
 import { useState } from "react";
 
 type Fila = { y: string; obraId: string; titulo: string; detalle: string; rol: string; img?: string; color: string };
 
 export function Trayectoria({ grupos }: { grupos: { dep: string; filas: Fila[] }[] }) {
+  const t = useT();
   const [tab, setTab] = useState(0);
   const actual = grupos[tab] ?? grupos[0];
   return (
     <>
       {grupos.length > 1 ? (
-        <div role="tablist" aria-label="Trayectoria por rol" className="tabs">
+        <div role="tablist" aria-label={t("Trayectoria por rol")} className="tabs">
           {grupos.map((g, i) => (
             <button key={g.dep} type="button" role="tab" className="tab" aria-selected={i === tab} onClick={() => setTab(i)}>
-              {g.dep} · {g.filas.length}
+              {t(g.dep)} · {g.filas.length}
             </button>
           ))}
         </div>
       ) : null}
       {/* Todas las filas se renderizan en el HTML para que Google las lea; solo se ocultan visualmente */}
       {grupos.map((g, i) => (
-        <ol key={g.dep} className="list" role="tabpanel" hidden={g !== actual} aria-label={g.dep}>
+        <ol key={g.dep} className="list" role="tabpanel" hidden={g !== actual} aria-label={t(g.dep)}>
           {g.filas.map((f, j) => (
             <li key={f.obraId + j} className="career-row tray-row">
               <span className="year">{f.y}</span>

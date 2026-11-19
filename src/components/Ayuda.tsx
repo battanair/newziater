@@ -1,9 +1,11 @@
 "use client";
 
 import { useEffect, useId, useRef, useState } from "react";
+import { useT } from "./Idioma";
 
 /** Botón «?» con una explicación corta. Se cierra con Esc o pulsando fuera. */
-export function Ayuda({ children, etiqueta = "Más información" }: { children: React.ReactNode; etiqueta?: string }) {
+export function Ayuda({ children, etiqueta }: { children: React.ReactNode; etiqueta?: string }) {
+  const t = useT();
   const [abierta, setAbierta] = useState(false);
   const id = useId();
   const caja = useRef<HTMLSpanElement>(null);
@@ -19,7 +21,7 @@ export function Ayuda({ children, etiqueta = "Más información" }: { children: 
 
   return (
     <span className="ayuda" ref={caja}>
-      <button type="button" className="ayuda-btn" aria-label={etiqueta} aria-expanded={abierta} aria-controls={id} onClick={() => setAbierta((x) => !x)}>?</button>
+      <button type="button" className="ayuda-btn" aria-label={etiqueta ?? t("Más información")} aria-expanded={abierta} aria-controls={id} onClick={() => setAbierta((x) => !x)}>?</button>
       {abierta ? <span id={id} role="tooltip" className="ayuda-pop">{children}</span> : null}
     </span>
   );

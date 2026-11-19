@@ -1,4 +1,5 @@
 import type { Funcion } from "./types";
+import { LOCALE, type Idioma } from "./i18n";
 import type { Credito, Obra, Persona } from "./types";
 
 export function nombreCompleto(p: Pick<Persona, "Nombre" | "Apellidos">): string {
@@ -20,12 +21,12 @@ function anio(v: unknown): string {
   return s === "0" || s === "NaN" ? "" : s;
 }
 
-/** "2015 – actualidad", "2023 – 2024" o "2019" */
-export function periodo(inicio: unknown, fin: unknown): string {
+/** "2015 – actualidad" (en inglés, "2015 – present"), "2023 – 2024" o "2019" */
+export function periodo(inicio: unknown, fin: unknown, lang: Idioma = "es"): string {
   const a = anio(inicio);
   const b = anio(fin);
   if (!a && !b) return "";
-  if (a && !b) return `${a} – actualidad`;
+  if (a && !b) return `${a} – ${lang === "en" ? "present" : "actualidad"}`;
   if (!a) return b;
   return a === b ? a : `${a} – ${b}`;
 }
@@ -121,12 +122,12 @@ export function hoyES(): string {
   return new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Madrid", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
 }
 /** «vie 14 nov» (y el año si no es el actual). */
-export function fechaCorta(iso: string): string {
+export function fechaCorta(iso: string, lang: Idioma = "es"): string {
   const [y, m, d] = iso.split("-").map(Number);
   if (!y || !m || !d) return iso;
   const f = new Date(Date.UTC(y, m - 1, d, 12));
   const anio = y !== new Date().getFullYear() ? { year: "numeric" as const } : {};
-  return new Intl.DateTimeFormat("es-ES", { weekday: "short", day: "numeric", month: "short", timeZone: "UTC", ...anio }).format(f).replace(/\./g, "");
+  return new Intl.DateTimeFormat(LOCALE[lang], { weekday: "short", day: "numeric", month: "short", timeZone: "UTC", ...anio }).format(f).replace(/\./g, "").replace(/,/g, "");
 }
 /** Funciones ordenadas y separadas en próximas y pasadas. */
 export function partirFunciones(fs: Funcion[] = []) {
@@ -136,21 +137,25 @@ export function partirFunciones(fs: Funcion[] = []) {
 }
 
 // ---------- Relevos en elenco y equipo ----------
-const MESES = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
-/** "2026-10" → "oct 2026" */
-export function mesCorto(m?: string): string {
+const MESES: Record<Idioma, string[]> = {
+  es: ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"],
+  en: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"],
+};
+/** "2026-10" → "oct 2026" (en inglés, "Oct 2026") */
+export function mesCorto(m?: string, lang: Idioma = "es"): string {
   const [y, n] = String(m ?? "").split("-").map(Number);
-  return y && n ? `${MESES[n - 1]} ${y}` : "";
+  return y && n ? `${MESES[lang][n - 1]} ${y}` : "";
 }
 export function mesActual(): string {
   const d = new Date();
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
 }
 /** Tramo de una persona en la obra: «desde el estreno», «desde oct 2026», «estreno – oct 2026»… ("" si no hay relevos). */
-export function tramo(c: { desde?: string; hasta?: string }, siempre = false): string {
-  if (!c.desde && !c.hasta) return siempre ? "desde el estreno" : "";
-  if (!c.hasta) return `desde ${mesCorto(c.desde)}`;
-  return `${c.desde ? mesCorto(c.desde) : "estreno"} – ${mesCorto(c.hasta)}`;
+export function tramo(c: { desde?: string; hasta?: string }, siempre = false, lang: Idioma = "es"): string {
+  const en = lang === "en";
+  if (!c.desde && !c.hasta) return siempre ? (en ? "since the premiere" : "desde el estreno") : "";
+  if (!c.hasta) return `${en ? "since" : "desde"} ${mesCorto(c.desde, lang)}`;
+  return `${c.desde ? mesCorto(c.desde, lang) : en ? "premiere" : "estreno"} – ${mesCorto(c.hasta, lang)}`;
 }
 
 // ---------- Enlaces escritos por usuarios ----------
@@ -180,10 +185,10 @@ export function sumarDias(iso: string, n: number): string {
   return new Date(Date.UTC(y, m - 1, d + n, 12)).toISOString().slice(0, 10);
 }
 /** «Hoy», «Mañana» o «Viernes 20 de noviembre». */
-export function diaCartelera(iso: string, hoy: string): string {
-  if (iso === hoy) return "Hoy";
-  if (iso === sumarDias(hoy, 1)) return "Mañana";
+export function diaCartelera(iso: string, hoy: string, lang: Idioma = "es"): string {
+  if (iso === hoy) return lang === "en" ? "Today" : "Hoy";
+  if (iso === sumarDias(hoy, 1)) return lang === "en" ? "Tomorrow" : "Mañana";
   const [y, m, d] = iso.split("-").map(Number);
-  const t = new Intl.DateTimeFormat("es-ES", { weekday: "long", day: "numeric", month: "long", timeZone: "UTC" }).format(new Date(Date.UTC(y, m - 1, d, 12)));
+  const t = new Intl.DateTimeFormat(LOCALE[lang], { weekday: "long", day: "numeric", month: "long", timeZone: "UTC" }).format(new Date(Date.UTC(y, m - 1, d, 12)));
   return t.charAt(0).toUpperCase() + t.slice(1);
 }

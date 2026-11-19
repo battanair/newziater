@@ -1,7 +1,6 @@
 "use client";
 
-import Link from "next/link";
-import { usePathname } from "next/navigation";
+import Link, { useT, usePathname } from "@/components/Idioma";
 import { Insignia, usePendientes } from "./Pendientes";
 
 const Icono = ({ d }: { d: React.ReactNode }) => (
@@ -18,17 +17,18 @@ const ITEMS = [
 
 /** Navegación inferior en móvil, como en una app. En escritorio se oculta por CSS. */
 export function TabBar() {
+  const t = useT();
   const path = usePathname();
   const { total } = usePendientes();
   return (
-    <nav className="tabbar" aria-label="Navegación">
+    <nav className="tabbar" aria-label={t("Navegación")}>
       {ITEMS.map((i) => (
         <Link key={i.href} href={i.href} aria-current={i.activo(path) ? "page" : undefined}>
           <span style={{ position: "relative", display: "inline-flex" }}>
             <Icono d={i.icono} />
             {i.href === "/panel" ? <span className="insignia-tab"><Insignia n={total} /></span> : null}
           </span>
-          <span>{i.label}</span>
+          <span>{t(i.label)}</span>
         </Link>
       ))}
     </nav>

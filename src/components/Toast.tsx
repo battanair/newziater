@@ -1,5 +1,7 @@
 "use client";
 
+
+import { useT } from "@/components/Idioma";
 import { createContext, useCallback, useContext, useRef, useState } from "react";
 
 type Opciones = { deshacer?: () => void | Promise<void>; error?: boolean };
@@ -9,6 +11,7 @@ const Ctx = createContext<(texto: string, opciones?: Opciones) => void>(() => {}
 
 /** Avisos breves abajo de la pantalla («Guardado», «Quitada de tu lista · Deshacer»). */
 export function ToastProvider({ children }: { children: React.ReactNode }) {
+  const t = useT();
   const [avisos, setAvisos] = useState<Aviso[]>([]);
   const n = useRef(0);
 
@@ -27,9 +30,9 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
           <div key={a.id} className={`toast ${a.error ? "toast-error" : ""}`}>
             <span>{a.texto}</span>
             {a.deshacer ? (
-              <button type="button" className="toast-btn" onClick={async () => { quitar(a.id); await a.deshacer?.(); }}>Deshacer</button>
+              <button type="button" className="toast-btn" onClick={async () => { quitar(a.id); await a.deshacer?.(); }}>{t("Deshacer")}</button>
             ) : null}
-            <button type="button" className="toast-cerrar" aria-label="Cerrar aviso" onClick={() => quitar(a.id)}>×</button>
+            <button type="button" className="toast-cerrar" aria-label={t("Cerrar aviso")} onClick={() => quitar(a.id)}>×</button>
           </div>
         ))}
       </div>

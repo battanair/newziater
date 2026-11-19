@@ -1,8 +1,8 @@
 "use client";
 
-import Link from "next/link";
+import Link, { useT, usePathname } from "@/components/Idioma";
 import { useEffect, useState } from "react";
-import { usePathname, useRouter } from "next/navigation";
+import { useRouter, useT } from "@/components/Idioma";
 import { authFetch, useAuth } from "./AuthProvider";
 import { useToast } from "./Toast";
 import { anadirCredito, creditosDe, miPersona } from "@/lib/client-data";
@@ -14,9 +14,10 @@ import type { Persona } from "@/lib/types";
  * enlazado a tu ficha. Si la obra es tuya se confirma al momento; si no,
  * le llega a quien la gestiona para que lo confirme (en Vínculos).
  */
-export function Anadirme({ obraId, titulo, duenoObra, anoinicio, anofin, texto = "¿Formaste parte? Añádete" }: {
+export function Anadirme({ obraId, titulo, duenoObra, anoinicio, anofin, texto }: {
   obraId: string; titulo: string; duenoObra?: string; anoinicio?: string | number; anofin?: string | number; texto?: string;
 }) {
+  const t = useT();
   const { user } = useAuth();
   const router = useRouter();
   const path = usePathname();
@@ -60,10 +61,10 @@ export function Anadirme({ obraId, titulo, duenoObra, anoinicio, anofin, texto =
       setAbierto(false);
       if (confirmado) {
         await authFetch("/api/revalidar", { obras: [obraId], personas: [yo.id] }).catch(() => {});
-        avisar("Añadido. Ya apareces en la obra y en tu trayectoria.");
+        avisar(t("Añadido. Ya apareces en la obra y en tu trayectoria."));
         router.refresh();
       } else {
-        avisar("Enviado. Aparecerás en la obra cuando quien la gestiona lo confirme.");
+        avisar(t("Enviado. Aparecerás en la obra cuando quien la gestiona lo confirme."));
       }
     } catch {
       setEstado("error");
@@ -72,46 +73,46 @@ export function Anadirme({ obraId, titulo, duenoObra, anoinicio, anofin, texto =
 
   return (
     <>
-      <button type="button" className="enlace" onClick={abrir}>{texto}</button>
+      <button type="button" className="enlace" onClick={abrir}>{texto ?? t("¿Formaste parte? Añádete")}</button>
       {abierto ? (
         <div className="modal" role="dialog" aria-modal="true" aria-labelledby="anadirme-titulo" onClick={(e) => { if (e.target === e.currentTarget) setAbierto(false); }}>
           <div className="modal-caja">
-            <h2 id="anadirme-titulo" className="h2">Añádete a «{titulo}»</h2>
-            {yo === undefined ? <p className="muted">Un momento…</p> : !yo ? (
+            <h2 id="anadirme-titulo" className="h2">{t("Añádete a «{titulo}»", { titulo: titulo })}</h2>
+            {yo === undefined ? <p className="muted">{t("Un momento…")}</p> : !yo ? (
               <div className="stack" style={{ gap: 14, marginTop: 12 }}>
-                <p className="soft" style={{ margin: 0 }}>Para aparecer en el elenco o el equipo necesitas una ficha de artista. Crearla lleva un minuto (o reclama la tuya si ya existe).</p>
+                <p className="soft" style={{ margin: 0 }}>{t("Para aparecer en el elenco o el equipo necesitas una ficha de artista. Crearla lleva un minuto (o reclama la tuya si ya existe).")}</p>
                 <div className="actions">
-                  <button type="button" className="btn btn-ghost" onClick={() => setAbierto(false)}>Ahora no</button>
-                  <Link href="/panel/bienvenida" className="btn btn-primary">Crear o reclamar mi ficha</Link>
+                  <button type="button" className="btn btn-ghost" onClick={() => setAbierto(false)}>{t("Ahora no")}</button>
+                  <Link href="/panel/bienvenida" className="btn btn-primary">{t("Crear o reclamar mi ficha")}</Link>
                 </div>
               </div>
             ) : yaEstoy ? (
               <div className="stack" style={{ gap: 14, marginTop: 12 }}>
-                <p className="soft" style={{ margin: 0 }}>Ya estás en esta obra. Si el papel no es correcto, puedes cambiarlo desde tu ficha.</p>
+                <p className="soft" style={{ margin: 0 }}>{t("Ya estás en esta obra. Si el papel no es correcto, puedes cambiarlo desde tu ficha.")}</p>
                 <div className="actions">
-                  <button type="button" className="btn btn-ghost" onClick={() => setAbierto(false)}>Cerrar</button>
-                  <Link href="/panel/ficha" className="btn btn-primary">Ir a mi ficha</Link>
+                  <button type="button" className="btn btn-ghost" onClick={() => setAbierto(false)}>{t("Cerrar")}</button>
+                  <Link href="/panel/ficha" className="btn btn-primary">{t("Ir a mi ficha")}</Link>
                 </div>
               </div>
             ) : (
               <form className="stack" style={{ gap: 16, marginTop: 12 }} onSubmit={enviar}>
                 <div className="field">
-                  <label className="label" htmlFor="an-dep">¿Qué hiciste?</label>
+                  <label className="label" htmlFor="an-dep">{t("¿Qué hiciste?")}</label>
                   <select id="an-dep" className="select" value={dep} onChange={(e) => setDep(e.target.value)}>
-                    {DEPARTAMENTOS.map((d) => <option key={d}>{d}</option>)}
+                    {DEPARTAMENTOS.map((d) => <option key={d} value={d}>{t(d)}</option>)}
                   </select>
                 </div>
                 <div className="field">
-                  <label className="label" htmlFor="an-cargo">{dep === "Interpretación" ? "Personaje" : "Cargo (opcional)"}</label>
-                  <input id="an-cargo" className="input" maxLength={150} value={cargo} onChange={(e) => setCargo(e.target.value)} placeholder={dep === "Interpretación" ? "Por ejemplo: Arancha" : "Por ejemplo: Ayudante de dirección"} />
+                  <label className="label" htmlFor="an-cargo">{dep === "Interpretación" ? t("Personaje") : t("Cargo (opcional)")}</label>
+                  <input id="an-cargo" className="input" maxLength={150} value={cargo} onChange={(e) => setCargo(e.target.value)} placeholder={dep === "Interpretación" ? t("Por ejemplo: Arancha") : t("Por ejemplo: Ayudante de dirección")} />
                 </div>
                 <p className="hint" style={{ margin: 0 }}>
-                  {duenoObra === user?.uid ? "Es tu obra: aparecerás al momento." : "Le pediremos a quien gestiona la obra que lo confirme. Mientras tanto saldrá como pendiente en tu panel."}
+                  {duenoObra === user?.uid ? t("Es tu obra: aparecerás al momento.") : t("Le pediremos a quien gestiona la obra que lo confirme. Mientras tanto saldrá como pendiente en tu panel.")}
                 </p>
-                {estado === "error" ? <p className="error" role="alert" style={{ margin: 0 }}>No se pudo guardar. Inténtalo de nuevo.</p> : null}
+                {estado === "error" ? <p className="error" role="alert" style={{ margin: 0 }}>{t("No se pudo guardar. Inténtalo de nuevo.")}</p> : null}
                 <div className="actions" style={{ justifyContent: "flex-end" }}>
-                  <button type="button" className="btn btn-ghost" onClick={() => setAbierto(false)}>Cancelar</button>
-                  <button type="submit" className="btn btn-primary" disabled={estado === "enviando"}>{estado === "enviando" ? "Guardando…" : "Añadirme"}</button>
+                  <button type="button" className="btn btn-ghost" onClick={() => setAbierto(false)}>{t("Cancelar")}</button>
+                  <button type="submit" className="btn btn-primary" disabled={estado === "enviando"}>{estado === "enviando" ? t("Guardando…") : t("Añadirme")}</button>
                 </div>
               </form>
             )}

@@ -1,6 +1,10 @@
 "use client";
 
-import Link from "next/link";
+import { LOCALE } from "@/lib/i18n";
+
+
+import { useT, useIdioma } from "@/components/Idioma";
+import Link, { useT } from "@/components/Idioma";
 import { useEffect, useMemo, useState } from "react";
 import { Timestamp, collection, documentId, getCountFromServer, getDocs, limit, orderBy, query, where } from "firebase/firestore";
 import { db } from "@/lib/firebase-client";
@@ -26,13 +30,14 @@ const hace = (ms: number) => {
   if (m < 60) return `hace ${Math.max(1, m)} min`;
   if (m < 1440) return `hace ${Math.round(m / 60)} h`;
   if (m < 43200) return `hace ${Math.round(m / 1440)} d`;
-  return new Date(ms).toLocaleDateString("es-ES", { day: "numeric", month: "short", year: "numeric" });
+  return new Date(ms).toLocaleDateString(LOCALE[lang], { day: "numeric", month: "short", year: "numeric" });
 };
 function diaISO(d: Date) {
   return new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Madrid", year: "numeric", month: "2-digit", day: "2-digit" }).format(d);
 }
 
 export function ResumenAdmin({ pendientes }: { pendientes: { mensajes: number; fichas: number; obras: number; sugerencias: number }; }) {
+  const t = useT();
   const [datos, setDatos] = useState<{ totales: Record<string, number>; semana: Record<string, number>; dias: Dia[]; eventos: Evento[] } | null>(null);
   const [error, setError] = useState("");
 
@@ -69,7 +74,7 @@ export function ResumenAdmin({ pendientes }: { pendientes: { mensajes: number; f
       ].filter((e) => e.cuando).sort((a, b) => b.cuando - a.cuando).slice(0, 14);
 
       setDatos({ totales: { obras, personas, companias, creditos, usuarios, notas, colaboradores }, semana: { obras: obras7, notas: notas7, cambios: cambios7, sugerencias: sugs7 }, dias, eventos });
-      if (!visitas) setError("Las visitas empezarán a verse cuando publiques las reglas nuevas de Firestore.");
+      if (!visitas) setError(t("Las visitas empezarán a verse cuando publiques las reglas nuevas de Firestore."));
     })();
   }, []);
 
@@ -81,7 +86,7 @@ export function ResumenAdmin({ pendientes }: { pendientes: { mensajes: number; f
     return { hoy: datos.dias[datos.dias.length - 1], v7: suma(ult7, "total"), p7: suma(prev7, "total"), u7: suma(ult7, "visitantes"), t30: suma(datos.dias, "total"), secciones };
   }, [datos]);
 
-  if (!datos || !v) return <p className="muted">Cargando estadísticas…</p>;
+  if (!datos || !v) return <p className="muted">{t("Cargando estadísticas…")}</p>;
   const delta = v.p7 ? Math.round(((v.v7 - v.p7) / v.p7) * 100) : null;
 
   return (
@@ -89,7 +94,7 @@ export function ResumenAdmin({ pendientes }: { pendientes: { mensajes: number; f
       {error ? <p className="hint" role="status">{error}</p> : null}
 
       <section>
-        <h2 className="eyebrow" style={{ marginBottom: 12 }}>Visitas</h2>
+        <h2 className="eyebrow" style={{ marginBottom: 12 }}>{t("Visitas")}</h2>
         <div className="tiles">
           <Tile valor={n(Number(v.hoy.total) || 0)} etiqueta="Visitas hoy" nota={`${n(Number(v.hoy.visitantes) || 0)} visitantes`} />
           <Tile valor={n(v.v7)} etiqueta="Últimos 7 días" nota={delta === null ? "sin datos de la semana anterior" : `${delta >= 0 ? "▲" : "▼"} ${Math.abs(delta)} % frente a la semana anterior`} />
@@ -99,31 +104,31 @@ export function ResumenAdmin({ pendientes }: { pendientes: { mensajes: number; f
       </section>
 
       <section className="panel">
-        <h2 className="h3" style={{ marginBottom: 4 }}>Visitas por día</h2>
-        <p className="hint" style={{ margin: "0 0 16px" }}>Últimos 30 días · páginas vistas</p>
+        <h2 className="h3" style={{ marginBottom: 4 }}>{t("Visitas por día")}</h2>
+        <p className="hint" style={{ margin: "0 0 16px" }}>{t("Últimos 30 días · páginas vistas")}</p>
         <Columnas dias={datos.dias} />
       </section>
 
       <div className="row" style={{ gap: 24 }}>
         <section className="panel" style={{ flex: "1 1 320px" }}>
-          <h2 className="h3" style={{ marginBottom: 4 }}>Qué se visita</h2>
-          <p className="hint" style={{ margin: "0 0 16px" }}>Últimos 7 días, por sección</p>
-          {v.secciones.length ? <Barras filas={v.secciones} /> : <p className="muted" style={{ margin: 0 }}>Aún no hay visitas registradas.</p>}
+          <h2 className="h3" style={{ marginBottom: 4 }}>{t("Qué se visita")}</h2>
+          <p className="hint" style={{ margin: "0 0 16px" }}>{t("Últimos 7 días, por sección")}</p>
+          {v.secciones.length ? <Barras filas={v.secciones} /> : <p className="muted" style={{ margin: 0 }}>{t("Aún no hay visitas registradas.")}</p>}
         </section>
         <section className="panel" style={{ flex: "1 1 320px" }}>
-          <h2 className="h3" style={{ marginBottom: 12 }}>Te esperan</h2>
+          <h2 className="h3" style={{ marginBottom: 12 }}>{t("Te esperan")}</h2>
           <ul className="list">
             <Pend n={pendientes.mensajes} l="Mensajes de contacto sin atender" />
             <Pend n={pendientes.fichas} l="Reclamaciones de fichas" />
             <Pend n={pendientes.obras} l="Solicitudes para gestionar obras" />
             <Pend n={pendientes.sugerencias} l="Sugerencias pendientes" />
           </ul>
-          <p className="hint" style={{ margin: "12px 0 0" }}>Están en las pestañas de arriba.</p>
+          <p className="hint" style={{ margin: "12px 0 0" }}>{t("Están en las pestañas de arriba.")}</p>
         </section>
       </div>
 
       <section>
-        <h2 className="eyebrow" style={{ marginBottom: 12 }}>Contenido</h2>
+        <h2 className="eyebrow" style={{ marginBottom: 12 }}>{t("Contenido")}</h2>
         <div className="tiles">
           <Tile valor={n(datos.totales.obras)} etiqueta="Obras" nota={`+${n(datos.semana.obras)} esta semana`} />
           <Tile valor={n(datos.totales.personas)} etiqueta="Fichas de artista" />
@@ -137,7 +142,7 @@ export function ResumenAdmin({ pendientes }: { pendientes: { mensajes: number; f
       </section>
 
       <section className="panel">
-        <h2 className="h3" style={{ marginBottom: 12 }}>Actividad reciente</h2>
+        <h2 className="h3" style={{ marginBottom: 12 }}>{t("Actividad reciente")}</h2>
         {datos.eventos.length ? (
           <ul className="list">
             {datos.eventos.map((e, i) => (
@@ -148,34 +153,33 @@ export function ResumenAdmin({ pendientes }: { pendientes: { mensajes: number; f
               </li>
             ))}
           </ul>
-        ) : <p className="muted" style={{ margin: 0 }}>Todavía no hay actividad.</p>}
+        ) : <p className="muted" style={{ margin: 0 }}>{t("Todavía no hay actividad.")}</p>}
       </section>
 
       <LimpiezaFotos />
 
-      <p className="hint">
-        Para el detalle de visitas (de dónde llega la gente, países, dispositivos, páginas concretas) abre{" "}
-        <a href="https://vercel.com/ziater/ziater/analytics" target="_blank" rel="noopener noreferrer" style={{ textDecoration: "underline" }}>Analytics en Vercel</a>.
-        Este panel no cuenta tus propias visitas.
-      </p>
+      <p className="hint">{t("Para el detalle de visitas (de dónde llega la gente, países, dispositivos, páginas concretas) abre")}{" "}
+        <a href="https://vercel.com/ziater/ziater/analytics" target="_blank" rel="noopener noreferrer" style={{ textDecoration: "underline" }}>{t("Analytics en Vercel")}</a>{t(". Este panel no cuenta tus propias visitas.")}</p>
     </div>
   );
 }
 
 function Tile({ valor, etiqueta, nota }: { valor: string; etiqueta: string; nota?: string }) {
+  const t = useT();
   return (
     <div className="tile">
-      <span className="tile-et">{etiqueta}</span>
+      <span className="tile-et">{t(etiqueta)}</span>
       <span className="tile-valor">{valor}</span>
-      {nota ? <span className="tile-nota">{nota}</span> : null}
+      {nota ? <span className="tile-nota">{t(nota)}</span> : null}
     </div>
   );
 }
 
 function Pend({ n: num, l }: { n: number; l: string }) {
+  const t = useT();
   return (
     <li style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 0" }}>
-      <span>{l}</span>
+      <span>{t(l)}</span>
       <span className={`chip ${num ? "chip-foco" : ""}`}>{num}</span>
     </li>
   );
@@ -183,17 +187,19 @@ function Pend({ n: num, l }: { n: number; l: string }) {
 
 /** Columnas de visitas por día (una serie), con tooltip al pasar el ratón y tabla de datos. */
 function Columnas({ dias }: { dias: Dia[] }) {
+  const t = useT();
+  const lang = useIdioma();
   const [activo, setActivo] = useState<number | null>(null);
   const max = Math.max(1, ...dias.map((d) => Number(d.total) || 0));
   const paso = Math.pow(10, Math.floor(Math.log10(max)));
   const tope = Math.ceil(max / paso) * paso;
   const W = 720, H = 200, izq = 36, abajo = 22, banda = (W - izq) / dias.length, ancho = Math.min(24, banda - 2);
   const y = (val: number) => (H - abajo) - (val / tope) * (H - abajo - 10);
-  const fecha = (iso: string) => new Date(iso + "T12:00:00").toLocaleDateString("es-ES", { day: "numeric", month: "short" });
+  const fecha = (iso: string) => new Date(iso + "T12:00:00").toLocaleDateString(LOCALE[lang], { day: "numeric", month: "short" });
   const iMax = dias.reduce((m, d, i) => ((Number(d.total) || 0) > (Number(dias[m].total) || 0) ? i : m), 0);
   return (
     <div className="grafico">
-      <svg viewBox={`0 0 ${W} ${H}`} role="img" aria-label="Visitas por día en los últimos 30 días" style={{ width: "100%", height: "auto", display: "block" }} onMouseLeave={() => setActivo(null)}>
+      <svg viewBox={`0 0 ${W} ${H}`} role="img" aria-label={t("Visitas por día en los últimos 30 días")} style={{ width: "100%", height: "auto", display: "block" }} onMouseLeave={() => setActivo(null)}>
         {[0, tope / 2, tope].map((t) => (
           <g key={t}>
             <line x1={izq} x2={W} y1={y(t)} y2={y(t)} stroke="var(--linea)" strokeWidth={1} />
@@ -215,13 +221,13 @@ function Columnas({ dias }: { dias: Dia[] }) {
       {activo !== null ? (
         <div className="grafico-tip" style={{ left: `${((izq + activo * banda + banda / 2) / W) * 100}%` }}>
           <strong>{fecha(dias[activo].dia)}</strong>
-          <span>{n(Number(dias[activo].total) || 0)} visitas · {n(Number(dias[activo].visitantes) || 0)} visitantes</span>
+          <span>{n(Number(dias[activo].total) || 0)}{" "}{t("visitas ·")}{" "}{n(Number(dias[activo].visitantes) || 0)}{" "}{t("visitantes")}</span>
         </div>
       ) : null}
       <details style={{ marginTop: 10 }}>
-        <summary className="hint" style={{ cursor: "pointer" }}>Ver los datos en tabla</summary>
+        <summary className="hint" style={{ cursor: "pointer" }}>{t("Ver los datos en tabla")}</summary>
         <table className="tabla-datos">
-          <thead><tr><th>Día</th><th>Visitas</th><th>Visitantes</th></tr></thead>
+          <thead><tr><th>{t("Día")}</th><th>{t("Visitas")}</th><th>{t("Visitantes")}</th></tr></thead>
           <tbody>{[...dias].reverse().map((d) => <tr key={d.dia}><td>{fecha(d.dia)}</td><td>{n(Number(d.total) || 0)}</td><td>{n(Number(d.visitantes) || 0)}</td></tr>)}</tbody>
         </table>
       </details>
@@ -231,12 +237,13 @@ function Columnas({ dias }: { dias: Dia[] }) {
 
 /** Barras horizontales (una serie) con el valor en la punta. */
 function Barras({ filas }: { filas: { k: string; l: string; v: number }[] }) {
+  const t = useT();
   const max = Math.max(...filas.map((f) => f.v));
   return (
     <ul className="barras">
       {filas.map((f) => (
-        <li key={f.k} title={`${f.l}: ${n(f.v)} visitas`}>
-          <span className="barras-et">{f.l}</span>
+        <li key={f.k} title={t("{l}: {v} visitas", { l: f.l, v: n(f.v) })}>
+          <span className="barras-et">{t(f.l)}</span>
           <span className="barras-pista"><span className="barras-barra" style={{ width: `${Math.max(2, (f.v / max) * 100)}%` }} /></span>
           <span className="barras-val">{n(f.v)}</span>
         </li>

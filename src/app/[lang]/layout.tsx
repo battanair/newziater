@@ -1,0 +1,84 @@
+import type { Metadata, Viewport } from "next";
+import { notFound } from "next/navigation";
+import { Fraunces, Source_Sans_3 } from "next/font/google";
+import "../globals.css";
+import { AuthProvider } from "@/components/AuthProvider";
+import { SCRIPT_SESION } from "@/lib/sesion";
+import { Header } from "@/components/Header";
+import { Footer } from "@/components/Footer";
+import { TabBar } from "@/components/TabBar";
+import { ToastProvider } from "@/components/Toast";
+import { PendientesProvider } from "@/components/Pendientes";
+import { ContadorVisitas } from "@/components/ContadorVisitas";
+import { SCRIPT_MODO } from "@/components/ModoToggle";
+import { SITE_URL } from "@/lib/firebase-config";
+// Analítica de Vercel: sin cookies ni datos personales, así que no necesita banner
+import { BannerCookies } from "@/components/BannerCookies";
+import { PuertaConsentimiento } from "@/components/PuertaConsentimiento";
+import { IdiomaProvider } from "@/components/Idioma";
+import { IDIOMAS, OG_LOCALE, esIdioma, traductor } from "@/lib/i18n";
+import { fijarIdioma } from "@/lib/idioma-servidor";
+
+// Dos fuentes legibles: Fraunces para titulares y Source Sans 3 para el texto.
+const serif = Fraunces({ subsets: ["latin"], variable: "--font-serif", display: "swap", weight: ["500", "600"] });
+const sans = Source_Sans_3({ subsets: ["latin"], variable: "--font-sans", display: "swap", weight: ["400", "500", "600", "700"] });
+
+type P = Promise<{ lang: string }>;
+
+export const dynamicParams = false;
+export function generateStaticParams() {
+  return IDIOMAS.map((lang) => ({ lang }));
+}
+
+export async function generateMetadata({ params }: { params: P }): Promise<Metadata> {
+  const lang = fijarIdioma((await params).lang);
+  const t = traductor(lang);
+  return {
+    metadataBase: new URL(SITE_URL),
+    title: { default: t("Ziater — La base de datos de las artes escénicas"), template: "%s | Ziater" },
+    description: t("Obras de teatro, danza, circo e improvisación, con sus artistas, compañías y teatros. Descubre qué hay en cartel y la trayectoria de los profesionales de las artes vivas."),
+    applicationName: "Ziater",
+    openGraph: { type: "website", locale: OG_LOCALE[lang], alternateLocale: OG_LOCALE[lang === "es" ? "en" : "es"], siteName: "Ziater", url: SITE_URL },
+    formatDetection: { telephone: false },
+    appleWebApp: { title: "Ziater", statusBarStyle: "black-translucent" },
+    twitter: { card: "summary_large_image" },
+    // La canonical va en cada página (si estuviera aquí, todas las que no la definen apuntarían a la portada)
+    robots: { index: true, follow: true, googleBot: { index: true, follow: true, "max-image-preview": "large", "max-snippet": -1, "max-video-preview": -1 } },
+  };
+}
+
+export const viewport: Viewport = { themeColor: "#131210", width: "device-width", initialScale: 1 };
+
+export default async function RootLayout({ children, params }: { children: React.ReactNode; params: P }) {
+  const l = (await params).lang;
+  if (!esIdioma(l)) notFound();
+  const lang = fijarIdioma(l);
+  const t = traductor(lang);
+  return (
+    <html lang={lang} className={`${serif.variable} ${sans.variable}`} suppressHydrationWarning>
+      <head>
+        {/* Aplica el modo claro guardado antes de pintar, sin destello */}
+        <script dangerouslySetInnerHTML={{ __html: SCRIPT_MODO }} />
+        <script dangerouslySetInnerHTML={{ __html: SCRIPT_SESION }} />
+      </head>
+      <body>
+        <IdiomaProvider lang={lang}>
+          <a href="#contenido" className="sr-only">{t("Saltar al contenido")}</a>
+          <AuthProvider>
+            <PendientesProvider>
+              <ToastProvider>
+                <Header />
+                <div id="contenido">{children}</div>
+                <Footer />
+                <TabBar />
+                <ContadorVisitas />
+                <PuertaConsentimiento />
+              </ToastProvider>
+            </PendientesProvider>
+          </AuthProvider>
+          <BannerCookies />
+        </IdiomaProvider>
+      </body>
+    </html>
+  );
+}

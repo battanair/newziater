@@ -24,14 +24,23 @@ export async function generateSitemaps() {
   return trozos;
 }
 
+type Entrada = MetadataRoute.Sitemap[number];
+/** Cada página en español y en inglés, enlazadas entre sí (hreflang) para que Google muestre la de cada idioma. */
+function dosIdiomas(p: string, extra: Omit<Entrada, "url">): MetadataRoute.Sitemap {
+  const es = `${SITE_URL}${p}`;
+  const en = `${SITE_URL}/en${p.startsWith("/?") ? p.slice(1) : p}`;
+  const alternates = { languages: { es, en, "x-default": es } };
+  return [{ url: es, ...extra, alternates }, { url: en, ...extra, alternates }];
+}
+
 export default async function sitemap({ id }: { id: number | Promise<number> }): Promise<MetadataRoute.Sitemap> {
   const n = Number(await id);
   if (n === 0) {
     const now = new Date();
-    const generales = ["", "/cartelera", "/obras", "/personas", "/companias", "/salas", "/colaboradores", "/politica-de-privacidad", "/terminos-de-uso", "/politica-de-cookies", "/aviso-legal"].map((p) => ({ url: `${SITE_URL}${p}`, lastModified: now, changeFrequency: "daily" as const, priority: p ? 0.8 : 1 }));
+    const generales = ["", "/cartelera", "/obras", "/personas", "/companias", "/salas", "/colaboradores", "/politica-de-privacidad", "/terminos-de-uso", "/politica-de-cookies", "/aviso-legal"].flatMap((p) => dosIdiomas(p, { lastModified: now, changeFrequency: "daily", priority: p ? 0.8 : 1 }));
     // Una página por género («obras de comedia», «obras de danza»…): misma URL que su canonical
-    const generos = GENEROS.map((g) => ({ url: `${SITE_URL}/obras?genero=${encodeURIComponent(g)}`, changeFrequency: "weekly" as const, priority: 0.6 }));
-    const ciudades = (await cartelera(hoyES())).ciudades.map((c) => ({ url: `${SITE_URL}/cartelera/${c.slug}`, lastModified: now, changeFrequency: "daily" as const, priority: 0.7 }));
+    const generos = GENEROS.flatMap((g) => dosIdiomas(`/obras?genero=${encodeURIComponent(g)}`, { changeFrequency: "weekly", priority: 0.6 }));
+    const ciudades = (await cartelera(hoyES())).ciudades.flatMap((c) => dosIdiomas(`/cartelera/${c.slug}`, { lastModified: now, changeFrequency: "daily", priority: 0.7 }));
     return [...generales, ...generos, ...ciudades];
   }
   // Localiza qué colección y qué tramo corresponde a este número
@@ -40,7 +49,7 @@ export default async function sitemap({ id }: { id: number | Promise<number> }):
     const trozos = Math.max(1, Math.ceil((await contar(c.col)) / URLS_POR_SITEMAP));
     if (resto < trozos) {
       const ids = await idsPagina(c.col, resto);
-      return ids.map((i) => ({ url: `${SITE_URL}/${c.ruta}/${i}`, changeFrequency: "weekly" as const, priority: c.prioridad }));
+      return ids.flatMap((i) => dosIdiomas(`/${c.ruta}/${i}`, { changeFrequency: "weekly", priority: c.prioridad }));
     }
     resto -= trozos;
   }

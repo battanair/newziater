@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useId, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useT } from "@/components/Idioma";
 import type { SearchItem } from "@/lib/types";
 
 // Búsqueda contra el servidor (no se descarga ningún índice): espera 200 ms
@@ -38,6 +38,7 @@ export const hrefFor = (i: SearchItem) => (i.t === "obra" ? `/obra/${i.id}` : i.
 const GROUP: Record<SearchItem["t"], string> = { obra: "Obras", persona: "Artistas", productora: "Compañías", sala: "Salas" };
 
 export function SearchBox({ hero = false, autoFocus = false }: { hero?: boolean; autoFocus?: boolean }) {
+  const t = useT();
   const router = useRouter();
   const id = useId();
   const [q, setQ] = useState("");
@@ -63,7 +64,7 @@ export function SearchBox({ hero = false, autoFocus = false }: { hero?: boolean;
       <form role="search" onSubmit={(e) => { e.preventDefault(); go(results[active]); }}>
         <label className={`search ${hero ? "search-hero" : ""}`}>
           <svg aria-hidden="true" width={hero ? 22 : 18} height={hero ? 22 : 18} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" /></svg>
-          <span className="sr-only">Buscar en Ziater</span>
+          <span className="sr-only">{t("Buscar en Ziater")}</span>
           <input
             type="search"
             role="combobox"
@@ -72,7 +73,7 @@ export function SearchBox({ hero = false, autoFocus = false }: { hero?: boolean;
             aria-autocomplete="list"
             autoFocus={autoFocus}
             maxLength={80}
-            placeholder={hero ? "Busca obras, artistas o compañías…" : "Obras, artistas, compañías…"}
+            placeholder={hero ? t("Busca obras, artistas o compañías…") : t("Obras, artistas, compañías…")}
             value={q}
             onFocus={() => setOpen(true)}
             onChange={(e) => { setQ(e.target.value); setActive(0); setOpen(true); }}
@@ -82,14 +83,14 @@ export function SearchBox({ hero = false, autoFocus = false }: { hero?: boolean;
               if (e.key === "Escape") setOpen(false);
             }}
           />
-          {hero ? <button type="submit" className="btn btn-light" style={{ background: "var(--sala)", color: "var(--papel)", borderColor: "var(--sala)" }}>Buscar</button> : null}
+          {hero ? <button type="submit" className="btn btn-light" style={{ background: "var(--sala)", color: "var(--papel)", borderColor: "var(--sala)" }}>{t("Buscar")}</button> : null}
         </label>
       </form>
       {open && results.length > 0 ? (
         <div id={`${id}-list`} role="listbox" className="suggest" style={{ position: "absolute", left: 0, right: 0, zIndex: 30 }}>
           {results.map((r, idx) => (
             <div key={r.t + r.id}>
-              {idx === 0 || results[idx - 1].t !== r.t ? <div className="suggest-group">{GROUP[r.t]}</div> : null}
+              {idx === 0 || results[idx - 1].t !== r.t ? <div className="suggest-group">{t(GROUP[r.t])}</div> : null}
               <button type="button" role="option" aria-selected={idx === active} className="suggest-item" onMouseEnter={() => setActive(idx)} onClick={() => go(r)}>
                 {r.img ? <img src={r.img} alt="" className={`thumb ${r.t !== "obra" ? "thumb-round" : ""}`} loading="lazy" /> : <span className={`thumb ${r.t !== "obra" ? "thumb-round" : ""}`} />}
                 <span>

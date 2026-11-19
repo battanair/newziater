@@ -1,8 +1,8 @@
 "use client";
 
-import Link from "next/link";
+import Link, { useT, usePathname } from "@/components/Idioma";
 import Image from "next/image";
-import { usePathname } from "next/navigation";
+import { SelectorIdioma } from "./SelectorIdioma";
 import { useAuth } from "./AuthProvider";
 import { SearchBox } from "./SearchBox";
 import { ModoToggle } from "./ModoToggle";
@@ -16,15 +16,15 @@ const LINKS = [
 ];
 
 export function Logo() {
+  const t = useT();
   return (
-    <Link href="/" className="logo" aria-label="Ziater, inicio">
-      <span className="logo-dot" aria-hidden="true" />
-      ZIATER
-    </Link>
+    <Link href="/" className="logo" aria-label={t("Ziater, inicio")}>
+      <span className="logo-dot" aria-hidden="true" />{t("ZIATER")}</Link>
   );
 }
 
 export function Header() {
+  const t = useT();
   const pathname = usePathname();
   const { user, loading } = useAuth();
   const { total } = usePendientes();
@@ -37,34 +37,33 @@ export function Header() {
         <div className="header-search">
           <SearchBox />
         </div>
-        <nav aria-label="Principal" className="nav">
+        <nav aria-label={t("Principal")} className="nav">
           {LINKS.map((l) => (
             <Link key={l.href} href={l.href} aria-current={pathname.startsWith(l.href) ? "page" : undefined}>
-              {l.label}
+              {t(l.label)}
             </Link>
           ))}
         </nav>
         <div className="actions">
+          <span className="solo-escritorio"><SelectorIdioma /></span>
           <ModoToggle />
           {esAdmin ? (
-            <Link href="/panel/admin" className="btn btn-admin" aria-label={mensajesNuevos ? `Administración: ${mensajesNuevos} mensajes sin atender` : "Administración"} title="Administración" style={{ position: "relative" }}>
+            <Link href="/panel/admin" className="btn btn-admin" aria-label={mensajesNuevos ? t("Administración: {n} mensajes sin atender", { n: mensajesNuevos }) : t("Administración")} title={t("Administración")} style={{ position: "relative" }}>
               <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 3v18h18" /><path d="M7 15l4-4 3 3 5-6" /></svg>
-              <span className="solo-escritorio">Admin</span>
+              <span className="solo-escritorio">{t("Admin")}</span>
               <Insignia n={mensajesNuevos} />
             </Link>
           ) : null}
           {loading ? null : user ? (
-            <Link href="/panel" className="btn btn-primary solo-escritorio" aria-label="Mi espacio">
+            <Link href="/panel" className="btn btn-primary solo-escritorio" aria-label={t("Mi espacio")}>
               {user.photoURL ? (
                 <Image src={user.photoURL} alt="" width={26} height={26} style={{ borderRadius: "50%" }} />
-              ) : null}
-              Mi espacio
-              <Insignia n={total} />
+              ) : null}{t("Mi espacio")}<Insignia n={total} />
             </Link>
           ) : (
             <>
-              <Link href="/login" className="btn btn-ghost">Entrar</Link>
-              <Link href="/signup" className="btn btn-primary solo-escritorio">Registrarse</Link>
+              <Link href="/login" className="btn btn-ghost">{t("Entrar")}</Link>
+              <Link href="/signup" className="btn btn-primary solo-escritorio">{t("Registrarse")}</Link>
             </>
           )}
         </div>

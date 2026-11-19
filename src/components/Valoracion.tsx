@@ -1,7 +1,9 @@
 "use client";
 
+import { LOCALE } from "@/lib/i18n";
+
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useT, useIdioma } from "@/components/Idioma";
 import { doc, getDoc, runTransaction, serverTimestamp } from "firebase/firestore";
 import { db } from "@/lib/firebase-client";
 import { anadirALista } from "@/lib/client-data";
@@ -14,6 +16,8 @@ import { useToast } from "./Toast";
 // puntuación). Las reglas de Firestore comprueban que los números cuadran,
 // así que nadie puede inflar la nota de una obra.
 export function Valoracion({ obraId, votos: v0 = 0, nota: n0 = 0 }: { obraId: string; votos?: number; nota?: number }) {
+  const t = useT();
+  const lang = useIdioma();
   const { user } = useAuth();
   const router = useRouter();
   const [mia, setMia] = useState(0);
@@ -46,7 +50,7 @@ export function Valoracion({ obraId, votos: v0 = 0, nota: n0 = 0 }: { obraId: st
       });
       setMia(nota);
       setStats(res);
-      avisar(`Nota guardada: ${nota}. También la hemos añadido a «La he visto».`);
+      avisar(t("Nota guardada: {nota}. También la hemos añadido a «La he visto».", { nota: nota }));
       anadirALista(user.uid, "vistas", obraId).catch(() => {}); // puntuarla implica haberla visto
       setEstado("idle");
       authFetch("/api/revalidar", { obras: [obraId] }).catch(() => {});
@@ -59,27 +63,27 @@ export function Valoracion({ obraId, votos: v0 = 0, nota: n0 = 0 }: { obraId: st
   return (
     <dl className="stats" style={{ alignItems: "flex-end" }}>
       <div>
-        <dt>Valoración Ziater</dt>
+        <dt>{t("Valoración Ziater")}</dt>
         <dd style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
           {stats.votos ? (
             <>
               <span style={{ color: "var(--foco)" }} aria-hidden="true">★</span>
-              <span style={{ fontSize: 32 }}>{stats.nota.toLocaleString("es-ES", { maximumFractionDigits: 1 })}</span>
-              <span className="muted" style={{ fontSize: 15, fontWeight: 400 }}>/10 · {stats.votos} {stats.votos === 1 ? "voto" : "votos"}</span>
+              <span style={{ fontSize: 32 }}>{stats.nota.toLocaleString(LOCALE[lang], { maximumFractionDigits: 1 })}</span>
+              <span className="muted" style={{ fontSize: 15, fontWeight: 400 }}>/10 · {stats.votos} {stats.votos === 1 ? t("voto") : t("votos")}</span>
             </>
           ) : (
-            <span className="muted" style={{ fontSize: 16, fontWeight: 400 }}>Aún sin votos. ¡Sé la primera persona!</span>
+            <span className="muted" style={{ fontSize: 16, fontWeight: 400 }}>{t("Aún sin votos. ¡Sé la primera persona!")}</span>
           )}
         </dd>
       </div>
       <div className="votar">
-        <dt>{mia ? `Tu nota: ${mia}` : "¿La has visto? Puntúala"}</dt>
-        <dd role="group" aria-label="Tu nota de 1 a 10" className="notas" onMouseLeave={() => setHover(0)}>
+        <dt>{mia ? t("Tu nota: {mia}", { mia: mia }) : t("¿La has visto? Puntúala")}</dt>
+        <dd role="group" aria-label={t("Tu nota de 1 a 10")} className="notas" onMouseLeave={() => setHover(0)}>
           {Array.from({ length: 10 }, (_, i) => i + 1).map((n) => (
             <button
               key={n}
               type="button"
-              aria-label={`Puntuar con ${n}`}
+              aria-label={t("Puntuar con {n}", { n: n })}
               aria-pressed={mia === n}
               disabled={estado === "saving"}
               onMouseEnter={() => setHover(n)}
@@ -90,7 +94,7 @@ export function Valoracion({ obraId, votos: v0 = 0, nota: n0 = 0 }: { obraId: st
             </button>
           ))}
         </dd>
-        {estado === "error" ? <p className="error" role="alert" style={{ margin: "6px 0 0" }}>No se pudo guardar tu nota. Inténtalo de nuevo.</p> : null}
+        {estado === "error" ? <p className="error" role="alert" style={{ margin: "6px 0 0" }}>{t("No se pudo guardar tu nota. Inténtalo de nuevo.")}</p> : null}
       </div>
     </dl>
   );

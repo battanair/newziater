@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import Link, { useIdioma, useT } from "@/components/Idioma";
 import { useEffect, useState } from "react";
 import { useAuth } from "./AuthProvider";
 import { ObraCard } from "./Cards";
@@ -15,6 +15,8 @@ type Bloques = { enCartel: Obra[]; porPuntuar: Obra[]; deSeguidos: Obra[]; nombr
  * cartel, novedades de los artistas que sigues y obras vistas sin puntuar.
  */
 export function ParaTi() {
+  const t = useT();
+  const lang = useIdioma();
   const { user } = useAuth();
   const [b, setB] = useState<Bloques | null>(null);
 
@@ -55,9 +57,8 @@ export function ParaTi() {
         <section className="wrap section">
           <div className="panel" style={{ display: "flex", flexWrap: "wrap", gap: 16, alignItems: "center" }}>
             <p className="soft" style={{ margin: 0, flex: "1 1 320px" }}>
-              {b.nombre ? `${b.nombre}, aquí` : "Aquí"} verás tus novedades: las obras de tu lista que estén en cartel y lo nuevo de los artistas que sigues. Empieza guardando una obra con «Quiero verla» o siguiendo a un artista.
-            </p>
-            <Link href="/obras" className="btn">Explorar obras</Link>
+              {b.nombre ? t("{nombre}, aquí verás tus novedades: las obras de tu lista que estén en cartel y lo nuevo de los artistas que sigues. Empieza guardando una obra con «Quiero verla» o siguiendo a un artista.", { nombre: b.nombre }) : t("Aquí verás tus novedades: las obras de tu lista que estén en cartel y lo nuevo de los artistas que sigues. Empieza guardando una obra con «Quiero verla» o siguiendo a un artista.")}</p>
+            <Link href="/obras" className="btn">{t("Explorar obras")}</Link>
           </div>
         </section>
       ) : null}
@@ -65,18 +66,18 @@ export function ParaTi() {
       {b.enCartel.length ? (
         <section className="wrap section">
           <div className="section-head">
-            <div><h2 className="h2">De tu lista, en cartel</h2><p className="muted" style={{ margin: "6px 0 0" }}>Obras que querías ver con funciones próximas</p></div>
-            <Link href="/panel/listas/quiero-ver">Tu lista →</Link>
+            <div><h2 className="h2">{t("De tu lista, en cartel")}</h2><p className="muted" style={{ margin: "6px 0 0" }}>{t("Obras que querías ver con funciones próximas")}</p></div>
+            <Link href="/panel/listas/quiero-ver">{t("Tu lista →")}</Link>
           </div>
-          <div className="grid-posters">{b.enCartel.slice(0, 6).map((o) => <ObraCard key={o.id} obra={o} etiqueta={`Próxima: ${fechaCorta(partirFunciones(o.funciones).proximas[0].fecha)}`} />)}</div>
+          <div className="grid-posters">{b.enCartel.slice(0, 6).map((o) => <ObraCard key={o.id} obra={o} etiqueta={t("Próxima: {fecha}", { fecha: fechaCorta(partirFunciones(o.funciones).proximas[0].fecha, lang) })} />)}</div>
         </section>
       ) : null}
 
       {b.deSeguidos.length ? (
         <section className="wrap section">
           <div className="section-head">
-            <div><h2 className="h2">De los artistas que sigues</h2><p className="muted" style={{ margin: "6px 0 0" }}>Obras en las que participan</p></div>
-            <Link href="/panel/listas/artistas">Artistas que sigues →</Link>
+            <div><h2 className="h2">{t("De los artistas que sigues")}</h2><p className="muted" style={{ margin: "6px 0 0" }}>{t("Obras en las que participan")}</p></div>
+            <Link href="/panel/listas/artistas">{t("Artistas que sigues →")}</Link>
           </div>
           <div className="grid-posters">{b.deSeguidos.map((o) => <ObraCard key={o.id} obra={o} />)}</div>
         </section>
@@ -85,9 +86,9 @@ export function ParaTi() {
       {b.porPuntuar.length ? (
         <section className="wrap section">
           <div className="section-head">
-            <div><h2 className="h2">¿Qué te parecieron?</h2><p className="muted" style={{ margin: "6px 0 0" }}>Las has visto pero aún no las has puntuado</p></div>
+            <div><h2 className="h2">{t("¿Qué te parecieron?")}</h2><p className="muted" style={{ margin: "6px 0 0" }}>{t("Las has visto pero aún no las has puntuado")}</p></div>
           </div>
-          <div className="grid-posters">{b.porPuntuar.map((o) => <ObraCard key={o.id} obra={o} etiqueta="Puntúala ★" />)}</div>
+          <div className="grid-posters">{b.porPuntuar.map((o) => <ObraCard key={o.id} obra={o} etiqueta={t("Puntúala ★")} />)}</div>
         </section>
       ) : null}
     </div>
