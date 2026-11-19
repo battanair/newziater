@@ -168,8 +168,11 @@ async function tieneObras(idPersona: string): Promise<boolean> {
   return (s?.docs ?? []).some((d) => (d.data().estado ?? "confirmado") === "confirmado");
 }
 
-// La lista de artistas solo muestra fichas con al menos una obra: las vacías siguen
-// existiendo (y se encuentran por su enlace o en el buscador), pero no ocupan el listado.
+// Con OCULTAR_FICHAS_VACIAS = true, la lista de artistas solo muestra fichas con al menos
+// una obra (las vacías siguen existiendo y se encuentran por su enlace o en el buscador).
+// De momento salen todas.
+const OCULTAR_FICHAS_VACIAS = false;
+
 export const paginaPersonas = memo(
   "paginaPersonas",
   async (opts: { despues?: string }): Promise<{ items: Persona[]; siguiente?: string }> => {
@@ -182,7 +185,7 @@ export const paginaPersonas = memo(
       if (cursor?.exists()) c.push(startAfter(cursor));
       c.push(limit(POR));
       const s = await getDocs(query(collection(db, "persona"), ...c));
-      const conObras = await Promise.all(s.docs.map(async (d) => ({ d, ok: Boolean(String(d.data().Nombre ?? "").trim()) && (await tieneObras(d.id)) })));
+      const conObras = await Promise.all(s.docs.map(async (d) => ({ d, ok: Boolean(String(d.data().Nombre ?? "").trim()) && (!OCULTAR_FICHAS_VACIAS || (await tieneObras(d.id))) })));
       siguiente = undefined;
       for (const { d, ok } of conObras) {
         if (items.length >= POR) { siguiente = items[items.length - 1].id; break; }
