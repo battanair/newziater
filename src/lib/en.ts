@@ -1,6 +1,7 @@
 // Traducciones al inglés. La clave es el texto en español tal y como aparece en el código (t("…")).
 // Si falta una clave, se muestra el español. Para añadir textos nuevos: escribe t("Texto") y añade aquí su traducción.
 export const EN: Record<string, string> = {
+  "+ Añadir obra": "+ Add show",
   " como": " as",
   " y en tu ficha de artista como": " and on your artist profile as",
   "(email o web)": "(email or website)",

@@ -5,6 +5,7 @@ import Link from "@/components/Idioma";
 import { obrasEnGira, paginaObras, type OrdenObras } from "@/lib/data";
 import { ObraCard } from "@/components/Cards";
 import { Paginacion } from "@/components/Paginacion";
+import { AnadirObraBoton } from "@/components/AnadirObraBoton";
 import { GENEROS } from "@/lib/format";
 
 export const revalidate = 600;
@@ -46,7 +47,10 @@ export default async function ObrasPage({ params, searchParams }: { params: Prom
 
   return (
     <main className="wrap section">
-      <h1 className="h1" style={{ marginBottom: 20 }}>{enGira ? t("Obras disponibles para gira") : genero ? t("Obras · {genero}", { genero: t(genero) }) : t("Obras")}</h1>
+      <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", justifyContent: "space-between", gap: 12, marginBottom: 20 }}>
+        <h1 className="h1" style={{ margin: 0 }}>{enGira ? t("Obras disponibles para gira") : genero ? t("Obras · {genero}", { genero: t(genero) }) : t("Obras")}</h1>
+        <AnadirObraBoton />
+      </div>
       {enGira ? (
         <>
           <p className="lead soft" style={{ maxWidth: 680, marginTop: 0 }}>{t("Para salas, festivales y programadores: obras cuyas compañías buscan bolos. En cada ficha encontrarás el contacto de distribución.")}</p>
