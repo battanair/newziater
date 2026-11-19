@@ -1,8 +1,8 @@
 "use client";
 
 
-import { useT, useIdioma } from "@/components/Idioma";
-import Link, { useT } from "@/components/Idioma";
+import Link, { useT, useIdioma } from "@/components/Idioma";
+import { ruta } from "@/lib/i18n";
 import { Suspense, use, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { FichaTecnicaEditor, type PremioEditable } from "@/components/FichaTecnicaEditor";

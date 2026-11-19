@@ -1,7 +1,6 @@
 "use client";
 
 
-import { useT } from "@/components/Idioma";
 import Link, { useT } from "@/components/Idioma";
 import { useEffect, useState } from "react";
 import { doc, getDoc } from "firebase/firestore";

@@ -3,8 +3,7 @@
 import { LOCALE } from "@/lib/i18n";
 
 
-import { useT, useIdioma } from "@/components/Idioma";
-import Link, { useT } from "@/components/Idioma";
+import Link, { useT, useIdioma } from "@/components/Idioma";
 import { useEffect, useMemo, useState } from "react";
 import { Timestamp, collection, documentId, getCountFromServer, getDocs, limit, orderBy, query, where } from "firebase/firestore";
 import { db } from "@/lib/firebase-client";
@@ -30,7 +29,7 @@ const hace = (ms: number) => {
   if (m < 60) return `hace ${Math.max(1, m)} min`;
   if (m < 1440) return `hace ${Math.round(m / 60)} h`;
   if (m < 43200) return `hace ${Math.round(m / 1440)} d`;
-  return new Date(ms).toLocaleDateString(LOCALE[lang], { day: "numeric", month: "short", year: "numeric" });
+  return new Date(ms).toLocaleDateString("es-ES", { day: "numeric", month: "short", year: "numeric" });
 };
 function diaISO(d: Date) {
   return new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Madrid", year: "numeric", month: "2-digit", day: "2-digit" }).format(d);

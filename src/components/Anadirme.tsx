@@ -1,8 +1,7 @@
 "use client";
 
-import Link, { useT, usePathname } from "@/components/Idioma";
+import Link, { useT, usePathname, useRouter } from "@/components/Idioma";
 import { useEffect, useState } from "react";
-import { useRouter, useT } from "@/components/Idioma";
 import { authFetch, useAuth } from "./AuthProvider";
 import { useToast } from "./Toast";
 import { anadirCredito, creditosDe, miPersona } from "@/lib/client-data";

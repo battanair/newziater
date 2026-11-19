@@ -1,11 +1,10 @@
 "use client";
 
-import Link, { useT } from "@/components/Idioma";
+import Link, { useT, useRouter } from "@/components/Idioma";
 import { CasillasCuenta } from "./Consentimientos";
 import { EDAD_MINIMA, VERSION_TERMINOS } from "@/lib/consentimiento";
 import { useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { useRouter, useT } from "@/components/Idioma";
 import {
   GoogleAuthProvider,
   createUserWithEmailAndPassword,

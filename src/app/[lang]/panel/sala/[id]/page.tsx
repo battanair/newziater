@@ -1,8 +1,8 @@
 "use client";
 
 
-import { useT, useIdioma } from "@/components/Idioma";
-import Link, { useT } from "@/components/Idioma";
+import Link, { useT, useIdioma } from "@/components/Idioma";
+import { ruta } from "@/lib/i18n";
 import { use, useEffect, useState } from "react";
 import { addDoc, collection, doc, serverTimestamp, updateDoc } from "firebase/firestore";
 import type { User } from "firebase/auth";

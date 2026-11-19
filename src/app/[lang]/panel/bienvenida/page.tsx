@@ -1,8 +1,7 @@
 "use client";
 
-import Link, { useT } from "@/components/Idioma";
+import Link, { useT, useRouter } from "@/components/Idioma";
 import { useEffect, useState } from "react";
-import { useRouter, useT } from "@/components/Idioma";
 import { RequireAuth } from "@/components/RequireAuth";
 import { useBusqueda } from "@/components/SearchBox";
 import { crearMiPersona, miPersona } from "@/lib/client-data";

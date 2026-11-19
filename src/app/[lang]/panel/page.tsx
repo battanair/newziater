@@ -1,7 +1,6 @@
 "use client";
 
 
-import { useT } from "@/components/Idioma";
 import Link, { useT } from "@/components/Idioma";
 import { useEffect, useState } from "react";
 import type { User } from "firebase/auth";

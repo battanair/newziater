@@ -1,5 +1,5 @@
 import { idiomaDePagina } from "@/lib/idioma-servidor";
-import { OG_LOCALE, alternos, idiomaDe, ruta, traductor } from "@/lib/i18n";
+import { LOCALE, OG_LOCALE, alternos, idiomaDe, ruta, traductor } from "@/lib/i18n";
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "@/components/Idioma";

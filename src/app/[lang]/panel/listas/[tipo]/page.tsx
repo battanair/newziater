@@ -3,8 +3,7 @@
 import { numero } from "@/lib/i18n";
 
 
-import { useT, useIdioma } from "@/components/Idioma";
-import Link, { useT } from "@/components/Idioma";
+import Link, { useT, useIdioma } from "@/components/Idioma";
 import { notFound } from "next/navigation";
 import { use, useCallback, useEffect, useState } from "react";
 import type { DocumentSnapshot } from "firebase/firestore";
